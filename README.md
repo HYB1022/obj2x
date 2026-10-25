@@ -1,2 +1,86 @@
 # obj2x
-convert multiple .obj files into .x files(even .o3d files)
+
+Blender에서 내보낸 **obj → x → o3d** 변환을 폴더 단위로 한 번에 처리해 주는 OMSI용 도구입니다.
+파일을 하나씩 열고 옵션을 맞추고 Convert를 누르던 작업을, 폴더만 지정하면 자동으로 해 줍니다.
+
+## 하는 일
+
+1. 폴더 안의 `.obj`를 Blender 2.79로 `.x`로 변환합니다.
+2. 변환된 `.x`를 OmsiXConv로 `.o3d`까지 변환합니다. OmsiXConv의 체크박스(`X-File: z up` 등)는 설정한 상태로 자동으로 맞춰 줍니다.
+3. OmsiXConv를 여러 개 동시에 띄워 병렬로 처리하고, 그 창들은 화면 밖으로 치워서 이 도구의 창만 보이게 합니다.
+
+`.o3d`는 `.x`와 같은 폴더에 생기고, 파일 이름은 obj 이름과 같습니다 (`face.obj` → `face.x` → `face.o3d`).
+
+## 필요한 것
+
+| 필요한 것 | 설명 |
+| --- | --- |
+| Windows 10 / 11 | PowerShell 5.1은 기본 포함이라 따로 설치할 필요 없음 |
+| [Blender 2.79b](https://download.blender.org/release/Blender2.79/) | 2.79 기본 포함 `Import-Export: DirectX X Format` 애드온이 켜져 있어야 합니다. 다른 버전(2.8 이상)은 지원하지 않습니다 |
+| OmsiXConv (Omsi X to O3D Converter 1.0) | **이 저장소에 포함되어 있지 않습니다.** 별도로 구해서 `OmsiXConv.exe` 위치를 지정하세요 |
+
+obj를 만드는 Blender는 버전이 상관없습니다. 변환에만 2.79b가 필요합니다.
+
+## 사용법
+
+1. [Releases](https://github.com/HYB1022/obj2x/releases)에서 최신 `obj2x.zip`을 받아 **쓰기 가능한 폴더**에 풉니다. 설정이 같은 폴더의 `obj2x.ini`에 저장됩니다.
+2. `obj2x.bat`을 실행합니다.
+3. 아래 항목을 지정합니다. 한 번 지정하면 저장됩니다.
+   - Blender 2.79의 `blender.exe`
+   - OBJ 폴더(입력), X 폴더(출력) — `입력 폴더와 같게`를 체크하면 한 폴더에 .x와 .o3d가 함께 생깁니다
+   - `OmsiXConv.exe`
+4. `변환 시작`을 누릅니다. 진행 상황이 아래 창에 표시됩니다.
+
+변환하는 동안에는 보이지 않는 OmsiXConv 창이 입력을 받고 있으니 마우스와 키보드를 가급적 건드리지 마세요.
+
+## 기능
+
+| 기능 | 설명 |
+| --- | --- |
+| 변경된 obj만 변환 | `.o3d`보다 새로 수정된 obj만 변환합니다 (O3D 변환을 끄면 `.x`와 비교). 모델링하며 반복해서 내보낼 때 유용합니다 |
+| 중지 | Blender와 OmsiXConv를 모두 종료하고 대기열을 비웁니다 |
+| 실패한 것만 다시 | 끝난 뒤 실패한 파일만 O3D 단계부터 다시 돌립니다 |
+| 동시 실행 개수 | OmsiXConv를 몇 개까지 동시에 띄울지 정합니다. 기본 10, 컴퓨터가 버거우면 줄이세요 |
+| 옵션... | 아래 참고 |
+| 업데이트 확인 | 시작할 때 GitHub에서 최신 릴리스를 확인하고, 새 버전이 있으면 설치할지 묻습니다 |
+
+### 옵션 창
+
+- **OmsiXConv 체크박스 8개**: `z up`, `Separate Files`, `Show Details of X`, `Remove Specular`, `Opt. Materials`, `Opt. Vertices`, `All Normals Up`, `Use Submesh Local Pos. as Global Pos.` 변환할 때마다 여기서 정한 상태로 자동 설정됩니다. 기본값은 `z up` 해제, `Remove Specular` / `Opt. Materials` / `Opt. Vertices` 체크입니다.
+- **.x 삭제**: O3D 변환에 성공하면 중간 파일인 `.x`를 지웁니다.
+- **Blender 추가 옵션**: .x 내보내기 애드온의 옵션을 `이름=값` 한 줄씩 적습니다 (예: `ApplyModifiers=True`). 실행 로그의 `x exporter options:` 목록에 있는 이름만 적용되고, 없는 이름은 `ignored options`로 표시됩니다.
+
+## 업데이트
+
+시작 시 새 버전이 있으면 설치할지 묻습니다. `예`를 누르면 릴리스의 zip을 내려받아 같은 폴더에 덮어쓰고 다시 시작합니다.
+
+- 설정(`obj2x.ini`)은 그대로 유지됩니다.
+- 기존 `obj2x.bat`, `obj2x_gui.ps1`, `obj2x.py`는 `obj2x_backup` 폴더에 보관됩니다.
+- 시작할 때 GitHub에 접속하는 게 싫으면 `시작 시 업데이트 확인` 체크를 끄세요.
+- 내려받은 파일의 무결성은 따로 검증하지 않습니다. 이 저장소의 릴리스를 신뢰하는 경우에만 사용하세요.
+
+## 문제 해결
+
+| 증상 | 확인할 것 |
+| --- | --- |
+| Windows가 실행을 막거나 경고함 | `.bat`/`.ps1` 파일은 소스가 그대로 열려 있습니다. 내용을 확인한 뒤 허용하세요 |
+| `blender.exe` 관련 오류 | 2.79b의 `blender.exe`를 지정했는지 확인하세요 (자동 감지는 하지 않습니다) |
+| `E/A-Fehler 103`이 간혹 뜸 | OmsiXConv 쪽 오류입니다. 자동으로 최대 3번 재시도하고, 계속 나면 동시 실행 개수를 줄여 보세요 |
+| 로그에 `OmsiXConv 창을 못 찾음` | OmsiXConv 경로가 맞는지, 다른 프로그램이 그 창을 가로막지 않는지 확인하세요 |
+| 로그에 `파일 선택창을 못 찾음` | 괄호 안에 나온 창 목록을 이슈로 알려주세요 |
+| 방향이 틀어진 모델 | 옵션 창에서 OmsiXConv의 `z up` 상태를 확인하세요 (기본은 해제) |
+
+## 알아 둘 점
+
+- 제 환경에서 만든 도구라 다른 환경에서는 동작이 다를 수 있습니다. 문제가 있으면 로그 창 내용과 함께 이슈로 알려주세요.
+- 파일이 큰 `.x`(수 MB 이상)는 변환이 오래 걸릴 수 있습니다.
+- 이 저장소에는 Blender와 OmsiXConv가 포함되어 있지 않습니다. 각 프로그램의 라이선스는 각자 따릅니다.
+
+## 변경 내역
+
+- **v1.3** — 변경된 obj만 변환, 중지 / 실패한 것만 다시, 옵션 창(OmsiXConv 체크박스 전체 설정, .x 삭제, 내보내기 추가 옵션), 자동 업데이트 설치
+- **v1.1** — 최초 공개: obj → x → o3d 일괄 변환, `z up` 자동 해제, 병렬 변환, 입력 폴더와 같게 옵션, 업데이트 확인
+
+## 라이선스
+
+[MIT License](LICENSE)
