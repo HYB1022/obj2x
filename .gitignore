@@ -1,0 +1,33 @@
+# 빌드 결과물 (build.bat으로 생성, 배포는 Releases의 obj2x.zip으로)
+*.exe
+*.exe.old
+*.pdb
+*.zip
+
+# 사용자 설정 (개인 경로가 들어감)
+obj2x.ini
+
+# 자동 업데이트가 만드는 백업 폴더
+obj2x_backup/
+
+# 테스트용 모델/변환 결과
+*.obj
+*.mtl
+*.x
+*.o3d
+
+# --shots 스크린샷
+*.png
+
+# Python
+__pycache__/
+*.pyc
+
+# Claude Code 개인 설정
+.claude/settings.local.json
+
+# 에디터 / OS
+.vs/
+.vscode/
+Thumbs.db
+desktop.ini
