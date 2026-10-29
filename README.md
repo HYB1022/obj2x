@@ -112,4 +112,10 @@ OmsiXConv의 `.o3d`와 대조해 검증한 범위에서는 삼각형·재질·UV
 
 ## 라이선스
 
-[MIT License](LICENSE)
+Copyright (C) 2026 Hyunwoo Bang
+
+[GNU General Public License v3.0 이상](LICENSE) (GPL-3.0-or-later)
+
+이 프로그램을 자유롭게 사용·수정·재배포할 수 있지만, 수정한 버전을 배포할 때는 같은 GPL 라이선스로 소스 코드를 함께 공개해야 합니다.
+
+v2.2 이전 버전은 MIT 라이선스로 배포되었습니다.
