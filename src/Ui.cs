@@ -396,7 +396,7 @@ public class SlimBar : Control, IRefresh {
 // ---------------------------------------------------------------- 사이드바 메뉴 버튼
 public class NavButton : Control, IRefresh {
     public string Page; public string Key; public bool Active;
-    public bool Badge;                       // 오른쪽 빨간 점 (새 버전 알림 등)
+    public string BadgeKey;                  // 오른쪽 알약 표시 문구 키 (새 버전 알림 등). null이면 없음
     bool hover;
     Fader hv;
     public NavButton() {
@@ -419,11 +419,21 @@ public class NavButton : Control, IRefresh {
         int isz = Ui.S(24), ix = r.X + Ui.S(10);
         Icons.Draw(g, Page, ix, r.Y + (r.Height - isz) / 2f, isz, 1f);
         int tx = ix + isz + Ui.S(12);
-        TextRenderer.DrawText(g, Text, Active ? Ui.F(FR.Bold) : Ui.F(FR.Main), new Rectangle(tx, r.Y, r.Right - tx - Ui.S(24), r.Height), Active ? Theme.NavPillText : Theme.Text, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
-        if (Badge) {
-            float d = Ui.S(8f);
-            using (SolidBrush b = new SolidBrush(Color.FromArgb(255, 59, 48))) g.FillEllipse(b, r.Right - Ui.S(14) - d / 2, r.Y + r.Height / 2f - d / 2, d, d);
+        int right = r.Right - Ui.S(8);
+        if (BadgeKey != null) {
+            // [업데이트] 처럼 연한 강조색 바탕 + 강조색 글자
+            string bt = L.T(BadgeKey);
+            Font bf = Ui.F(FR.Sub);
+            int bw = Ui.TextW(bt, bf) + Ui.S(20), bh = Ui.S(24);
+            Rectangle br = new Rectangle(right - bw, r.Y + (r.Height - bh) / 2, bw, bh);
+            Color soft = Theme.Dark ? Color.FromArgb(70, Theme.Accent) : Color.FromArgb(34, Theme.Accent);
+            Color fg = Theme.Dark ? Ui.Mix(Theme.Accent, Color.White, 0.45) : Theme.Accent;
+            using (GraphicsPath gp = Ui.Round(br.X, br.Y, br.Width, br.Height, bh / 2f))
+            using (SolidBrush b = new SolidBrush(soft)) g.FillPath(b, gp);
+            TextRenderer.DrawText(g, bt, bf, br, fg, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+            right = br.X - Ui.S(6);
         }
+        TextRenderer.DrawText(g, Text, Active ? Ui.F(FR.Bold) : Ui.F(FR.Main), new Rectangle(tx, r.Y, Math.Max(0, right - tx), r.Height), Active ? Theme.NavPillText : Theme.Text, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
     }
 }
 

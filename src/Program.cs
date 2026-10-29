@@ -26,7 +26,7 @@ public static class AppIcon {
 }
 
 public static class Program {
-    public const string AppVersion = "2.2";
+    public const string AppVersion = "2.3";
     public const string Repo = "HYB1022/obj2x";
 
     [DllImport("user32.dll")] static extern bool SetProcessDPIAware();

@@ -19,7 +19,8 @@ public partial class MainForm {
     void UpdateLinkText() {
         if (hero != null) hero.Invalidate();
         NavButton nb;
-        if (navs.TryGetValue("about", out nb) && nb.Badge != (updLatest.Length > 0)) { nb.Badge = updLatest.Length > 0; nb.Invalidate(); }
+        string bk = updLatest.Length > 0 ? "about_pill_update" : null;
+        if (navs.TryGetValue("about", out nb) && nb.BadgeKey != bk) { nb.BadgeKey = bk; nb.Invalidate(); }
     }
 
     static string JsonStr(string json, string key) {
@@ -32,7 +33,7 @@ public partial class MainForm {
         catch (Exception) { return latest != current; }
     }
 
-    // GitHub 최신 릴리스 조회 (백그라운드). 새 버전이 있으면 창을 띄우지 않고 정보 탭의 업데이트 줄과 메뉴 점으로만 알린다.
+    // GitHub 최신 릴리스 조회 (백그라운드). 새 버전이 있으면 창을 띄우지 않고 정보 탭의 업데이트 줄과 메뉴의 [업데이트] 표시로만 알린다.
     public void StartUpdateCheck(bool manual) {
         if (updBusy) return;
         updBusy = true;
