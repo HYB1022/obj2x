@@ -9,6 +9,7 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 - 실행: `obj2x.bat` (exe가 없으면 먼저 빌드).
 - 자체 점검: `obj2x.exe --selftest`. 설정, 문구, 변환기, 엔진(중지 포함), 화면 구성을 점검하고 `PASS`/`FAIL` 줄을 출력한다. 코드를 바꾼 뒤 빌드하고 이것부터 돌린다.
 - 스크린샷: `obj2x.exe --shots <폴더>` (개발용, 화면을 PNG로 저장).
+- README 화면: `obj2x.exe --readme-shots <폴더>`로 찍어서 `docs/images/`에 넣는다. 사용자 경로가 보이는 화면은 찍지 않는다.
 
 ## 제약
 

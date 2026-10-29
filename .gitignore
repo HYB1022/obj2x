@@ -19,6 +19,8 @@ obj2x_backup/
 # --selftest 결과 / --shots 스크린샷
 obj2x_selftest.txt
 *.png
+# README에 쓰는 화면 (obj2x.exe --readme-shots로 생성)
+!docs/images/*.png
 
 # Python
 __pycache__/

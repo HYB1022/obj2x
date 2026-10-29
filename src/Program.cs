@@ -41,7 +41,10 @@ public static class Program {
 
         string here = AppDomain.CurrentDomain.BaseDirectory;
         if (selftest) return SelfTest.Run(here);
-        for (int i = 0; i < args.Length - 1; i++) { if (args[i] == "--shots") return Shots.Run(args[i + 1]); }
+        for (int i = 0; i < args.Length - 1; i++) {
+            if (args[i] == "--shots") return Shots.Run(args[i + 1]);
+            if (args[i] == "--readme-shots") return Shots.Readme(args[i + 1]);
+        }
 
         try { string old = System.Reflection.Assembly.GetExecutingAssembly().Location + ".old"; if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
 

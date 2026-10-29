@@ -237,6 +237,10 @@ public partial class MainForm {
         return o;
     }
 
+    // 개발용(--readme-shots): 정해진 방식으로 바로 변환을 시작한다
+    public void ShotRun(string mode) { wizMode = mode; StartConversion(); }
+    public bool IsRunning { get { return running; } }
+
     // 변환 시작 (마법사 마지막 단계에서 호출)
     public void StartConversion() {
         if (running) return;
