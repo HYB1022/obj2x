@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Windows.Forms;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 
-namespace Obj2x {
+namespace Obj2x.UI {
 
-// obj2x.exe --selftest : 설정/문구/변환기/엔진(중지 포함)/화면 구성을 자동으로 점검한다.
+// obj2x.exe --selftest : 설정/문구/변환기/엔진(중지 포함)/XAML 화면/ViewModel을 자동으로 점검한다.
 public static class SelfTest {
     static int fail = 0;
     static StringBuilder sb = new StringBuilder();
@@ -18,21 +19,9 @@ public static class SelfTest {
         if (!ok) fail++;
         sb.AppendLine(line); Console.WriteLine(line);
     }
-    static void Click(Control c) {
-        typeof(Control).GetMethod("OnClick", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(c, new object[] { EventArgs.Empty });
-    }
-    static List<T> Find<T>(Control root) where T : Control {
-        List<T> r = new List<T>();
-        foreach (Control c in root.Controls) { if (c is T) r.Add((T)c); r.AddRange(Find<T>(c)); }
-        return r;
-    }
-    static void Pump(int ms) {
-        DateTime end = DateTime.Now.AddMilliseconds(ms);
-        while (DateTime.Now < end) { Application.DoEvents(); Thread.Sleep(10); }
-    }
 
     public static int Run(string here) {
-        Anim.Off = true;
+        Motion.Off = true;
         string root = Path.Combine(Path.GetTempPath(), "obj2x_selftest_cs");
         try { if (Directory.Exists(root)) Directory.Delete(root, true); } catch (Exception) { }
         Directory.CreateDirectory(root);
@@ -67,7 +56,7 @@ public static class SelfTest {
         d.AgreedVer = "1.10"; T("면책: 1.10도 2.0 미만", d.NeedDisclaimer(), "");
         d.AgreedVer = "2.0"; T("면책: 2.0이면 불필요", !d.NeedDisclaimer(), "");
         d.AgreedVer = "2.1"; T("면책: 2.1이면 불필요", !d.NeedDisclaimer(), "");
-        T("업데이트: 버전 비교", MainForm.IsNewer("2.1", "2.0") && !MainForm.IsNewer("2.0", "2.0") && MainForm.IsNewer("2.10", "2.9"), "");
+        T("업데이트: 버전 비교", Updater.IsNewer("2.1", "2.0") && !Updater.IsNewer("2.0", "2.0") && Updater.IsNewer("2.10", "2.9"), "");
 
         // 3. FastO3D
         string od = Path.Combine(root, "obj"); Directory.CreateDirectory(Path.Combine(od, "sub"));
@@ -103,47 +92,68 @@ public static class SelfTest {
         T("엔진(빠른 변환): 중간에 중지", fin2 && stopped2 && rows2 == 5 && !File.Exists(Path.Combine(big2, "m10.o3d")), rows2 + " fin=" + fin2 + " stopped=" + stopped2);
         T("엔진: 중지 뒤 다시 시작 가능", !e2.Running, "");
 
-        // 5. 엔진: Blender 단계 중지 (유닉스에서만, 가짜 blender 스크립트)
-        if (Environment.OSVersion.Platform == PlatformID.Unix) {
-            string fake = Path.Combine(root, "blender.sh");
-            File.WriteAllText(fake, "#!/bin/sh\necho 'OK one'\nsleep 30\n");
-            Process.Start("chmod", "+x \"" + fake + "\"").WaitForExit();
-            ro = new RunOptions(); ro.Mode = "x"; ro.In = od; ro.Out = od; ro.Blender = fake; ro.Py = Path.Combine(root, "obj2x.py");
-            Engine e3 = new Engine(); bool fin3 = false, stopped3 = false; DateTime st0 = DateTime.Now;
-            e3.OnSay = delegate(string t) { if (t.StartsWith("OK")) e3.Stop(); };
-            e3.OnFinish = delegate(bool st) { stopped3 = st; fin3 = true; };
-            e3.Start(ro, Engine.FindObjs(od, true));
-            for (int i = 0; i < 200 && !fin3; i++) Thread.Sleep(20);
-            T("엔진(Blender 단계): 중간에 중지", fin3 && stopped3 && (DateTime.Now - st0).TotalSeconds < 8, "fin=" + fin3 + " stopped=" + stopped3);
-        }
+        // 5. 변환 준비 (Core)
+        Settings cs = new Settings(); cs.Inp = @"C:\no\such\folder"; cs.Blender = ""; cs.Conv = "";
+        string err, note;
+        T("준비: 없는 입력 폴더", Conversion.Prepare(cs, Conversion.BuildOptions(cs, "fast", ""), out err, out note) == null && err == "msg_err_in", err);
+        cs.Inp = od;
+        T("준비: Blender 없으면 표준 방식 막힘", Conversion.Prepare(cs, Conversion.BuildOptions(cs, "std", ""), out err, out note) == null && err == "msg_err_bl", err);
+        List<ObjItem> prep = Conversion.Prepare(cs, Conversion.BuildOptions(cs, "fast", ""), out err, out note);
+        T("준비: 빠른 변환은 도구 없이 가능", prep != null && prep.Count == 1, err);
+        T("준비: 없는 도구 목록", Conversion.MissingTools(cs).Count == 2, "");
 
-        // 6. 화면
+        // 6. XAML 화면
+        List<string> bad = new List<string>();
+        foreach (string n in Xaml.Names()) { try { Xaml.Load(n); } catch (Exception ex) { bad.Add(n + ": " + ex.Message); } }
+        T("XAML: 모든 화면 읽기 (" + Xaml.Names().Length + "개)", bad.Count == 0, string.Join(" / ", bad.ToArray()));
+
+        // 7. 메인 창 + ViewModel
         try {
-            Settings us = new Settings(); us.Path = Path.Combine(root, "ui.ini"); us.Lang = "ko"; us.Theme = "light"; us.Inp = od; us.AddRecent(od); us.AddRecent(@"C:\no\such\folder");
-            MainForm f = new MainForm(us);
-            f.WindowState = FormWindowState.Normal; f.Show(); Pump(200);
-            foreach (string pg in new string[] { "wizard", "advanced", "settings", "about", "dashboard" }) { f.SwitchPage(pg); Pump(50); }
-            T("화면: 모든 페이지 전환", true, "");
+            Settings us = new Settings(); us.Path = Path.Combine(root, "ui.ini"); us.Lang = "ko"; us.Theme = "light"; us.Inp = big; us.AddRecent(big); us.AddRecent(@"C:\no\such\folder");
+            us.Blender = ""; us.Conv = ""; us.UpdCheck = false;
+            Loc.SetLang("ko"); Theme.Apply("light", "indigo", false);
+            MainWindow f = new MainWindow(us, root, false);
+            f.FixClientSize(1040, 686); f.Show(); Pump.Run(200);
+            foreach (string pg in new string[] { "wizard", "advanced", "settings", "about", "dashboard" }) { f.VM.Page = pg; Pump.Run(50); }
+            T("화면: 모든 페이지 전환", f.VM.Page == "dashboard", f.VM.Page);
             foreach (string th in new string[] { "dark", "light", "system" }) foreach (string ac in new string[] { "indigo", "teal", "rose" }) {
-                f.S.Theme = th; f.S.Accent = ac; f.ApplyTheme(); Pump(20);
+                f.VM.ThemeName = th; f.VM.AccentName = ac; Pump.Run(20);
             }
-            f.S.Lang = "en"; f.ApplyLanguage(); Pump(50); f.S.Lang = "ko"; f.ApplyLanguage(); Pump(50);
-            T("화면: 테마 9가지 + 언어 전환(재시작 없음)", !f.IsDisposed, "");
+            f.VM.ThemeName = "light"; f.VM.AccentName = "indigo";
+            f.VM.Lang = "en"; Pump.Run(50);
+            bool en = f.VM.NextText == "Next" || L.Lang == "en";
+            f.VM.Lang = "ko"; Pump.Run(50);
+            T("화면: 테마 9가지 + 언어 전환(재시작 없음)", en && L.Lang == "ko", L.Lang);
+
+            // 마법사
+            f.VM.Page = "wizard"; Pump.Run(50);
+            T("마법사: 들어오면 1단계, 도구 없으면 빠른 변환", f.VM.WizStep == 1 && f.VM.IsFast && !f.VM.StdEnabled, f.VM.WizStep + " " + f.VM.WizMode);
+            f.VM.WizNextCmd.Execute(null); Pump.Run(30);
+            T("마법사: 2단계 + 최근 폴더 2개(없는 폴더 표시)", f.VM.WizStep == 2 && f.VM.Recent.Count == 2 && !f.VM.Recent[0].Exists && f.VM.Recent[1].Exists, f.VM.Recent.Count.ToString());
+            T("마법사: 빠른 변환이면 출력 폴더 잠김", f.VM.OutLocked && f.VM.OutPath == big, f.VM.OutPath);
+            f.VM.WizNextCmd.Execute(null); f.VM.WizNextCmd.Execute(null); Pump.Run(30);
+            T("마법사: 4단계 요약", f.VM.WizStep == 4 && f.VM.Summary[1] == big && f.VM.NextText == L.T("btn_run"), f.VM.Summary[1]);
+            f.VM.WizNextCmd.Execute(null);
+            for (int i = 0; i < 300 && f.VM.Running; i++) Pump.Run(20);
+            Pump.Run(100);
+            T("마법사: 실행하면 대시보드 결과 표에 60줄", f.VM.Page == "dashboard" && f.VM.Results.Count == 60 && f.VM.Tab == "res" && !f.VM.Running, f.VM.Results.Count + " " + f.VM.Page);
+
             // 면책 오버레이
-            bool? result = null;
-            f.ShowDisclaimer(false);
-            Pump(50);
-            List<DialogOverlay> ovs = Find<DialogOverlay>(f);
-            T("면책: 같은 창 안 오버레이로 표시", ovs.Count == 1 && ovs[0].Parent == f, ovs.Count.ToString());
-            if (ovs.Count == 1) {
-                RButton okb = ovs[0].Btn[ovs[0].Btn.Length - 1];
-                T("면책: 체크 전에는 계속 버튼 비활성", okb != null && !okb.Enabled, "");
-                List<Check> cks = Find<Check>(ovs[0]);
-                cks[0].Checked = true; Pump(20);
-                T("면책: 체크하면 계속 버튼 활성", okb.Enabled, "");
-                Click(okb); Pump(50);
-                T("면책: 계속 누르면 오버레이 사라지고 동의 기록", Find<DialogOverlay>(f).Count == 0 && f.S.Agreed && f.S.AgreedVer == Program.AppVersion, "");
+            f.Disclaimer(false, null); Pump.Run(50);
+            DialogHost dh = f.LastDialog;
+            T("면책: 같은 창 안 오버레이로 표시", f.OverlayCount == 1 && dh != null, f.OverlayCount.ToString());
+            if (dh != null) {
+                Button okb = dh.Btn[dh.Btn.Length - 1];
+                T("면책: 체크 전에는 계속 버튼 비활성", !okb.IsEnabled, "");
+                dh.Check.IsChecked = true; Pump.Run(20);
+                T("면책: 체크하면 계속 버튼 활성", okb.IsEnabled, "");
+                okb.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Pump.Run(50);
+                T("면책: 계속 누르면 오버레이 사라지고 동의 기록", f.OverlayCount == 0 && us.Agreed && us.AgreedVer == AppInfo.Version, f.OverlayCount.ToString());
             }
+
+            // 업데이트 알림: 창 없이 메뉴 표시
+            f.VM.FakeUpdate("9.9"); Pump.Run(20);
+            T("업데이트: 정보 메뉴에 [업데이트] 표시, 대화 상자 없음", f.VM.UpdNavBadge == "about_pill_update" && f.OverlayCount == 0, "");
             f.Close();
         } catch (Exception ex) { T("화면 구성", false, ex.ToString()); }
 

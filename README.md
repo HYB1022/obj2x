@@ -139,7 +139,7 @@ OmsiXConv의 `.o3d`와 대조해 검증한 범위에서는 삼각형·재질·UV
 
 ## 직접 빌드하기
 
-`build.bat`을 실행하면 Windows에 기본 포함된 C# 컴파일러(.NET Framework 4)로 `src\*.cs`를 `obj2x.exe`로 빌드합니다. 따로 설치할 것은 없습니다.
+`build.bat`을 실행하면 Windows에 기본 포함된 C# 컴파일러(.NET Framework 4)로 `src\Core`(변환 로직)와 `src\App`(WPF 화면)을 `obj2x.exe`로 빌드합니다. 따로 설치할 것은 없습니다.
 
 ```bat
 build.bat

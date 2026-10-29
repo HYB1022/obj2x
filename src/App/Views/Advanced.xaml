@@ -1,0 +1,57 @@
+<ScrollViewer xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- 고급: OmsiXConv 세부 옵션, Blender 내보내기 추가 옵션, 실행 프로그램 경로 -->
+  <StackPanel Margin="24,20,24,24">
+    <TextBlock Text="{ui:Tr nav_advanced}" Style="{StaticResource TTitle}"/>
+
+    <Border Style="{StaticResource CardBox}" Margin="0,16,0,0">
+      <StackPanel Margin="20,14,20,16">
+        <TextBlock Text="{ui:Tr sec_adv_omsi}" Style="{StaticResource TBold}"/>
+        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
+        <TextBlock Text="{ui:Tr sec_adv_omsi_sub}" Style="{StaticResource TSub}" Margin="0,4,0,8"/>
+        <ItemsControl ItemsSource="{Binding Copts}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate><CheckBox Style="{StaticResource Chk}" Content="{Binding Name}" IsChecked="{Binding Checked}" Margin="0,2" HorizontalAlignment="Left"/></DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+          <TextBlock Text="{ui:Tr lbl_par}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+          <Button Content="−" Style="{StaticResource BtnSmall}" Width="28" Command="{Binding ParDownCmd}"/>
+          <TextBlock Text="{Binding Par}" Width="40" TextAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
+          <Button Content="+" Style="{StaticResource BtnSmall}" Width="28" Command="{Binding ParUpCmd}"/>
+          <TextBlock Text="{Binding CoresText}" Style="{StaticResource TSub}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <Border Style="{StaticResource CardBox}" Margin="0,12,0,0">
+      <StackPanel Margin="20,14,20,18">
+        <TextBlock Text="{ui:Tr sec_adv_rna}" Style="{StaticResource TBold}"/>
+        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
+        <TextBlock Text="{ui:Tr sec_adv_rna_sub}" Style="{StaticResource TSub}" Margin="0,6,0,10" TextWrapping="Wrap"/>
+        <TextBox Text="{Binding ExOpt, UpdateSourceTrigger=PropertyChanged}" Height="80" AcceptsReturn="True" TextWrapping="Wrap"
+                 VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" Padding="4"/>
+      </StackPanel>
+    </Border>
+
+    <Border Style="{StaticResource CardBox}" Margin="0,12,0,0">
+      <StackPanel Margin="20,14,20,18">
+        <TextBlock Text="{ui:Tr sec_adv_paths}" Style="{StaticResource TBold}"/>
+        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
+        <TextBlock Text="{ui:Tr lbl_blender_path}" Margin="0,10,0,6"/>
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" Command="{Binding BrowseBlenderCmd}" Margin="10,0,0,0"/>
+          <TextBox Text="{Binding BlenderPath}"/>
+        </DockPanel>
+        <TextBlock Text="{ui:Tr lbl_conv_path}" Margin="0,12,0,6"/>
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" Command="{Binding BrowseConvCmd}" Margin="10,0,0,0"/>
+          <TextBox Text="{Binding ConvPath}"/>
+        </DockPanel>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</ScrollViewer>

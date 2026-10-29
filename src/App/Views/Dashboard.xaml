@@ -1,0 +1,77 @@
+<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x" Margin="16">
+  <!-- 대시보드: 상태 카드, 경로 경고 배너, 작업 내역(로그/결과 표) -->
+  <Grid.RowDefinitions><RowDefinition Height="96"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+
+  <Border Style="{StaticResource CardBox}">
+    <Grid>
+      <TextBlock Text="{ui:Tr dash_status_title}" Style="{StaticResource TBold}" Margin="20,14,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+      <StackPanel Orientation="Horizontal" Margin="20,42,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+        <Ellipse Style="{StaticResource Dot}"/>
+        <TextBlock Text="{Binding StatusText}" Margin="8,0,0,0"/>
+      </StackPanel>
+      <TextBlock Text="{Binding LastText}" Style="{StaticResource TSub}" Margin="20,66,300,0" VerticalAlignment="Top" TextTrimming="CharacterEllipsis"/>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
+        <Button Content="{ui:Tr btn_stop}" Style="{StaticResource BtnNormal}" Command="{Binding StopCmd}" Margin="0,0,10,0"
+                Visibility="{Binding StopVisible, Converter={StaticResource Vis}}"/>
+        <Button Content="{ui:Tr btn_retry}" Style="{StaticResource BtnNormal}" Command="{Binding RetryCmd}" Margin="0,0,10,0"
+                Visibility="{Binding RetryVisible, Converter={StaticResource Vis}}"/>
+        <Button Content="{ui:Tr btn_start_wizard}" Style="{StaticResource BtnPrimary}" Command="{Binding StartWizardCmd}" IsEnabled="{Binding NotRunning}"/>
+      </StackPanel>
+    </Grid>
+  </Border>
+
+  <!-- 노란 경고 배너 -->
+  <Border Grid.Row="1" Margin="0,12,0,0" Height="72" CornerRadius="14" BorderThickness="2" Background="{DynamicResource BnBg}" BorderBrush="{DynamicResource BnBorder}"
+          Visibility="{Binding BannerVisible, Converter={StaticResource Vis}}">
+    <Grid>
+      <Path Data="M 34,24 L 49,50 L 19,50 Z M 34,32 L 34,41 M 34,45 L 34,45.5" Stroke="{DynamicResource BnText}" StrokeThickness="1.8"
+            StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-2,-2,0,0"/>
+      <StackPanel Margin="68,0,200,0" VerticalAlignment="Center">
+        <TextBlock Text="{ui:Tr dash_banner_title}" Style="{StaticResource TH2}" Foreground="{DynamicResource BnText}" TextTrimming="CharacterEllipsis"/>
+        <TextBlock Text="{Binding BannerText}" Style="{StaticResource TSub}" Foreground="{DynamicResource BnText}" TextWrapping="Wrap" Margin="0,4,0,0" MaxHeight="32"/>
+      </StackPanel>
+      <Button Content="{ui:Tr btn_set_blender}" Style="{StaticResource BtnBanner}" Command="{Binding SetPathsCmd}" HorizontalAlignment="Right" Margin="0,0,20,0"/>
+    </Grid>
+  </Border>
+
+  <!-- 작업 내역 -->
+  <Border Grid.Row="2" Margin="0,12,0,0" Style="{StaticResource CardBox}">
+    <Grid Margin="20,0,20,20">
+      <Grid.RowDefinitions><RowDefinition Height="48"/><RowDefinition Height="32"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <TextBlock Text="{ui:Tr card_history_title}" Style="{StaticResource TH2}" VerticalAlignment="Center" Margin="0,2,0,0"/>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <Button Content="{ui:Tr btn_clear}" Style="{StaticResource BtnSmall}" Command="{Binding ClearCmd}"/>
+        <Button Content="{ui:Tr btn_save}" Style="{StaticResource BtnSmall}" Command="{Binding SaveLogCmd}" Margin="6,0,16,0"/>
+        <Button Content="{ui:Tr tab_log}" Style="{StaticResource BtnTab}" Tag="{Binding LogTab}" Command="{Binding TabCmd}" CommandParameter="log"/>
+        <Button Content="{ui:Tr tab_res}" Style="{StaticResource BtnTab}" Tag="{Binding ResTab}" Command="{Binding TabCmd}" CommandParameter="res" Margin="6,0,0,0"/>
+      </StackPanel>
+      <Grid Grid.Row="1">
+        <ProgressBar Style="{StaticResource Slim}" Value="{Binding Progress, Mode=OneWay}" VerticalAlignment="Top"/>
+        <TextBlock Text="{Binding StatText}" Style="{StaticResource TSub}" Margin="0,8,0,0" TextTrimming="CharacterEllipsis"/>
+      </Grid>
+      <TextBox x:Name="LogBox" Grid.Row="2" Style="{StaticResource LogBox}" Visibility="{Binding LogVisible, Converter={StaticResource Vis}}"/>
+      <ListView Grid.Row="2" Style="{StaticResource Res}" ItemsSource="{Binding Results}" Visibility="{Binding ResVisible, Converter={StaticResource Vis}}">
+        <ListView.View>
+          <GridView>
+            <GridViewColumn Header="{ui:Tr col_file}" Width="260" DisplayMemberBinding="{Binding Name}" HeaderContainerStyle="{StaticResource HdrL}"/>
+            <GridViewColumn Header="{ui:Tr col_vert}" Width="75" HeaderContainerStyle="{StaticResource HdrR}">
+              <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding V}" TextAlignment="Right"/></DataTemplate></GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="{ui:Tr col_tri}" Width="75" HeaderContainerStyle="{StaticResource HdrR}">
+              <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding T}" TextAlignment="Right"/></DataTemplate></GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="{ui:Tr col_mat}" Width="60" HeaderContainerStyle="{StaticResource HdrR}">
+              <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding M}" TextAlignment="Right"/></DataTemplate></GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="{ui:Tr col_time}" Width="70" HeaderContainerStyle="{StaticResource HdrR}">
+              <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Sec}" TextAlignment="Right"/></DataTemplate></GridViewColumn.CellTemplate>
+            </GridViewColumn>
+            <GridViewColumn Header="{ui:Tr col_stat}" Width="300" DisplayMemberBinding="{Binding Status}" HeaderContainerStyle="{StaticResource HdrL}"/>
+          </GridView>
+        </ListView.View>
+      </ListView>
+    </Grid>
+  </Border>
+</Grid>

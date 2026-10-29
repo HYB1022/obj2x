@@ -1,0 +1,111 @@
+using System;
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
+using Microsoft.Win32;
+
+namespace Obj2x.UI {
+
+// 라이트/다크 × 인디고/틸/로즈 색 팔레트. Apply하면 앱 리소스의 브러시를 바꿔서
+// XAML의 {DynamicResource 이름} 과 직접 그리는 컨트롤(Changed 이벤트)이 함께 바뀐다.
+public static class Theme {
+    public static bool Dark;
+    public static string AccentName = "indigo";
+    public static Color Accent, AccentHov, NavPill, NavPillBdr, NavPillText;
+    public static Color Bg, Sidebar, Card, CardBdr, Input, InputBdr, Btn, BtnHov, Text, Muted, Divider, DisBg, DisText, ToggleOff, Ok, Warn, Bad, Dim;
+    public static Color BnBg, BnBorder, BnText, BnBtnBg, BnBtnFg, BnBtnHov;
+    public static FontFamily Font = new FontFamily("Malgun Gothic");
+    public static event Action Changed;
+
+    static Color C(int r, int g, int b) { return Color.FromRgb((byte)r, (byte)g, (byte)b); }
+
+    public static bool SystemIsDark() {
+        try {
+            object v = Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 1);
+            if (v is int) return ((int)v) == 0;
+        } catch (Exception) { }
+        return false;
+    }
+
+    public static void Apply(string theme, string accent, bool sysFont) {
+        bool dark = theme == "dark" || (theme == "system" && SystemIsDark());
+        Dark = dark;
+        AccentName = (accent == "teal" || accent == "rose") ? accent : "indigo";
+        if (accent == "teal") {
+            if (dark) { Accent = C(20, 184, 166); AccentHov = C(45, 212, 191); NavPill = C(19, 56, 56); NavPillBdr = C(30, 84, 84); NavPillText = C(204, 251, 241); }
+            else { Accent = C(13, 148, 136); AccentHov = C(15, 118, 110); NavPill = C(240, 253, 250); NavPillBdr = C(153, 246, 228); NavPillText = C(17, 94, 89); }
+        } else if (accent == "rose") {
+            if (dark) { Accent = C(244, 63, 94); AccentHov = C(251, 113, 133); NavPill = C(61, 27, 40); NavPillBdr = C(95, 38, 60); NavPillText = C(255, 228, 230); }
+            else { Accent = C(225, 29, 72); AccentHov = C(190, 18, 60); NavPill = C(255, 241, 242); NavPillBdr = C(254, 205, 211); NavPillText = C(159, 18, 57); }
+        } else {
+            if (dark) { Accent = C(129, 140, 248); AccentHov = C(165, 180, 252); NavPill = C(43, 51, 86); NavPillBdr = C(63, 71, 115); NavPillText = C(224, 231, 255); }
+            else { Accent = C(79, 70, 229); AccentHov = C(67, 56, 202); NavPill = C(238, 242, 255); NavPillBdr = C(199, 210, 254); NavPillText = C(55, 48, 163); }
+        }
+        if (dark) {
+            Bg = C(18, 20, 26); Sidebar = C(24, 26, 34); Card = C(32, 35, 46); CardBdr = C(44, 49, 64);
+            Input = C(22, 24, 32); InputBdr = C(54, 59, 78); Btn = C(42, 46, 60); BtnHov = C(54, 59, 78);
+            Text = C(241, 243, 249); Muted = C(148, 155, 174); Divider = C(40, 44, 58);
+            DisBg = C(28, 30, 40); DisText = C(90, 96, 114); ToggleOff = C(60, 65, 84);
+            Ok = C(76, 209, 143); Warn = C(242, 180, 75); Bad = C(255, 107, 107); Dim = C(98, 104, 124);
+            BnBg = C(72, 60, 22); BnBorder = C(214, 160, 20); BnText = C(255, 238, 180);
+            BnBtnBg = C(255, 226, 130); BnBtnFg = C(30, 24, 10); BnBtnHov = C(255, 236, 165);
+        } else {
+            Bg = C(245, 246, 250); Sidebar = C(239, 241, 247); Card = C(255, 255, 255); CardBdr = C(230, 233, 242);
+            Input = C(255, 255, 255); InputBdr = C(218, 222, 233); Btn = C(238, 240, 247); BtnHov = C(228, 231, 240);
+            Text = C(28, 31, 42); Muted = C(100, 110, 130); Divider = C(235, 237, 245);
+            DisBg = C(230, 232, 239); DisText = C(160, 165, 178); ToggleOff = C(209, 213, 219);
+            Ok = C(30, 130, 80); Warn = C(176, 100, 0); Bad = C(186, 26, 26); Dim = C(154, 152, 164);
+            BnBg = C(255, 240, 186); BnBorder = C(224, 168, 16); BnText = C(33, 28, 10);
+            BnBtnBg = C(30, 24, 10); BnBtnFg = Colors.White; BnBtnHov = C(62, 52, 28);
+        }
+        Font = sysFont ? SystemFonts.MessageFontFamily : new FontFamily("Malgun Gothic");
+        Push();
+        if (Changed != null) Changed();
+    }
+
+    // 앱 리소스에 브러시로 넣는다
+    static void Push() {
+        if (Application.Current == null) return;
+        ResourceDictionary r = Application.Current.Resources;
+        Set(r, "Accent", Accent); Set(r, "AccentHov", AccentHov); Set(r, "NavPill", NavPill); Set(r, "NavPillBdr", NavPillBdr); Set(r, "NavPillText", NavPillText);
+        Set(r, "Bg", Bg); Set(r, "Sidebar", Sidebar); Set(r, "Card", Card); Set(r, "CardBdr", CardBdr);
+        Set(r, "Input", Input); Set(r, "InputBdr", InputBdr); Set(r, "Btn", Btn); Set(r, "BtnHov", BtnHov);
+        Set(r, "Text", Text); Set(r, "Muted", Muted); Set(r, "Divider", Divider);
+        Set(r, "DisBg", DisBg); Set(r, "DisText", DisText); Set(r, "ToggleOff", ToggleOff);
+        Set(r, "Ok", Ok); Set(r, "Warn", Warn); Set(r, "Bad", Bad); Set(r, "Dim", Dim);
+        Set(r, "BnBg", BnBg); Set(r, "BnBorder", BnBorder); Set(r, "BnText", BnText);
+        Set(r, "BnBtnBg", BnBtnBg); Set(r, "BnBtnFg", BnBtnFg); Set(r, "BnBtnHov", BnBtnHov);
+        Set(r, "Busy", C(255, 152, 0));
+        // [업데이트] 같은 연한 강조색 알약
+        Set(r, "AccentSoft", Color.FromArgb((byte)(Dark ? 70 : 34), Accent.R, Accent.G, Accent.B));
+        Set(r, "AccentSoftText", Dark ? Mix(Accent, Colors.White, 0.45) : Accent);
+        r["UiFont"] = Font;
+    }
+    static void Set(ResourceDictionary r, string k, Color c) { r[k] = Brush(c); }
+
+    public static SolidColorBrush Brush(Color c) { SolidColorBrush b = new SolidColorBrush(c); b.Freeze(); return b; }
+    public static Color A(Color c, double a) { return Color.FromArgb((byte)Math.Max(0, Math.Min(255, c.A * a)), c.R, c.G, c.B); }
+    public static Color Mix(Color a, Color b, double t) {
+        return Color.FromRgb((byte)(a.R + (b.R - a.R) * t), (byte)(a.G + (b.G - a.G) * t), (byte)(a.B + (b.B - a.B) * t));
+    }
+
+    // 제목 표시줄을 테마에 맞춘다 (Windows 10 2004 이상)
+    [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr h, int attr, ref int v, int size);
+    public static void TitleBar(Window w) {
+        try {
+            IntPtr h = new WindowInteropHelper(w).Handle;
+            if (h == IntPtr.Zero) return;
+            int v = Dark ? 1 : 0;
+            DwmSetWindowAttribute(h, 20, ref v, 4);
+        } catch (Exception) { }
+    }
+}
+
+// 움직임 공통 설정
+public static class Motion {
+    public static bool Off;          // 셀프 테스트/화면 캡처: 모든 움직임을 즉시 끝낸다
+    public static Duration D(double sec) { return new Duration(TimeSpan.FromSeconds(Off ? 0 : sec)); }
+    public static double EaseOut(double t) { if (t <= 0) return 0; if (t >= 1) return 1; double u = 1 - t; return 1 - u * u * u; }
+}
+}

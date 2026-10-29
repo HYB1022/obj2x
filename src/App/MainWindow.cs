@@ -1,0 +1,159 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+
+namespace Obj2x.UI {
+
+// 메인 창: Shell.xaml과 페이지 XAML을 읽어 붙이고, ViewModel이 부탁하는 화면 일(IUi)을 맡는다.
+public class MainWindow : Window, IUi {
+    public readonly MainViewModel VM;
+    readonly Settings S;
+    readonly bool upgrade;
+    readonly Grid host, pageHost, overlay;
+    readonly FrameworkElement shell;
+    readonly Canvas pillLayer;
+    readonly Border pill;
+    readonly TextBox logBox;
+    readonly AboutHero hero;
+    readonly Dictionary<string, FrameworkElement> pages = new Dictionary<string, FrameworkElement>();
+    readonly ScaleTransform zoom = new ScaleTransform(1, 1);
+    string shown = "dashboard";
+    public DialogHost LastDialog;
+    public static readonly string[] PageNames = new string[] { "dashboard", "wizard", "advanced", "settings", "about" };
+
+    public MainWindow(Settings s, string here, bool upgrade) {
+        S = s; this.upgrade = upgrade;
+        Title = L.T("app_title");
+        Icon = Art.AppIcon();
+        Width = 1056; Height = 725; MinWidth = 920; MinHeight = 640;
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        WindowState = WindowState.Maximized;
+        UseLayoutRounding = true;
+
+        host = new Grid(); host.SetResourceReference(Panel.BackgroundProperty, "Bg");
+        shell = (FrameworkElement)Xaml.Load("Shell.xaml");
+        shell.LayoutTransform = zoom;
+        host.Children.Add(shell);
+        Content = host;
+        pageHost = (Grid)shell.FindName("PageHost");
+        overlay = (Grid)shell.FindName("Overlay");
+        pillLayer = (Canvas)shell.FindName("PillLayer");
+        pill = (Border)shell.FindName("NavPill");
+
+        VM = new MainViewModel(s, here, this);
+        DataContext = VM;
+        foreach (string n in PageNames) {
+            FrameworkElement p = (FrameworkElement)Xaml.Load(char.ToUpper(n[0]) + n.Substring(1) + ".xaml");
+            p.Visibility = n == "dashboard" ? Visibility.Visible : Visibility.Collapsed;
+            p.RenderTransform = new TranslateTransform();
+            pages[n] = p; pageHost.Children.Add(p);
+        }
+        logBox = (TextBox)pages["dashboard"].FindName("LogBox");
+        hero = (AboutHero)pages["about"];
+
+        VM.PageChanged += ShowPage;
+        VM.LogAppended += delegate(string t) { logBox.AppendText(t + "\r\n"); logBox.ScrollToEnd(); };
+        VM.LogCleared += delegate { logBox.Clear(); };
+        Loc.Changed += delegate { Title = L.T("app_title"); };
+        SizeChanged += delegate { UpdateZoom(); };
+        SourceInitialized += delegate { Theme.TitleBar(this); };
+        Loaded += delegate {
+            UpdateZoom();
+            MovePill(shown, false);
+            if (S.UpdCheck) VM.StartUpdateCheck();
+            if (this.upgrade && S.NeedDisclaimer()) Disclaimer(false, null);
+        };
+        Closing += delegate { VM.SaveAll(); VM.E.Stop(); };
+    }
+
+    // ------------------------------------------------------------ 화면 배율
+    // 기준 크기(1040x686)보다 창이 크면 글자와 여백을 함께 키운다. 0.1 단위로 최대 1.3배.
+    void UpdateZoom() {
+        double w = host.ActualWidth, h = host.ActualHeight;
+        if (w < 200 || h < 200) return;
+        double z = Math.Floor(Math.Min(w / 1040, h / 686) * 10 + 0.001) / 10;
+        z = Math.Max(1, Math.Min(1.3, z));
+        if (Math.Abs(z - zoom.ScaleX) < 0.01) return;
+        zoom.ScaleX = zoom.ScaleY = z;
+        Dispatcher.BeginInvoke(new Action(delegate { MovePill(shown, false); }), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    // 셀프 테스트/화면 캡처: 창 안쪽 크기를 정해 둔다 (창이 그 크기에 맞춰진다)
+    public void FixClientSize(double w, double h) {
+        WindowState = WindowState.Normal;
+        host.Width = w; host.Height = h;
+        SizeToContent = SizeToContent.WidthAndHeight;
+        UpdateLayout(); UpdateZoom();
+    }
+    public FrameworkElement Host { get { return host; } }
+    public int OverlayCount { get { return overlay.Children.Count; } }
+
+    // ------------------------------------------------------------ 페이지 전환 (새 화면이 살짝 떠오르며 나타남)
+    void ShowPage(string name) {
+        FrameworkElement np;
+        if (!pages.TryGetValue(name, out np)) return;
+        if (name != shown) {
+            pages[shown].Visibility = Visibility.Collapsed;
+            np.Visibility = Visibility.Visible;
+            if (!Motion.Off) {
+                DoubleAnimation fade = new DoubleAnimation(0, 1, Motion.D(0.24));
+                DoubleAnimation rise = new DoubleAnimation(14, 0, Motion.D(0.24));
+                rise.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+                np.BeginAnimation(OpacityProperty, fade);
+                ((TranslateTransform)np.RenderTransform).BeginAnimation(TranslateTransform.YProperty, rise);
+            }
+            shown = name;
+        }
+        MovePill(name, true);
+        if (name == "about") hero.StartIntro();
+    }
+
+    void MovePill(string page, bool anim) {
+        NavItem ni = shell.FindName("Nav_" + page) as NavItem;
+        if (ni == null || !ni.IsLoaded) return;
+        double top = ni.TranslatePoint(new Point(0, 0), pillLayer).Y + 2;
+        if (!anim || Motion.Off) { pill.BeginAnimation(Canvas.TopProperty, null); Canvas.SetTop(pill, top); return; }
+        DoubleAnimation a = new DoubleAnimation(top, Motion.D(0.25));
+        a.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+        pill.BeginAnimation(Canvas.TopProperty, a);
+    }
+
+    // ------------------------------------------------------------ IUi
+    public void Msg(string text) { LastDialog = Dialogs.Msg(overlay, "obj2x", text); }
+
+    public void Disclaimer(bool review, Action<bool> done) {
+        LastDialog = Dialogs.Disclaimer(overlay, review, delegate(bool ok) {
+            if (!review) {
+                if (ok) { S.Agreed = true; S.AgreedVer = AppInfo.Version; S.Save(); }
+                else Close();
+            }
+            if (done != null) done(ok);
+        });
+    }
+
+    public string BrowseFolder(string start) { return FolderPicker.Pick(this, start); }
+
+    public string PickFile(string title, string filter, string start) {
+        Microsoft.Win32.OpenFileDialog d = new Microsoft.Win32.OpenFileDialog();
+        d.Title = title; d.Filter = filter; d.CheckFileExists = true;
+        try { string dir = Path.GetDirectoryName(Conversion.Clean(start)); if (Directory.Exists(dir)) d.InitialDirectory = dir; } catch (Exception) { }
+        return d.ShowDialog(this) == true ? d.FileName : null;
+    }
+
+    public string SaveFile(string name, string filter) {
+        Microsoft.Win32.SaveFileDialog d = new Microsoft.Win32.SaveFileDialog();
+        d.FileName = name; d.Filter = filter;
+        return d.ShowDialog(this) == true ? d.FileName : null;
+    }
+
+    public void Post(Action a) { Dispatcher.BeginInvoke(a); }
+
+    public void ApplyLook() { Theme.Apply(S.Theme, S.Accent, S.SysFont); Theme.TitleBar(this); }
+
+    public void Exit() { Close(); }
+}
+}

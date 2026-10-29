@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Obj2x {
-// OmsiXConv 창을 찾아 조작하고, 제목 표시줄 색을 바꾸는 Win32 도우미
+// OmsiXConv 창을 찾아 조작하는 Win32 도우미
 public static class W {
     public delegate bool EnumProc(IntPtr h, IntPtr l);
     [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc p, IntPtr l);
@@ -48,10 +48,5 @@ public static class W {
     public static void Click(IntPtr h) { PostMessage(h, 0x00F5, IntPtr.Zero, IntPtr.Zero); }
     public static void SetText(IntPtr h, string t) { SendMessageStr(h, 0x000C, IntPtr.Zero, t); }
     public static IntPtr Dlg(IntPtr h, int id) { return GetDlgItem(h, id); }
-    [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr h, int attr, ref int v, int size);
-    public static void DarkTitle(IntPtr h) { int v = 1; DwmSetWindowAttribute(h, 20, ref v, 4); }
-    public static void LightTitle(IntPtr h) { int v = 0; DwmSetWindowAttribute(h, 20, ref v, 4); }
-    [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
-    [DllImport("user32.dll")] public static extern bool ReleaseCapture();
 }
 }

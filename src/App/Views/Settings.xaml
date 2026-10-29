@@ -1,0 +1,82 @@
+<ScrollViewer xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- 설정: 모양, 동작, 파일 -->
+  <StackPanel Margin="24,20,24,24">
+    <TextBlock Text="{ui:Tr nav_settings}" Style="{StaticResource TTitle}"/>
+
+    <Border Style="{StaticResource CardBox}" Margin="0,16,0,0">
+      <StackPanel Margin="20,14,20,8">
+        <TextBlock Text="{ui:Tr sec_appearance}" Style="{StaticResource TBold}"/>
+        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
+        <DockPanel Height="56">
+          <ui:Segmented DockPanel.Dock="Right" Items="ko=!한국어;en=!English" Value="{Binding Lang}"/>
+          <TextBlock Text="{ui:Tr lbl_language}" VerticalAlignment="Center"/>
+        </DockPanel>
+        <DockPanel Height="56">
+          <ui:Segmented DockPanel.Dock="Right" Items="system=theme_system;light=theme_light;dark=theme_dark" Value="{Binding ThemeName}"/>
+          <TextBlock Text="{ui:Tr lbl_theme}" VerticalAlignment="Center"/>
+        </DockPanel>
+        <DockPanel Height="56">
+          <ui:Segmented DockPanel.Dock="Right" Items="indigo=accent_indigo;teal=accent_teal;rose=accent_rose" Value="{Binding AccentName}"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr lbl_accent}"/>
+            <TextBlock Text="{ui:Tr lbl_accent_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
+          </StackPanel>
+        </DockPanel>
+        <DockPanel Height="60">
+          <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding SysFont}"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr lbl_sysfont}"/>
+            <TextBlock Text="{ui:Tr lbl_sysfont_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
+          </StackPanel>
+        </DockPanel>
+      </StackPanel>
+    </Border>
+
+    <Border Style="{StaticResource CardBox}" Margin="0,12,0,0">
+      <StackPanel Margin="20,14,20,4">
+        <TextBlock Text="{ui:Tr sec_behavior}" Style="{StaticResource TBold}"/>
+        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
+        <DockPanel Height="60">
+          <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding UpdCheck}"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr lbl_updcheck}"/>
+            <TextBlock Text="{ui:Tr lbl_updcheck_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
+          </StackPanel>
+        </DockPanel>
+        <Rectangle Style="{StaticResource Div}"/>
+        <DockPanel Height="60">
+          <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding DelX}"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr lbl_delx}"/>
+            <TextBlock Text="{ui:Tr lbl_delx_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
+          </StackPanel>
+        </DockPanel>
+      </StackPanel>
+    </Border>
+
+    <Border Style="{StaticResource CardBox}" Margin="0,12,0,0">
+      <StackPanel Margin="20,14,20,4">
+        <TextBlock Text="{ui:Tr sec_files}" Style="{StaticResource TBold}"/>
+        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
+        <DockPanel Height="64">
+          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_open_folder}" Style="{StaticResource BtnNormal}" Height="30" Command="{Binding OpenBackupCmd}" Margin="16,0,0,0"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr lbl_backup}"/>
+            <TextBlock Text="{Binding BackupPath}" Style="{StaticResource TSub}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+          </StackPanel>
+        </DockPanel>
+        <Rectangle Style="{StaticResource Div}"/>
+        <DockPanel Height="64">
+          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_clean}" Style="{StaticResource BtnNormal}" Height="30" Command="{Binding CleanTempCmd}" Margin="16,0,0,0"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr lbl_temp}"/>
+            <TextBlock Text="{Binding TempText}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
+          </StackPanel>
+        </DockPanel>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</ScrollViewer>

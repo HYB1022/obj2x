@@ -1,0 +1,48 @@
+<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x"
+      Background="{DynamicResource Bg}" TextElement.FontFamily="{DynamicResource UiFont}" TextElement.FontSize="12"
+      TextElement.Foreground="{DynamicResource Text}" TextOptions.TextFormattingMode="Display">
+  <!-- 메인 창 껍데기: 사이드바 + 페이지 + 상태줄, 맨 위에 대화 상자 층 -->
+  <Grid x:Name="Root">
+    <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="34"/></Grid.RowDefinitions>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="210"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+
+    <!-- 사이드바: 선택된 메뉴 뒤의 알약(NavPill)이 메뉴 사이를 미끄러져 움직인다 -->
+    <Border Background="{DynamicResource Sidebar}" BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,1,0">
+      <Grid>
+        <Canvas x:Name="PillLayer">
+          <Border x:Name="NavPill" Width="186" Height="38" Canvas.Left="12" Canvas.Top="70" CornerRadius="12" BorderThickness="1"
+                  Background="{DynamicResource NavPill}" BorderBrush="{DynamicResource NavPillBdr}"/>
+        </Canvas>
+        <StackPanel x:Name="NavList">
+          <StackPanel Orientation="Horizontal" Height="64">
+            <ui:LogoArt Width="40" Height="40" Margin="14,0,10,0"/>
+            <TextBlock Text="obj2x" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+          </StackPanel>
+          <ui:NavItem x:Name="Nav_dashboard" Page="dashboard" Key="nav_dashboard" Current="{Binding Page}" Command="{Binding NavCmd}" HorizontalAlignment="Left" Margin="10,4,0,0"/>
+          <ui:NavItem x:Name="Nav_wizard" Page="wizard" Key="nav_wizard" Current="{Binding Page}" Command="{Binding NavCmd}" HorizontalAlignment="Left" Margin="10,4,0,0"/>
+          <TextBlock Text="{ui:Tr nav_tools_hdr}" Style="{StaticResource TTiny}" Margin="22,16,0,10"/>
+          <ui:NavItem x:Name="Nav_advanced" Page="advanced" Key="nav_advanced" Current="{Binding Page}" Command="{Binding NavCmd}" HorizontalAlignment="Left" Margin="10,0,0,0"/>
+          <ui:NavItem x:Name="Nav_settings" Page="settings" Key="nav_settings" Current="{Binding Page}" Command="{Binding NavCmd}" HorizontalAlignment="Left" Margin="10,4,0,0"/>
+          <ui:NavItem x:Name="Nav_about" Page="about" Key="nav_info" Current="{Binding Page}" Command="{Binding NavCmd}" Badge="{Binding UpdNavBadge}" HorizontalAlignment="Left" Margin="10,4,0,0"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- 페이지들 (MainWindow가 넣는다) -->
+    <Grid x:Name="PageHost" Grid.Column="1" ClipToBounds="True"/>
+
+    <!-- 상태줄 -->
+    <Border Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource Sidebar}" BorderBrush="{DynamicResource Divider}" BorderThickness="0,1,0,0">
+      <Grid>
+        <StackPanel Orientation="Horizontal" Margin="20,0,0,0" VerticalAlignment="Center">
+          <Ellipse Style="{StaticResource Dot}"/>
+          <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Muted}" Margin="8,0,0,0"/>
+        </StackPanel>
+        <TextBlock Text="{Binding VersionText}" Style="{StaticResource TSub}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,16,0"/>
+      </Grid>
+    </Border>
+  </Grid>
+  <Grid x:Name="Overlay"/>
+</Grid>
