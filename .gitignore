@@ -16,7 +16,8 @@ obj2x_backup/
 *.x
 *.o3d
 
-# --shots 스크린샷
+# --selftest 결과 / --shots 스크린샷
+obj2x_selftest.txt
 *.png
 
 # Python
