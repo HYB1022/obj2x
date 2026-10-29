@@ -63,8 +63,9 @@ public static partial class L {
         ko["about_row_repo"] = "GitHub 저장소"; en["about_row_repo"] = "GitHub repository";
         ko["about_upd_idle"] = "눌러서 확인"; en["about_upd_idle"] = "Click to check";
         ko["about_upd_new"] = "새 버전 v{0} 설치 가능"; en["about_upd_new"] = "v{0} available - click to install";
-        ko["upd_btn_page"] = "릴리스 페이지"; en["upd_btn_page"] = "Release page";
-        ko["upd_btn_later"] = "나중에"; en["upd_btn_later"] = "Later";
+        ko["about_upd_row_title"] = "새 버전 v{0}"; en["about_upd_row_title"] = "Version v{0}";
+        ko["about_upd_row_sub"] = "현재 v{0} · 설정은 그대로 유지됩니다"; en["about_upd_row_sub"] = "Current v{0} · your settings are kept";
+        ko["about_upd_installing"] = "설치 중..."; en["about_upd_installing"] = "Installing...";
         ko["err_selftest"] = "자가 검사 실패";
         en["err_selftest"] = "Self-test failed";
     }

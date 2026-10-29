@@ -80,6 +80,87 @@ public static class LogoArt {
     }
 }
 
+// 메뉴/정보 화면 아이콘: 색이 있는 둥근 사각형 타일 위에 흰 선 그림 (24 단위 격자 기준)
+public static class Icons {
+    public static Color TileColor(string name) {
+        switch (name) {
+            case "dashboard": return Color.FromArgb(88, 101, 242);
+            case "wizard": return Color.FromArgb(175, 82, 222);
+            case "advanced": return Color.FromArgb(255, 149, 0);
+            case "settings": return Color.FromArgb(142, 142, 147);
+            case "about": return Color.FromArgb(0, 122, 255);
+            default: return Theme.Accent;
+        }
+    }
+
+    public static void Draw(Graphics g, string name, float x, float y, float size, float alpha) {
+        int al = Math.Max(0, Math.Min(255, (int)(255 * alpha)));
+        if (al == 0) return;
+        Color tc = Color.FromArgb(al, TileColor(name));
+        Color wc = Color.FromArgb(al, Color.White);
+        float k = size / 24f;
+        using (GraphicsPath gp = Ui.Round(x, y, size, size, size * 0.27f))
+        using (SolidBrush b = new SolidBrush(tc)) g.FillPath(b, gp);
+        using (Pen p = new Pen(wc, Math.Max(1.2f, 1.7f * k)))
+        using (SolidBrush w = new SolidBrush(wc))
+        using (SolidBrush t = new SolidBrush(tc)) {
+            p.StartCap = LineCap.Round; p.EndCap = LineCap.Round; p.LineJoin = LineJoin.Round;
+            switch (name) {
+                case "dashboard":   // 네 칸 타일
+                    for (int i = 0; i < 4; i++) {
+                        float cx = x + ((i % 2 == 0) ? 6.5f : 12.5f) * k, cy = y + ((i < 2) ? 6.5f : 12.5f) * k;
+                        using (GraphicsPath q = Ui.Round(cx, cy, 5 * k, 5 * k, 1.3f * k)) g.FillPath(w, q);
+                    }
+                    break;
+                case "wizard":      // 마법봉 + 반짝임
+                    g.DrawLine(p, x + 6.5f * k, y + 17.5f * k, x + 13.5f * k, y + 10.5f * k);
+                    Sparkle(g, w, x + 16 * k, y + 8 * k, 3.8f * k);
+                    Sparkle(g, w, x + 8.5f * k, y + 8 * k, 2f * k);
+                    break;
+                case "advanced":    // 슬라이더 세 줄
+                    using (Pen thin = new Pen(wc, Math.Max(1f, 1.4f * k))) {
+                        thin.StartCap = LineCap.Round; thin.EndCap = LineCap.Round;
+                        float[] ys = new float[] { 7.5f, 12f, 16.5f }, ks = new float[] { 14.5f, 9f, 13f };
+                        for (int i = 0; i < 3; i++) {
+                            g.DrawLine(thin, x + 6 * k, y + ys[i] * k, x + 18 * k, y + ys[i] * k);
+                            RectangleF kr = new RectangleF(x + (ks[i] - 2f) * k, y + (ys[i] - 2f) * k, 4 * k, 4 * k);
+                            g.FillEllipse(t, kr); g.DrawEllipse(thin, kr);
+                        }
+                    }
+                    break;
+                case "settings":    // 톱니바퀴
+                    float gx = x + 12 * k, gy = y + 12 * k;
+                    for (int i = 0; i < 8; i++) {
+                        GraphicsState st = g.Save();
+                        g.TranslateTransform(gx, gy); g.RotateTransform(i * 45f);
+                        g.FillRectangle(w, -1.6f * k, -7.2f * k, 3.2f * k, 3.4f * k);
+                        g.Restore(st);
+                    }
+                    g.FillEllipse(w, gx - 5.2f * k, gy - 5.2f * k, 10.4f * k, 10.4f * k);
+                    g.FillEllipse(t, gx - 2.2f * k, gy - 2.2f * k, 4.4f * k, 4.4f * k);
+                    break;
+                case "about":       // i
+                    g.FillEllipse(w, x + 10.6f * k, y + 5.8f * k, 2.8f * k, 2.8f * k);
+                    using (Pen bold = new Pen(wc, 2.4f * k)) { bold.StartCap = LineCap.Round; bold.EndCap = LineCap.Round; g.DrawLine(bold, x + 12 * k, y + 11 * k, x + 12 * k, y + 17.5f * k); }
+                    break;
+                case "update":      // 아래 화살표 + 받침
+                    g.DrawLine(p, x + 12 * k, y + 6 * k, x + 12 * k, y + 14 * k);
+                    g.DrawLines(p, new PointF[] { new PointF(x + 8.5f * k, y + 10.8f * k), new PointF(x + 12 * k, y + 14.3f * k), new PointF(x + 15.5f * k, y + 10.8f * k) });
+                    g.DrawLines(p, new PointF[] { new PointF(x + 6.5f * k, y + 15.5f * k), new PointF(x + 6.5f * k, y + 17.8f * k), new PointF(x + 17.5f * k, y + 17.8f * k), new PointF(x + 17.5f * k, y + 15.5f * k) });
+                    break;
+            }
+        }
+    }
+
+    // 네 갈래 반짝임
+    static void Sparkle(Graphics g, Brush b, float cx, float cy, float r) {
+        float i = r * 0.28f;
+        g.FillPolygon(b, new PointF[] {
+            new PointF(cx, cy - r), new PointF(cx + i, cy - i), new PointF(cx + r, cy), new PointF(cx + i, cy + i),
+            new PointF(cx, cy + r), new PointF(cx - i, cy + i), new PointF(cx - r, cy), new PointF(cx - i, cy - i) });
+    }
+}
+
 // 노란 경고 배너
 public class BannerPanel : Panel, IRefresh {
     public BannerPanel() {

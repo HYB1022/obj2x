@@ -396,6 +396,7 @@ public class SlimBar : Control, IRefresh {
 // ---------------------------------------------------------------- 사이드바 메뉴 버튼
 public class NavButton : Control, IRefresh {
     public string Page; public string Key; public bool Active;
+    public bool Badge;                       // 오른쪽 빨간 점 (새 버전 알림 등)
     bool hover;
     Fader hv;
     public NavButton() {
@@ -415,7 +416,14 @@ public class NavButton : Control, IRefresh {
             using (GraphicsPath gp = Ui.Round(r.X, r.Y, r.Width, r.Height, Ui.S(12f)))
             using (SolidBrush b = new SolidBrush(Color.FromArgb((int)(255 * Math.Min(1f, hv.V)), Theme.Btn))) g.FillPath(b, gp);
         }
-        TextRenderer.DrawText(g, Text, Active ? Ui.F(FR.Bold) : Ui.F(FR.Main), new Rectangle(r.X + Ui.S(16), r.Y, r.Width - Ui.S(20), r.Height), Active ? Theme.NavPillText : Theme.Text, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+        int isz = Ui.S(24), ix = r.X + Ui.S(10);
+        Icons.Draw(g, Page, ix, r.Y + (r.Height - isz) / 2f, isz, 1f);
+        int tx = ix + isz + Ui.S(12);
+        TextRenderer.DrawText(g, Text, Active ? Ui.F(FR.Bold) : Ui.F(FR.Main), new Rectangle(tx, r.Y, r.Right - tx - Ui.S(24), r.Height), Active ? Theme.NavPillText : Theme.Text, TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
+        if (Badge) {
+            float d = Ui.S(8f);
+            using (SolidBrush b = new SolidBrush(Color.FromArgb(255, 59, 48))) g.FillEllipse(b, r.Right - Ui.S(14) - d / 2, r.Y + r.Height / 2f - d / 2, d, d);
+        }
     }
 }
 

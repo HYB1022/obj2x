@@ -12,17 +12,14 @@ namespace Obj2x {
 public partial class MainForm {
     string updText = null;            // 링크 라벨에 보여줄 문구 키 (없으면 저장소 주소)
     string updLatest = "", updUrl = "", updZip = "";
-    bool updBusy;
+    bool updBusy, updInstalling;
 
     string RepoUrl() { return "https://github.com/" + Program.Repo; }
 
     void UpdateLinkText() {
         if (hero != null) hero.Invalidate();
-    }
-
-    void OnLinkClick() {
-        if (updLatest.Length > 0) PromptUpdate();
-        else { try { Process.Start(RepoUrl()); } catch (Exception) { } }
+        NavButton nb;
+        if (navs.TryGetValue("about", out nb) && nb.Badge != (updLatest.Length > 0)) { nb.Badge = updLatest.Length > 0; nb.Invalidate(); }
     }
 
     static string JsonStr(string json, string key) {
@@ -35,7 +32,7 @@ public partial class MainForm {
         catch (Exception) { return latest != current; }
     }
 
-    // GitHub 최신 릴리스 조회 (백그라운드). manual=true면 결과를 라벨에 항상 표시한다.
+    // GitHub 최신 릴리스 조회 (백그라운드). 새 버전이 있으면 창을 띄우지 않고 정보 탭의 업데이트 줄과 메뉴 점으로만 알린다.
     public void StartUpdateCheck(bool manual) {
         if (updBusy) return;
         updBusy = true;
@@ -58,26 +55,21 @@ public partial class MainForm {
                     Match m = Regex.Match(json, "\"browser_download_url\"\\s*:\\s*\"([^\"]+\\.zip)\"");
                     if (m.Success) updZip = m.Groups[1].Value;
                     updText = "upd_link_new"; UpdateLinkText();
-                    PromptUpdate();
                 } else { updText = "upd_link_latest"; UpdateLinkText(); }
             });
         });
         th.IsBackground = true; th.Start();
     }
 
-    void PromptUpdate() {
-        string msg = L.T("upd_prompt", updLatest, Program.AppVersion);
-        DialogOverlay.Show(this, L.T("upd_title"), msg, null, new string[] { L.T("upd_btn_later"), L.T("upd_btn_page"), L.T("upd_btn_install") }, 2, 520,
-            delegate(int i) {
-                if (i == 2) DoUpdate();
-                else if (i == 1) { try { if (updUrl.Length > 0) Process.Start(updUrl); } catch (Exception) { } }
-            });
-    }
+    // 개발용(--shots): 새 버전이 있는 것처럼 표시한다
+    public void FakeUpdate(string ver) { updLatest = ver; updText = "upd_link_new"; UpdateLinkText(); }
 
     // 내려받아 풀고, 실행 중인 exe는 이름을 바꿔 둔 뒤 새 파일로 교체하고 다시 시작한다.
     void DoUpdate() {
+        if (updInstalling) return;
         if (running) { Dialogs.Msg(this, L.T("upd_title"), L.T("upd_busy")); return; }
         if (!updZip.StartsWith("https://")) { try { Process.Start(updUrl); } catch (Exception) { } return; }
+        updInstalling = true; UpdateLinkText();
         Cursor = Cursors.WaitCursor;
         Say(L.T("upd_dl", updLatest));
         string zipUrl = updZip, here = Here, ver = Program.AppVersion;
@@ -115,6 +107,7 @@ public partial class MainForm {
             UI(delegate {
                 Cursor = Cursors.Default;
                 if (err != null) {
+                    updInstalling = false; UpdateLinkText();
                     Dialogs.Msg(this, L.T("upd_title"), L.T("upd_error", err));
                     try { if (updUrl.Length > 0) Process.Start(updUrl); } catch (Exception) { }
                     return;

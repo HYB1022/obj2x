@@ -37,6 +37,7 @@ public static class Shots {
             f.SwitchPage("advanced"); Save(f, Path.Combine(dir, tag + "_adv.png"));
             f.SwitchPage("settings"); Save(f, Path.Combine(dir, tag + "_set.png"));
             f.SwitchPage("about"); Save(f, Path.Combine(dir, tag + "_about.png"));
+            f.FakeUpdate("9.9"); Save(f, Path.Combine(dir, tag + "_about_upd.png"));
             f.SwitchPage("dashboard"); f.ShowDisclaimer(false); Save(f, Path.Combine(dir, tag + "_disc.png"));
             for (int i = f.Controls.Count - 1; i >= 0; i--) if (f.Controls[i] is DialogOverlay) f.Controls.RemoveAt(i);
             // 큰 창: 배율이 커져야 한다

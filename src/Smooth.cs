@@ -119,6 +119,8 @@ public class SwapOverlay : Control {
 public class AboutHero : Control, IRefresh {
     public Func<string> UpdateValue;          // 업데이트 줄 오른쪽 글자
     public Func<bool> UpdateIsNew;
+    public Func<string> UpdateVersion;        // 새 버전 번호
+    public Func<bool> UpdateBusy;             // 설치 중이면 버튼 글자를 바꾸고 누르지 못하게
     public event EventHandler UpdateRowClicked, RepoClicked, DisclaimerClicked;
 
     Bitmap grad;                               // 작은 그라데이션 (늘려서 그린다)
@@ -270,9 +272,8 @@ public class AboutHero : Control, IRefresh {
             c.FormatFlags = StringFormatFlags.NoWrap; c.Trimming = StringTrimming.EllipsisCharacter;
             int tH = (int)fT.GetHeight(g), vH = (int)fV.GetHeight(g), dH = (int)fD.GetHeight(g);
             bool pill = UpdateIsNew != null && UpdateIsNew();
-            string pillText = L.T("about_pill_update");
-            int bH = Ui.S(46), bW = Math.Max(Ui.S(220), (int)g.MeasureString(pillText, fB).Width + Ui.S(64));
-            int blockH = tH + Ui.S(6) + vH + Ui.S(10) + dH + (pill ? Ui.S(40) + bH : 0);
+            int bH = Ui.S(68);
+            int blockH = tH + Ui.S(6) + vH + Ui.S(10) + dH + (pill ? Ui.S(32) + bH : 0);
             int y = Math.Max(Ui.S(28), (heroH - blockH) / 2 - Ui.S(6));
             float a; int off;
 
@@ -283,14 +284,36 @@ public class AboutHero : Control, IRefresh {
             using (SolidBrush br = new SolidBrush(A(sub, a))) g.DrawString("v" + Program.AppVersion, fV, br, new RectangleF(0, y + off, W, vH), c);
             y += vH + Ui.S(10);
             using (SolidBrush br = new SolidBrush(A(sub, a))) g.DrawString(L.T("about_desc"), fD, br, new RectangleF(x0, y + off, cw, dH), c);
-            y += dH + Ui.S(40);
+            y += dH + Ui.S(32);
 
+            // 새 버전 줄: [아이콘] 새 버전 vX / 현재 vY ...        [업데이트]
             if (pill) {
                 a = Appear(2); off = (int)((1 - a) * Ui.S(16));
-                Rectangle br0 = new Rectangle((W - bW) / 2, y + off, bW, bH);
-                Glass(g, br0, Ui.S(14), a, hov[0], true);
-                using (SolidBrush b = new SolidBrush(A(txt, a))) g.DrawString(pillText, fB, b, br0, c);
-                hits.Add(new KeyValuePair<Rectangle, int>(br0, 0));
+                Rectangle cr = new Rectangle(x0, y + off, cw, bH);
+                Glass(g, cr, Ui.S(16), a, 0, false);
+                int pad = Ui.S(16), isz = Ui.S(38);
+                Icons.Draw(g, "update", cr.X + pad, cr.Y + (bH - isz) / 2f, isz, a);
+                bool busy = UpdateBusy != null && UpdateBusy();
+                string bt = L.T(busy ? "about_upd_installing" : "about_pill_update");
+                int bw = (int)g.MeasureString(bt, fB).Width + Ui.S(34), bh = Ui.S(34);
+                Rectangle br0 = new Rectangle(cr.Right - pad - bw, cr.Y + (bH - bh) / 2, bw, bh);
+                float hv = busy ? 0f : hov[0];
+                Color soft = Theme.Dark ? Color.FromArgb(56 + (int)(40 * hv), Theme.Accent) : Color.FromArgb(30 + (int)(30 * hv), Theme.Accent);
+                Color btxt = Theme.Dark ? Ui.Mix(Theme.Accent, Color.White, 0.45) : Theme.Accent;
+                using (GraphicsPath bp = Ui.Round(br0.X, br0.Y, br0.Width, br0.Height, bh / 2f))
+                using (SolidBrush b = new SolidBrush(A(soft, a))) g.FillPath(b, bp);
+                using (SolidBrush b = new SolidBrush(A(busy ? sub : btxt, a))) g.DrawString(bt, fB, b, br0, c);
+                if (!busy) hits.Add(new KeyValuePair<Rectangle, int>(new Rectangle(br0.X, br0.Y - off, br0.Width, br0.Height), 0));
+                int tx = cr.X + pad + isz + Ui.S(14);
+                RectangleF t1 = new RectangleF(tx, cr.Y, br0.X - Ui.S(12) - tx, bH / 2f + Ui.S(1));
+                RectangleF t2 = new RectangleF(tx, cr.Y + bH / 2f + Ui.S(1), t1.Width, bH / 2f - Ui.S(1));
+                using (StringFormat lt = new StringFormat())
+                using (StringFormat lb = new StringFormat()) {
+                    lt.LineAlignment = StringAlignment.Far; lt.FormatFlags = StringFormatFlags.NoWrap; lt.Trimming = StringTrimming.EllipsisCharacter;
+                    lb.LineAlignment = StringAlignment.Near; lb.FormatFlags = StringFormatFlags.NoWrap; lb.Trimming = StringTrimming.EllipsisCharacter;
+                    using (SolidBrush b = new SolidBrush(A(txt, a))) g.DrawString(L.T("about_upd_row_title", UpdateVersion != null ? UpdateVersion() : ""), fB, b, t1, lt);
+                    using (SolidBrush b = new SolidBrush(A(sub, a))) g.DrawString(L.T("about_upd_row_sub", Program.AppVersion), fRv, b, t2, lb);
+                }
             }
 
             // 항목들

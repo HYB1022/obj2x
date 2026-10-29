@@ -172,8 +172,10 @@ public partial class MainForm {
             return L.T("about_upd_idle");
         };
         hero.UpdateIsNew = delegate { return updLatest.Length > 0; };
+        hero.UpdateVersion = delegate { return updLatest; };
+        hero.UpdateBusy = delegate { return updInstalling; };
         hero.UpdateRowClicked += delegate {
-            if (updLatest.Length > 0) PromptUpdate();
+            if (updLatest.Length > 0) DoUpdate();
             else if (!updBusy) { updText = "upd_link_checking"; UpdateLinkText(); StartUpdateCheck(true); }
         };
         hero.RepoClicked += delegate { try { Process.Start(RepoUrl()); } catch (Exception) { } };
