@@ -33,5 +33,6 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 ## 릴리스
 
 - 버전은 `Program.AppVersion`에서 바꾸고, README의 변경 내역에도 적는다.
-- 자동 업데이트는 최신 릴리스의 `.zip` 첨부 파일을 받아 exe를 교체한다. zip 안에 `obj2x.exe`가 있어야 한다.
+- 자동 업데이트는 최신 릴리스의 `.zip` 첨부 파일을 받아 exe를 교체한다. 릴리스 zip `obj2x.zip`에는 `obj2x.exe`, `obj2x.bat`, `obj2x.py`, `obj2x_gui.ps1`을 같은 폴더(최상위)에 넣는다.
+  - C# 업데이터는 zip 안의 `obj2x.exe`를, v2.0 이하의 PowerShell 업데이터는 `obj2x_gui.ps1`을 찾아 그 폴더를 덮어쓴 뒤 `obj2x.bat`을 실행한다. `obj2x_gui.ps1`(exe 런처)을 빼면 v2.0 사용자의 업데이트가 실패한다.
 - `obj2x.exe`와 `obj2x.ini`는 저장소에 넣지 않는다(`.gitignore`). exe는 릴리스 zip으로만 배포한다.
