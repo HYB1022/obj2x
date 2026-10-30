@@ -164,6 +164,13 @@ public static class SelfTest {
             ww.Close();
         } catch (Exception ex) { T("환영 화면", false, ex.Message); }
 
+        // 5-3. MiSans: 설치돼 있으면 그것, 없으면 나눔스퀘어 네오로 대신 (글꼴 파일은 배포하지 않는다)
+        {
+            FontFamily mi = Theme.MiSans(), mf = Theme.MakeFont("misans");
+            bool ok = mi != null ? mf.Source.StartsWith(mi.Source) : mf.Source.Contains("NanumSquare Neo");
+            T("글꼴: MiSans " + (mi != null ? "설치됨 (" + mi.Source + ")" : "없음 → 나눔스퀘어 네오"), ok, mf.Source);
+        }
+
         // 6. XAML 화면
         List<string> bad = new List<string>();
         foreach (string n in Xaml.Names()) { try { Xaml.Load(n); } catch (Exception ex) { bad.Add(n + ": " + ex.Message); } }
@@ -234,7 +241,7 @@ public static class SelfTest {
             f.VM.FontName = "system"; Pump.Run(30);
             bool sys = us.Font == "system" && !Theme.Font.Source.Contains("./#");
             f.VM.FontName = "bogus"; f.VM.FontName = "nanum"; Pump.Run(30);
-            T("설정: 글꼴 드롭다운 (나눔/Noto/시스템)", noto && sys && us.Font == "nanum" && f.VM.Fonts.Count == 3, noto + " " + sys + " " + us.Font);
+            T("설정: 글꼴 드롭다운 (나눔/Noto/시스템)", noto && sys && us.Font == "nanum" && f.VM.Fonts.Count == 4, noto + " " + sys + " " + us.Font);
 
             // 개발자 옵션: 정보 화면의 버전을 7번 누르면 메뉴에 생긴다
             FrameworkElement navDev = LogicalTreeHelper.FindLogicalNode(f, "Nav_dev") as FrameworkElement;

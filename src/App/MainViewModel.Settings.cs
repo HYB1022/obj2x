@@ -68,12 +68,15 @@ public partial class MainViewModel {
     public string AccentName { get { return S.Accent; } set { if (value == S.Accent) return; S.Accent = value; ui.ApplyLook(); S.Save(); Raise("AccentName"); } }
     // 글꼴 목록은 이름이 언어마다 달라서 언어를 바꿀 때 새로 만든다. 그때 드롭다운이 null을 보내도 무시한다.
     public List<LangItem> Fonts {
-        get { return new List<LangItem> { new LangItem("nanum", L.T("font_nanum")), new LangItem("noto", L.T("font_noto")), new LangItem("system", L.T("font_system")) }; }
+        get {
+            return new List<LangItem> { new LangItem("nanum", L.T("font_nanum")), new LangItem("noto", L.T("font_noto")),
+                new LangItem("misans", Theme.MiSans() != null ? "MiSans" : L.T("font_need", "MiSans")), new LangItem("system", L.T("font_system")) };
+        }
     }
     public string FontName {
         get { return S.Font; }
         set {
-            if (value == null || value == S.Font || (value != "nanum" && value != "noto" && value != "system")) return;
+            if (value == null || value == S.Font || (value != "nanum" && value != "noto" && value != "misans" && value != "system")) return;
             S.Font = value; ui.ApplyLook(); S.Save(); Raise("FontName");
         }
     }

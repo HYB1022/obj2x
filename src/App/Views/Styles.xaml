@@ -5,18 +5,16 @@
   <BooleanToVisibilityConverter x:Key="Vis"/>
 
   <!-- 글자 -->
-  <Style x:Key="TTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="17.33"/><Setter Property="FontWeight" Value="Bold"/></Style>
+  <Style x:Key="TTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="26"/><Setter Property="FontWeight" Value="Bold"/></Style>
   <Style x:Key="TH2" TargetType="TextBlock"><Setter Property="FontSize" Value="14.67"/><Setter Property="FontWeight" Value="Bold"/></Style>
   <Style x:Key="TBold" TargetType="TextBlock"><Setter Property="FontWeight" Value="Bold"/></Style>
   <Style x:Key="TSub" TargetType="TextBlock"><Setter Property="FontSize" Value="11.33"/><Setter Property="Foreground" Value="{DynamicResource Muted}"/></Style>
   <Style x:Key="TTiny" TargetType="TextBlock"><Setter Property="FontSize" Value="10.67"/><Setter Property="FontWeight" Value="Bold"/><Setter Property="Foreground" Value="{DynamicResource Muted}"/></Style>
 
-  <!-- 카드 / 구분선 -->
+  <!-- 카드 / 구분선: HyperOS처럼 테두리 없는 둥근 카드 -->
   <Style x:Key="CardBox" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Card}"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource CardBdr}"/>
-    <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="CornerRadius" Value="20"/>
   </Style>
   <Style x:Key="Div" TargetType="Rectangle">
     <Setter Property="Height" Value="1"/>

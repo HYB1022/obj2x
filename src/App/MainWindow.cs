@@ -16,8 +16,6 @@ public class MainWindow : Window, IUi {
     readonly bool upgrade;
     readonly Grid host, pageHost, overlay;
     readonly FrameworkElement shell;
-    readonly Canvas pillLayer;
-    readonly Border pill;
     readonly TextBox logBox;
     readonly Dictionary<string, FrameworkElement> pages = new Dictionary<string, FrameworkElement>();
     readonly ScaleTransform zoom = new ScaleTransform(1, 1);
@@ -54,8 +52,6 @@ public class MainWindow : Window, IUi {
         Content = host;
         pageHost = (Grid)shell.FindName("PageHost");
         overlay = (Grid)shell.FindName("Overlay");
-        pillLayer = (Canvas)shell.FindName("PillLayer");
-        pill = (Border)shell.FindName("NavPill");
 
         VM = new MainViewModel(s, here, this);
         DataContext = VM;
@@ -65,8 +61,6 @@ public class MainWindow : Window, IUi {
 
         VM.PageChanged += ShowPage;
         VM.PropertyChanged += delegate(object o, System.ComponentModel.PropertyChangedEventArgs e) {
-            if (e.PropertyName == "DevMode" || e.PropertyName == null)   // 메뉴가 생기거나 사라지면 알약 위치를 다시
-                Dispatcher.BeginInvoke(new Action(delegate { MovePill(shown, false); }), DispatcherPriority.Loaded);
             if (e.PropertyName == "DevFps" || e.PropertyName == "DevMode" || e.PropertyName == null) SetFps(VM.DevFps);
             if (e.PropertyName == "DevBounds" || e.PropertyName == "DevMode" || e.PropertyName == null) bounds.Visibility = VM.DevBounds ? Visibility.Visible : Visibility.Collapsed;
         };
@@ -77,7 +71,6 @@ public class MainWindow : Window, IUi {
         SourceInitialized += delegate { Theme.TitleBar(this); };
         Loaded += delegate {
             UpdateZoom();
-            MovePill(shown, false);
             PreloadPages();
             SetFps(VM.DevFps);
             bounds.Visibility = VM.DevBounds ? Visibility.Visible : Visibility.Collapsed;
@@ -96,7 +89,6 @@ public class MainWindow : Window, IUi {
         z = Math.Max(1, Math.Min(1.3, z));
         if (Math.Abs(z - zoom.ScaleX) < 0.01) return;
         zoom.ScaleX = zoom.ScaleY = z;
-        Dispatcher.BeginInvoke(new Action(delegate { MovePill(shown, false); }), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     // 셀프 테스트/화면 캡처: 창 안쪽 크기를 정해 둔다 (창이 그 크기에 맞춰진다)
@@ -151,21 +143,9 @@ public class MainWindow : Window, IUi {
             }
             shown = name;
         }
-        MovePill(name, true);
         if (name == "about") ((AboutHero)np.FindName("Hero")).StartIntro();
     }
 
-    void MovePill(string page, bool anim) {
-        NavItem ni = shell.FindName("Nav_" + page) as NavItem;
-        if (ni == null || !ni.IsLoaded) return;
-        double top = ni.TranslatePoint(new Point(0, 0), pillLayer).Y + 2;
-        TranslateTransform tt = pill.RenderTransform as TranslateTransform;
-        if (tt == null) { tt = new TranslateTransform(); pill.RenderTransform = tt; }
-        if (!anim || Motion.Disabled) { tt.BeginAnimation(TranslateTransform.YProperty, null); tt.Y = top; return; }
-        DoubleAnimation a = new DoubleAnimation(top, Motion.D(0.25));
-        a.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
-        tt.BeginAnimation(TranslateTransform.YProperty, a);
-    }
 
     // ------------------------------------------------------------ IUi
     public void Msg(string text) { LastDialog = Dialogs.Msg(overlay, "obj2x", text); }

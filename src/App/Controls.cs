@@ -31,7 +31,8 @@ public class Drawn : FrameworkElement {
     protected void HitArea(DrawingContext dc) { dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, ActualWidth, ActualHeight)); }
 }
 
-// ---------------------------------------------------------------- 사이드바 메뉴 (아이콘 타일 + 이름 + 오른쪽 [업데이트] 알약)
+// ---------------------------------------------------------------- 왼쪽 메뉴 줄 (샤오미 태블릿 설정 앱처럼 카드 안의 한 줄)
+// 아이콘 타일 + 이름 + 오른쪽 [업데이트] 알약. 선택되면 줄이 강조색으로 옅게 칠해지며 나타난다.
 public class NavItem : Drawn {
     public static readonly DependencyProperty PageProperty = Dp("Page", typeof(string), typeof(NavItem), "");
     public static readonly DependencyProperty KeyProperty = Dp("Key", typeof(string), typeof(NavItem), "");
@@ -45,6 +46,7 @@ public class NavItem : Drawn {
     static readonly DependencyProperty BadgeInProperty = Dp("BadgeIn", typeof(double), typeof(NavItem), 1.0);
     public static readonly DependencyProperty CommandProperty = DependencyProperty.Register("Command", typeof(ICommand), typeof(NavItem));
     static readonly DependencyProperty HoverProperty = Dp("Hover", typeof(double), typeof(NavItem), 0.0);
+    static readonly DependencyProperty SelProperty = Dp("Sel", typeof(double), typeof(NavItem), 0.0);
     public string Page { get { return (string)GetValue(PageProperty); } set { SetValue(PageProperty, value); } }
     public string Key { get { return (string)GetValue(KeyProperty); } set { SetValue(KeyProperty, value); } }
     public string Current { get { return (string)GetValue(CurrentProperty); } set { SetValue(CurrentProperty, value); } }
@@ -53,8 +55,15 @@ public class NavItem : Drawn {
     public bool Active { get { return Current == Page; } }
 
     readonly RippleFx fx;
-    public NavItem() { Width = 190; Height = 42; Cursor = Cursors.Hand; fx = new RippleFx(this); }
-    Rect Box { get { return new Rect(2, 2, Math.Max(0, ActualWidth - 4), Math.Max(0, ActualHeight - 4)); } }
+    public NavItem() { Height = 50; Cursor = Cursors.Hand; fx = new RippleFx(this); }
+    Rect Box { get { return new Rect(0, 0, ActualWidth, ActualHeight); } }
+    const double Rad = 14;
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e) {
+        base.OnPropertyChanged(e);
+        if (e.Property != CurrentProperty && e.Property != PageProperty) return;
+        if (IsLoaded) Animate(SelProperty, Active ? 1 : 0, 0.2);
+        else { BeginAnimation(SelProperty, null); SetValue(SelProperty, Active ? 1.0 : 0.0); }
+    }
     protected override void OnMouseEnter(MouseEventArgs e) { Animate(HoverProperty, 1, 0.18); base.OnMouseEnter(e); }
     protected override void OnMouseLeave(MouseEventArgs e) { Animate(HoverProperty, 0, 0.18); fx.Release(); base.OnMouseLeave(e); }
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { fx.Press(e.GetPosition(this), Box, 0); base.OnMouseLeftButtonDown(e); }
@@ -63,12 +72,13 @@ public class NavItem : Drawn {
     protected override void OnRender(DrawingContext dc) {
         HitArea(dc);
         Rect r = Box;
-        double hv = (double)GetValue(HoverProperty);
-        if (!Active && hv > 0.01) dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.Btn, hv)), null, r, 12, 12);
-        if (fx.Active) { dc.PushClip(new RectangleGeometry(r, 12, 12)); fx.Draw(dc, RippleFx.Tint(Theme.Text), 0); dc.Pop(); }
-        double isz = 24, ix = r.X + 10;
+        double hv = (double)GetValue(HoverProperty), sel = Math.Max(0, Math.Min(1, (double)GetValue(SelProperty)));
+        if (hv * (1 - sel) > 0.01) dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.Btn, hv * (1 - sel))), null, r, Rad, Rad);
+        if (sel > 0.01) dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.NavPill, sel)), null, r, Rad, Rad);
+        if (fx.Active) { dc.PushClip(new RectangleGeometry(r, Rad, Rad)); fx.Draw(dc, RippleFx.Tint(Theme.Text), 0); dc.Pop(); }
+        double isz = 30, ix = r.X + 12;
         Art.Icon(dc, Page, ix, r.Y + (r.Height - isz) / 2, isz, 1);
-        double tx = ix + isz + 12, right = r.Right - 8;
+        double tx = ix + isz + 14, right = r.Right - 12;
         if (!string.IsNullOrEmpty(Badge)) {
             double e = Motion.EaseOut((double)GetValue(BadgeInProperty));
             Color fg = Theme.Dark ? Theme.Mix(Theme.Accent, Colors.White, 0.45) : Theme.Accent;
@@ -81,7 +91,7 @@ public class NavItem : Drawn {
             dc.Pop();
             right = br.X - 6;
         }
-        FormattedText t = Art.Line(L.T(Key), 12, Active, Active ? Theme.NavPillText : Theme.Text, right - tx);
+        FormattedText t = Art.Line(L.T(Key), 14, false, Theme.Mix(Theme.Text, Theme.NavPillText, sel), right - tx);
         dc.DrawText(t, new Point(tx, r.Y + (r.Height - t.Height) / 2));
     }
 }

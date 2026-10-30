@@ -78,6 +78,11 @@ public static class Theme {
         string tail = cjk + "Malgun Gothic, Microsoft YaHei UI, Yu Gothic UI, Segoe UI";
         try {
             if (font == "system") return new FontFamily(SystemFonts.MessageFontFamily.Source + ", " + tail);
+            if (font == "misans") {
+                FontFamily mi = MiSans();
+                if (mi != null) return new FontFamily(mi.BaseUri, mi.Source + ", " + tail);
+                font = "nanum";                   // 없으면 기본 글꼴로
+            }
             foreach (string[] b in Bundled) {
                 if (b[0] != font) continue;
                 string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts");
@@ -88,6 +93,32 @@ public static class Theme {
         } catch (Exception) { }
         return new FontFamily(tail);
     }
+    // MiSans: 라이선스상 글꼴 파일을 함께 배포할 수 없어서 넣지 않는다. 사용자가 Windows에 설치했거나
+    // exe 옆 fonts 폴더에 MiSans*.ttf/otf를 넣어 두었으면 그것을 쓴다. 없으면 null.
+    static FontFamily miSans; static bool miChecked;
+    public static FontFamily MiSans() {
+        if (miChecked) return miSans;
+        miChecked = true;
+        try {
+            string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts");
+            if (System.IO.Directory.Exists(dir) && (System.IO.Directory.GetFiles(dir, "MiSans*.ttf").Length > 0 || System.IO.Directory.GetFiles(dir, "MiSans*.otf").Length > 0))
+                miSans = PickMi(Fonts.GetFontFamilies(new Uri(dir + System.IO.Path.DirectorySeparatorChar)));
+            if (miSans == null) miSans = PickMi(Fonts.SystemFontFamilies);
+        } catch (Exception) { miSans = null; }
+        return miSans;
+    }
+    // 이름이 MiSans인 것을 먼저, 없으면 MiSans Normal/Regular, 그다음 MiSans로 시작하는 아무거나 (Latin 등 일부 글자 전용판은 피한다)
+    static FontFamily PickMi(System.Collections.Generic.ICollection<FontFamily> fams) {
+        FontFamily best = null; int score = 0;
+        foreach (FontFamily f in fams) {
+            foreach (string n in f.FamilyNames.Values) {
+                int sc = n == "MiSans" ? 4 : (n == "MiSans Normal" || n == "MiSans Regular") ? 3 : (n.StartsWith("MiSans") && n.IndexOf("Latin") < 0) ? 1 : 0;
+                if (sc > score) { score = sc; best = f; }
+            }
+        }
+        return best;
+    }
+
     public static bool BundledFont(string font) {
         foreach (string[] b in Bundled) if (b[0] == font) return System.IO.File.Exists(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts", b[2]));
         return false;

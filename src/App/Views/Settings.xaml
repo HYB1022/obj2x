@@ -32,7 +32,7 @@
           </StackPanel>
         </DockPanel>
         <DockPanel Height="60">
-          <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="180" VerticalAlignment="Center"
+          <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="210" VerticalAlignment="Center"
                     ItemsSource="{Binding Fonts}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FontName}"/>
           <StackPanel VerticalAlignment="Center">
             <TextBlock Text="{ui:Tr lbl_font}"/>

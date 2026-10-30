@@ -19,7 +19,7 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 
 - 라이선스: GPL-3.0-or-later (v2.2까지는 MIT). 외부 코드를 가져올 때는 GPL과 호환되는 라이선스인지 확인한다.
 - **C# 5 / .NET Framework 4**: `csc.exe` v4.0.30319가 지원하는 문법만 쓴다. 문자열 보간 `$""`, `?.`, `nameof`, 식 본문 멤버(`=>`), 자동 속성 초기값, `out var`, 튜플 문법은 컴파일되지 않는다. 람다 대신 `delegate { }`를 쓰는 기존 스타일을 따른다.
-- 외부 의존성 없음. 참조는 .NET Framework에 들어 있는 WPF(`PresentationFramework` 등)와 `System.IO.Compression`뿐이다. 글꼴은 `fonts/`(나눔스퀘어 네오, Noto Sans KR, 둘 다 SIL OFL 1.1 — `fonts/OFL.txt`)를 exe 옆에 두고 읽는다. 설정의 글꼴 드롭다운(`Settings.Font` = `nanum`/`noto`/`system`)을 `Theme.MakeFont`가 받는다. 글자를 굵게 제대로 그리려면 `TextOptions.TextFormattingMode`는 `Ideal`이어야 한다. 릴리스 zip에도 `fonts` 폴더를 넣는다. WinForms는 쓰지 않는다(폴더 선택도 `FolderPicker`의 Windows 기본 창).
+- 외부 의존성 없음. 참조는 .NET Framework에 들어 있는 WPF(`PresentationFramework` 등)와 `System.IO.Compression`뿐이다. 글꼴은 `fonts/`(나눔스퀘어 네오, Noto Sans KR, 둘 다 SIL OFL 1.1 — `fonts/OFL.txt`)를 exe 옆에 두고 읽는다. 설정의 글꼴 드롭다운(`Settings.Font` = `nanum`/`noto`/`misans`/`system`)을 `Theme.MakeFont`가 받는다. MiSans는 라이선스가 글꼴 파일 재배포를 막아서 넣지 않는다. 사용자가 설치했거나 `fonts`에 넣어 둔 것만 쓰고(`Theme.MiSans()`), 없으면 나눔스퀘어 네오로 대신한다. 글자를 굵게 제대로 그리려면 `TextOptions.TextFormattingMode`는 `Ideal`이어야 한다. 릴리스 zip에도 `fonts` 폴더를 넣는다. WinForms는 쓰지 않는다(폴더 선택도 `FolderPicker`의 Windows 기본 창).
 - **XAML은 실행할 때 `XamlReader`로 읽는다**(MSBuild 없이 빌드하려고). 그래서:
   - XAML 오류는 컴파일할 때 잡히지 않는다. 고친 뒤 `--selftest`의 "XAML: 모든 화면 읽기"로 확인한다.
   - `x:Class`, 이벤트 속성(`Click="..."`)을 쓸 수 없다. 동작은 ViewModel의 명령(`Command="{Binding ...}"`)으로, 화면 쪽 처리는 C# 컨트롤/첨부 속성(`ui:Behave`)으로 한다.
@@ -51,9 +51,9 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 | --- | --- |
 | `Program.cs` | 진입점, `--selftest`/`--shots`, 첫 실행이면 환영 화면 |
 | `MainViewModel*.cs` | 화면 상태와 동작(속성/명령). 화면 컨트롤은 모르고, 대화 상자·파일 선택·알림(`Toast`)은 `IUi`로 부탁한다. `MainViewModel.Dev.cs`는 개발자 옵션(정보 화면의 버전을 7번 누르면 켜짐, `Settings.DevMode`) |
-| `MainWindow.cs` | Shell/페이지 XAML을 붙이고 `IUi` 구현: 페이지 전환 애니메이션, 사이드바 알약, 창 크기 배율, 대화 상자. 대시보드 외 페이지는 처음 열 때 만든다 |
+| `MainWindow.cs` | Shell/페이지 XAML을 붙이고 `IUi` 구현: 페이지 전환 애니메이션, 창 크기 배율, 대화 상자. 대시보드 외 페이지는 처음 열 때 만든다 |
 | `WelcomeWindow.cs` | 첫 실행 환영 화면 |
-| `Views/*.xaml` | `Styles`(공통 스타일), `Shell`(사이드바/상태줄), `Dashboard`, `Wizard`, `Advanced`, `Settings`, `Dev`(개발자 옵션, HyperOS 설정 화면 모양), `About` |
+| `Views/*.xaml` | `Styles`(공통 스타일), `Shell`(샤오미 태블릿 설정 앱처럼 둘로 나눈 화면: 왼쪽 큰 제목 + 앱 카드 + 카드로 묶은 메뉴), `Dashboard`, `Wizard`, `Advanced`, `Settings`, `Dev`(개발자 옵션, HyperOS 설정 화면 모양), `About` |
 | `Controls.cs`, `Hero.cs`, `Art.cs` | 직접 그리는 컨트롤(메뉴, 단계 표시, 방식 카드, 세그먼트, 숫자 상자), 정보 화면(`HeroBackdrop` 그라데이션 + `AboutHero` 내용), 아이콘/로고 |
 | `Effects.cs` | XAML 트리거용 애니메이션(`Anim`), 누름 물결 효과(`Ripple`, `RippleFx`) |
 | `Theme.cs` | 라이트/다크 × 인디고/틸/로즈 팔레트 → 앱 리소스 브러시, 브러시 캐시, 테마 전환 크로스페이드 |
