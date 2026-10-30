@@ -34,10 +34,11 @@ def to_blend(obj, out):
     # 빈 장면에서 시작 (기본 상자/조명/카메라 지우기)
     for o in list(bpy.data.objects):
         bpy.data.objects.remove(o, do_unlink=True)
-    if hasattr(bpy.ops.import_scene, "obj"):
-        bpy.ops.import_scene.obj(filepath=obj, split_mode="ON")
-    else:
+    # 3.2부터 새 obj 불러오기(wm.obj_import), 4.0부터는 그것만 있다
+    if bpy.app.version >= (3, 2, 0):
         bpy.ops.wm.obj_import(filepath=obj)
+    else:
+        bpy.ops.import_scene.obj(filepath=obj, split_mode="ON")
     n = len(bpy.data.objects)
     print("imported objects:", n)
     # OMSI는 [matl_alpha]가 있을 때만 알파를 투명으로 쓴다 (obj2x가 그때만 map_d를 넣음).

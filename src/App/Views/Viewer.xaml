@@ -71,6 +71,16 @@
             </StackPanel>
           </DockPanel>
         </Button>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Command="{Binding PickBlendExeCmd}" Margin="8,0,0,0"/>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr btn_auto}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Command="{Binding AutoBlendExeCmd}" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_blender}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding BlendExeText}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
         <Button Style="{StaticResource DevRow}" Command="{Binding SaveObjCmd}">
           <DockPanel>
             <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>

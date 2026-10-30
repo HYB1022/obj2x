@@ -397,10 +397,18 @@
   "view_preset_sub": "밖에서 보이는 것, 실내, 또는 가장 자세한 LOD의 모든 부품 (조건부 부품 포함)",
   "view_sec_export": "저장",
   "view_blend": "Blender 파일로 저장 (.blend)",
-  "view_blend_sub": "고급 탭에 지정한 Blender로 열어 텍스처까지 파일 안에 넣어 저장합니다",
+  "view_blend_sub": "켜 둔 부품을 아래 Blender로 열어 텍스처까지 파일 안에 넣어 저장합니다",
   "view_obj": "OBJ로 저장 (.obj + .mtl)",
   "view_obj_sub": "다른 3D 프로그램에서 열 수 있게 저장합니다",
   "view_part_stray": " · 차체 밖에 있어 꺼 둠 (게임에서는 애니메이션으로 옮겨지는 부품)",
   "view_err_noparts": "부품 파일({0}개)을 하나도 찾지 못했습니다.\n차량 폴더: {1}\n\ncfg에 적힌 [mesh] 경로가 차량 폴더의 Model 폴더나 cfg가 있는 폴더 기준으로 맞는지 확인하세요.",
-  "view_err_encrypted_all": "이 모델의 o3d는 암호화되어 있어 열 수 없습니다. (OMSI 기본 차량 등)"
+  "view_err_encrypted_all": "이 모델의 o3d는 암호화되어 있어 열 수 없습니다. (OMSI 기본 차량 등)",
+  "view_blender": "Blender 파일에 쓸 Blender",
+  "view_blender_auto": "자동: 가장 새 버전 {0} · {1}",
+  "view_blender_custom": "직접 고름: {0} · {1}",
+  "view_blender_finding": "설치된 Blender를 찾는 중...",
+  "view_blender_none": "Blender를 찾지 못했습니다. 찾아보기로 blender.exe를 지정하세요.",
+  "view_saved_with": "Blender {0}로 저장했습니다.",
+  "view_blender_old": "Blender 2.79로 저장한 파일은 Blender 2.8 이상에서 열면 텍스처가 보이지 않고 화면 배치도 예전 모양으로 열립니다. 새 Blender를 설치하면 자동으로 그것을 씁니다.",
+  "btn_auto": "자동"
 }

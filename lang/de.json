@@ -397,10 +397,18 @@
   "view_preset_sub": "Von außen sichtbare Teile, Innenraum oder alle Teile des detailliertesten LOD (inkl. bedingter Teile)",
   "view_sec_export": "Speichern",
   "view_blend": "Als Blender-Datei speichern (.blend)",
-  "view_blend_sub": "Öffnet sie im unter Erweitert festgelegten Blender und speichert mit eingebetteten Texturen",
+  "view_blend_sub": "Öffnet die eingeschalteten Teile im Blender unten und speichert mit eingebetteten Texturen",
   "view_obj": "Als OBJ speichern (.obj + .mtl)",
   "view_obj_sub": "Für andere 3D-Programme speichern",
   "view_part_stray": " · aus: außerhalb der Karosserie (im Spiel per Animation an seinen Platz bewegt)",
   "view_err_noparts": "Keine der {0} Teiledateien wurde gefunden.\nFahrzeugordner: {1}\n\nPrüfe, ob die [mesh]-Pfade in der cfg relativ zum Model-Ordner des Fahrzeugs oder zum Ordner der cfg sind.",
-  "view_err_encrypted_all": "Die o3d-Dateien dieses Modells sind verschlüsselt und können nicht geöffnet werden (z. B. OMSI-Standardfahrzeuge)."
+  "view_err_encrypted_all": "Die o3d-Dateien dieses Modells sind verschlüsselt und können nicht geöffnet werden (z. B. OMSI-Standardfahrzeuge).",
+  "view_blender": "Blender für .blend-Dateien",
+  "view_blender_auto": "Automatisch: neueste Version {0} · {1}",
+  "view_blender_custom": "Ausgewählt: {0} · {1}",
+  "view_blender_finding": "Suche nach installiertem Blender...",
+  "view_blender_none": "Kein Blender gefunden. Wähle blender.exe über Durchsuchen.",
+  "view_saved_with": "Mit Blender {0} gespeichert.",
+  "view_blender_old": "Mit Blender 2.79 gespeicherte Dateien zeigen in Blender 2.8 oder neuer keine Texturen und öffnen mit dem alten Layout. Installiere ein neueres Blender, es wird dann automatisch verwendet.",
+  "btn_auto": "Auto"
 }

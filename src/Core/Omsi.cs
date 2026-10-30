@@ -11,6 +11,15 @@ namespace Obj2x {
 public static class Omsi {
     // Steam 설치 경로(레지스트리) + libraryfolders.vdf의 라이브러리마다 steamapps\common\OMSI 2를 찾는다
     public static string FindInstall() {
+        foreach (string l in SteamLibraries()) {
+            string d = Path.Combine(l, @"steamapps\common\OMSI 2");
+            if (File.Exists(Path.Combine(d, "Omsi.exe"))) return d;
+        }
+        return "";
+    }
+
+    // Steam 설치 폴더(레지스트리) + libraryfolders.vdf에 적힌 라이브러리들
+    public static List<string> SteamLibraries() {
         List<string> roots = new List<string>();
         foreach (string key in new string[] { @"HKEY_CURRENT_USER\Software\Valve\Steam", @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Valve\Steam" }) {
             try {
@@ -27,11 +36,50 @@ public static class Omsi {
                     libs.Add(m.Groups[1].Value.Replace(@"\\", @"\"));
             } catch (Exception) { }
         }
-        foreach (string l in libs) {
-            string d = Path.Combine(l, @"steamapps\common\OMSI 2");
-            if (File.Exists(Path.Combine(d, "Omsi.exe"))) return d;
+        return libs;
+    }
+
+    // ---- Blender 찾기: Program Files의 Blender Foundation, Steam의 Blender. 가장 새 버전을 .blend 저장에 쓴다
+    public class BlenderExe { public string Path; public Version Ver; public override string ToString() { return Ver != null ? Ver.ToString() : "?"; } }
+
+    public static List<BlenderExe> FindBlenders(string extra) {
+        List<string> cand = new List<string>();
+        foreach (string pf in new string[] { Environment.GetEnvironmentVariable("ProgramFiles"), Environment.GetEnvironmentVariable("ProgramFiles(x86)"), Environment.GetEnvironmentVariable("ProgramW6432") }) {
+            if (string.IsNullOrEmpty(pf)) continue;
+            string bf = System.IO.Path.Combine(pf, "Blender Foundation");
+            try { foreach (string d in Directory.GetDirectories(bf)) cand.Add(System.IO.Path.Combine(d, "blender.exe")); } catch (Exception) { }
         }
-        return "";
+        foreach (string l in SteamLibraries()) cand.Add(System.IO.Path.Combine(l, @"steamapps\common\Blender\blender.exe"));
+        if (!string.IsNullOrEmpty(extra)) cand.Add(extra);
+        List<BlenderExe> r = new List<BlenderExe>();
+        foreach (string c in cand) {
+            string full; try { full = System.IO.Path.GetFullPath(c); } catch (Exception) { continue; }
+            if (!File.Exists(full) || r.Exists(delegate(BlenderExe x) { return string.Equals(x.Path, full, StringComparison.OrdinalIgnoreCase); })) continue;
+            BlenderExe b = new BlenderExe(); b.Path = full; b.Ver = BlenderVersion(full);
+            r.Add(b);
+        }
+        r.Sort(delegate(BlenderExe a1, BlenderExe b1) { return (b1.Ver ?? new Version(0, 0)).CompareTo(a1.Ver ?? new Version(0, 0)); });
+        return r;
+    }
+
+    // 파일 정보의 제품 버전, 없으면 'blender -b --version'의 첫 줄 (Steam판은 파일 정보가 비어 있다)
+    public static Version BlenderVersion(string exe) {
+        try {
+            string pv = System.Diagnostics.FileVersionInfo.GetVersionInfo(exe).ProductVersion;
+            Match m = Regex.Match(pv ?? "", @"^(\d+)\.(\d+)(?:\.(\d+))?");
+            if (m.Success) return new Version(int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value), m.Groups[3].Success ? int.Parse(m.Groups[3].Value) : 0);
+        } catch (Exception) { }
+        try {
+            System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo(exe, "-b --factory-startup --version");
+            psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.RedirectStandardOutput = true;
+            using (System.Diagnostics.Process p = System.Diagnostics.Process.Start(psi)) {
+                string o = p.StandardOutput.ReadToEnd();
+                if (!p.WaitForExit(30000)) { try { p.Kill(); } catch (Exception) { } }
+                Match m = Regex.Match(o, @"Blender (\d+)\.(\d+)(?:\.(\d+))?");
+                if (m.Success) return new Version(int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value), m.Groups[3].Success ? int.Parse(m.Groups[3].Value) : 0);
+            }
+        } catch (Exception) { }
+        return null;
     }
 
     public static bool IsInstall(string dir) {

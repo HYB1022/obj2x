@@ -15,6 +15,10 @@ public partial class MainViewModel {
     public ICommand BrowseCfgCmd { get; private set; }
     public ICommand SaveBlendCmd { get; private set; }
     public ICommand SaveObjCmd { get; private set; }
+    public ICommand PickBlendExeCmd { get; private set; }
+    public ICommand AutoBlendExeCmd { get; private set; }
+    List<Omsi.BlenderExe> blenders;      // 찾은 Blender (가장 새 것이 앞). null이면 아직 안 찾음
+    bool blenderSearching;
     ModelCfg viewCfg;
     int viewScene, viewShow, loadGen;
     bool viewBusy;
@@ -30,6 +34,40 @@ public partial class MainViewModel {
         });
         SaveBlendCmd = new Cmd(delegate { Export(true); }, delegate(object p) { return viewCfg != null && !viewBusy; });
         SaveObjCmd = new Cmd(delegate { Export(false); }, delegate(object p) { return viewCfg != null && !viewBusy; });
+        PickBlendExeCmd = new Cmd(delegate {
+            string f = ui.PickFile("blender.exe", "Blender (blender.exe)|blender.exe", S.BlendExe.Length > 0 ? S.BlendExe : S.Blender);
+            if (f == null) return;
+            S.BlendExe = f; S.Save(); blenders = null; FindBlendersAsync();
+        });
+        AutoBlendExeCmd = new Cmd(delegate { S.BlendExe = ""; S.Save(); Raise("BlendExeText"); });
+        PageChanged += delegate(string p) { if (p == "viewer") FindBlendersAsync(); };
+    }
+
+    // .blend 저장에 쓸 Blender: 직접 고른 것, 아니면 찾은 것 중 가장 새 버전 (2.79는 2.8 이상에서 텍스처가 안 보여서 마지막 수단)
+    Omsi.BlenderExe BlendExe {
+        get {
+            if (blenders == null) return null;
+            if (S.BlendExe.Length > 0) { Omsi.BlenderExe m = blenders.Find(delegate(Omsi.BlenderExe b) { return string.Equals(b.Path, System.IO.Path.GetFullPath(S.BlendExe), StringComparison.OrdinalIgnoreCase); }); if (m != null) return m; }
+            return blenders.Count > 0 ? blenders[0] : null;
+        }
+    }
+    public string BlendExeText {
+        get {
+            if (blenders == null) return L.T("view_blender_finding");
+            Omsi.BlenderExe b = BlendExe;
+            if (b == null) return L.T("view_blender_none");
+            return L.T(S.BlendExe.Length > 0 ? "view_blender_custom" : "view_blender_auto", b.ToString(), b.Path);
+        }
+    }
+    void FindBlendersAsync() {
+        if (blenders != null || blenderSearching) return;
+        blenderSearching = true; Raise("BlendExeText");
+        string extra = S.BlendExe.Length > 0 ? S.BlendExe : Conversion.Clean(S.Blender);
+        Thread th = new Thread(delegate() {
+            List<Omsi.BlenderExe> r = Omsi.FindBlenders(extra);
+            ui.Post(delegate { blenders = r; blenderSearching = false; Raise("BlendExeText"); });
+        });
+        th.IsBackground = true; th.Start();
     }
 
     public string ViewPath { get { return viewPath.Length > 0 ? viewPath : L.T("view_none"); } }
@@ -126,7 +164,8 @@ public partial class MainViewModel {
         List<CfgMesh> sel = new List<CfgMesh>();
         foreach (PartItem p in Parts) if (p.Checked && p.Model != null) sel.Add(p.Mesh);
         if (sel.Count == 0) { ui.Msg(L.T("view_err_none")); return; }
-        if (blend && !Conversion.BlenderOk(S)) { ui.Msg(L.T("msg_err_bl")); return; }
+        if (blend && blenders == null) { FindBlendersAsync(); ui.Toast(L.T("view_blender_finding")); return; }
+        if (blend && BlendExe == null) { ui.Msg(L.T("view_blender_none")); return; }
         if (blend && !File.Exists(PyPath)) { ui.Msg(L.T("msg_err_py")); return; }
         string name = Path.GetFileNameWithoutExtension(viewCfg.CfgPath);
         string f = ui.SaveFile(name + (blend ? ".blend" : ".obj"), blend ? "Blender (*.blend)|*.blend" : "Wavefront OBJ (*.obj)|*.obj");
@@ -138,7 +177,10 @@ public partial class MainViewModel {
     public void ExportTo(bool blend, string f, List<CfgMesh> sel) {
         if (sel == null) { sel = new List<CfgMesh>(); foreach (PartItem p in Parts) if (p.Checked && p.Model != null) sel.Add(p.Mesh); }
         ModelCfg cfg = viewCfg;
-        string blender = Conversion.Clean(S.Blender), py = PyPath;
+        if (blend && blenders == null) blenders = Omsi.FindBlenders(S.BlendExe.Length > 0 ? S.BlendExe : Conversion.Clean(S.Blender));
+        Omsi.BlenderExe be = blend ? BlendExe : null;
+        if (blend && be == null) { LastExportError = L.T("view_blender_none"); ui.Msg(LastExportError); return; }
+        string blender = be != null ? be.Path : "", py = PyPath;
         viewBusy = true; Raise("ViewBusy"); CommandManager.InvalidateRequerySuggested();
         ui.Toast(L.T(blend ? "view_saving_blend" : "view_saving_obj"));
         Thread th = new Thread(delegate() {
@@ -176,6 +218,7 @@ public partial class MainViewModel {
                 LastExportError = err;
                 if (err != null) { ui.Msg(err); return; }
                 string body = L.T("view_saved_body", sel.Count, f);
+                if (be != null) body += "\n" + L.T("view_saved_with", be.ToString()) + (be.Ver != null && be.Ver.Major < 3 && be.Ver.Minor < 80 && be.Ver.Major == 2 ? "\n\n" + L.T("view_blender_old") : "");
                 if (missing != null && missing.Count > 0) body += "\n\n" + L.T("view_saved_missing", missing.Count) + "\n" + string.Join(", ", missing.GetRange(0, Math.Min(8, missing.Count)).ToArray());
                 if (errors.Count > 0) body += "\n\n" + string.Join("\n", errors.GetRange(0, Math.Min(5, errors.Count)).ToArray());
                 ui.Confirm(L.T("view_saved_title"), body, L.T("btn_open_folder"), delegate(bool ok) { if (ok) ui.OpenFolder(Path.GetDirectoryName(f)); });

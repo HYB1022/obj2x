@@ -397,10 +397,18 @@
   "view_preset_sub": "外から見える部品、車内、または最も詳細な LOD のすべての部品 (条件付き部品を含む)",
   "view_sec_export": "保存",
   "view_blend": "Blender ファイルで保存 (.blend)",
-  "view_blend_sub": "詳細設定の Blender で開き、テクスチャも埋め込んで保存します",
+  "view_blend_sub": "オンの部品を下の Blender で開き、テクスチャも埋め込んで保存します",
   "view_obj": "OBJ で保存 (.obj + .mtl)",
   "view_obj_sub": "他の 3D ソフトで開けるように保存します",
   "view_part_stray": " · 車体の外にあるためオフ (ゲームではアニメーションで移動する部品)",
   "view_err_noparts": "部品ファイル（{0} 個）が 1 つも見つかりません。\n車両フォルダー: {1}\n\ncfg の [mesh] パスが車両の Model フォルダーか cfg のあるフォルダーを基準にしているか確認してください。",
-  "view_err_encrypted_all": "このモデルの o3d は暗号化されているため開けません（OMSI の標準車両など）。"
+  "view_err_encrypted_all": "このモデルの o3d は暗号化されているため開けません（OMSI の標準車両など）。",
+  "view_blender": ".blend の保存に使う Blender",
+  "view_blender_auto": "自動: 最新バージョン {0} · {1}",
+  "view_blender_custom": "指定: {0} · {1}",
+  "view_blender_finding": "インストールされた Blender を探しています...",
+  "view_blender_none": "Blender が見つかりません。参照から blender.exe を指定してください。",
+  "view_saved_with": "Blender {0} で保存しました。",
+  "view_blender_old": "Blender 2.79 で保存したファイルは、Blender 2.8 以降で開くとテクスチャが表示されず、画面配置も古い形になります。新しい Blender をインストールすると自動でそちらを使います。",
+  "btn_auto": "自動"
 }

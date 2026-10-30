@@ -397,10 +397,18 @@
   "view_preset_sub": "从外部可见的部件、车内,或最精细 LOD 的全部部件 (含条件部件)",
   "view_sec_export": "保存",
   "view_blend": "保存为 Blender 文件 (.blend)",
-  "view_blend_sub": "用高级选项中设置的 Blender 打开,并把贴图一起打包保存",
+  "view_blend_sub": "用下方的 Blender 打开已开启的部件,并把贴图一起打包保存",
   "view_obj": "保存为 OBJ (.obj + .mtl)",
   "view_obj_sub": "保存为其他 3D 软件可打开的格式",
   "view_part_stray": " · 位于车身外,已关闭 (游戏中由动画移到位置的部件)",
   "view_err_noparts": "{0} 个部件文件一个也没找到。\n车辆文件夹: {1}\n\n请确认 cfg 中的 [mesh] 路径是以车辆的 Model 文件夹或 cfg 所在文件夹为基准。",
-  "view_err_encrypted_all": "此模型的 o3d 已加密,无法打开 (例如 OMSI 自带车辆)。"
+  "view_err_encrypted_all": "此模型的 o3d 已加密,无法打开 (例如 OMSI 自带车辆)。",
+  "view_blender": "保存 .blend 使用的 Blender",
+  "view_blender_auto": "自动: 最新版本 {0} · {1}",
+  "view_blender_custom": "已指定: {0} · {1}",
+  "view_blender_finding": "正在查找已安装的 Blender...",
+  "view_blender_none": "未找到 Blender。请用浏览指定 blender.exe。",
+  "view_saved_with": "已使用 Blender {0} 保存。",
+  "view_blender_old": "用 Blender 2.79 保存的文件在 Blender 2.8 及以上打开时不显示贴图,界面布局也是旧样式。安装新版 Blender 后会自动使用新版。",
+  "btn_auto": "自动"
 }

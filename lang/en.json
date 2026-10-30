@@ -397,10 +397,18 @@
   "view_preset_sub": "Parts seen from outside, the interior, or every part of the most detailed LOD (including conditional parts)",
   "view_sec_export": "Save",
   "view_blend": "Save as Blender file (.blend)",
-  "view_blend_sub": "Opens it in the Blender set in Advanced and saves with the textures packed in",
+  "view_blend_sub": "Opens the parts that are on in the Blender below and saves with the textures packed in",
   "view_obj": "Save as OBJ (.obj + .mtl)",
   "view_obj_sub": "Save for other 3D programs",
   "view_part_stray": " · off: outside the body (moved into place by animation in the game)",
   "view_err_noparts": "None of the {0} part files could be found.\nVehicle folder: {1}\n\nCheck that the [mesh] paths in the cfg are relative to the vehicle's Model folder or to the folder the cfg is in.",
-  "view_err_encrypted_all": "This model's o3d files are encrypted and can't be opened (e.g. OMSI's stock vehicles)."
+  "view_err_encrypted_all": "This model's o3d files are encrypted and can't be opened (e.g. OMSI's stock vehicles).",
+  "view_blender": "Blender used for .blend files",
+  "view_blender_auto": "Auto: newest version {0} · {1}",
+  "view_blender_custom": "Chosen: {0} · {1}",
+  "view_blender_finding": "Looking for installed Blender...",
+  "view_blender_none": "No Blender found. Use Browse to choose blender.exe.",
+  "view_saved_with": "Saved with Blender {0}.",
+  "view_blender_old": "Files saved with Blender 2.79 show no textures and use the old screen layout when opened in Blender 2.8 or later. Install a newer Blender and it will be used automatically.",
+  "btn_auto": "Auto"
 }

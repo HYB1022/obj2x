@@ -57,7 +57,7 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 | 파일 | 역할 |
 | --- | --- |
 | `Program.cs` | 진입점, `--selftest`/`--shots`, 첫 실행이면 환영 화면 |
-| `MainViewModel*.cs` | 화면 상태와 동작(속성/명령). 화면 컨트롤은 모르고, 대화 상자·파일 선택·알림(`Toast`)은 `IUi`로 부탁한다. `MainViewModel.Omsi.cs`는 오브젝트/스플라인 만들기, `MainViewModel.Viewer.cs`는 모델 보기(.blend 저장은 obj를 만든 뒤 `obj2x.py --blend`), `MainViewModel.Dev.cs`는 개발자 옵션(정보 화면의 버전을 7번 누르면 켜짐, `Settings.DevMode`) |
+| `MainViewModel*.cs` | 화면 상태와 동작(속성/명령). 화면 컨트롤은 모르고, 대화 상자·파일 선택·알림(`Toast`)은 `IUi`로 부탁한다. `MainViewModel.Omsi.cs`는 오브젝트/스플라인 만들기, `MainViewModel.Viewer.cs`는 모델 보기(.blend 저장은 obj를 만든 뒤 `BusDepot.py --blend`. Blender는 `Settings.BlendExe` 또는 설치된 것 중 가장 새 버전 — `Omsi.FindBlenders`가 Program Files와 Steam을 찾는다. 2.79로 저장하면 2.8 이상에서 텍스처가 안 보이고 옛 화면 배치가 열린다), `MainViewModel.Dev.cs`는 개발자 옵션(정보 화면의 버전을 7번 누르면 켜짐, `Settings.DevMode`) |
 | `MainWindow.cs` | Shell/페이지 XAML을 붙이고 `IUi` 구현: 페이지 전환 애니메이션, 창 크기 배율, 대화 상자. 대시보드 외 페이지는 처음 열 때 만든다 |
 | `WelcomeWindow.cs` | 첫 실행 환영 화면 |
 | `Views/*.xaml` | `Styles`(공통 스타일), `Shell`(샤오미 태블릿 설정 앱처럼 둘로 나눈 화면: 왼쪽 큰 제목 + 앱 카드 + 카드로 묶은 메뉴), `Dashboard`, `Wizard`, `Object`/`Spline`(OMSI 제작), `Viewer`(모델 보기), `Advanced`, `Settings`, `Dev`(개발자 옵션, HyperOS 설정 화면 모양), `About` |
@@ -74,6 +74,6 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 ## 릴리스
 
 - 버전은 `src/Core/AppInfo.cs`의 `Version`에서 바꾸고, README의 변경 내역에도 적는다.
-- 자동 업데이트는 최신 릴리스의 `.zip` 첨부 파일을 받아 exe를 교체한다. 릴리스 zip `BusDepot.zip`에는 `BusDepot.exe`, `BusDepot.bat`, `BusDepot.py`, `obj2x.exe`(런처), `obj2x.bat`(BusDepot.bat을 부름), `obj2x_gui.ps1`, `LICENSE`, `fonts\`(나눔스퀘어 네오, Noto Sans KR, OFL.txt만. **MiSans는 절대 넣지 않는다** — 라이선스가 재배포를 막는다. 저장소에서도 `.gitignore`로 뺀다)를 같은 폴더(최상위)에 넣는다. zip 안 경로는 `/`로 쓴다. `lang` 폴더는 넣지 않는다(사용자가 만든 언어 파일을 덮어쓰지 않게). GPL-3.0이라 바이너리와 함께 라이선스 원문을 배포해야 한다.
+- 자동 업데이트는 최신 릴리스의 `.zip` 첨부 파일을 받아 exe를 교체한다. 릴리스 zip `BusDepot.zip`에는 `BusDepot.exe`, `BusDepot.bat`, `BusDepot.py`, `obj2x.exe`(런처), `obj2x.bat`(BusDepot.bat을 부름), `obj2x_gui.ps1`(이 둘은 저장소의 `compat\`에 있고 zip에는 최상위에 넣는다), `LICENSE`, `fonts\`(나눔스퀘어 네오, Noto Sans KR, OFL.txt만. **MiSans는 절대 넣지 않는다** — 라이선스가 재배포를 막는다. 저장소에서도 `.gitignore`로 뺀다)를 같은 폴더(최상위)에 넣는다. zip 안 경로는 `/`로 쓴다. `lang` 폴더는 넣지 않는다(사용자가 만든 언어 파일을 덮어쓰지 않게). GPL-3.0이라 바이너리와 함께 라이선스 원문을 배포해야 한다.
   - 지금 업데이터는 zip 안의 `BusDepot.exe`(없으면 `obj2x.exe`)를 찾는다. v2.7.2 이하의 C# 업데이터는 `obj2x.exe`를, v2.0 이하의 PowerShell 업데이터는 `obj2x_gui.ps1`을 찾아 그 폴더를 덮어쓴 뒤 `obj2x.exe`/`obj2x.bat`을 실행한다. 그래서 `obj2x.exe` 런처, `obj2x.bat`, `obj2x_gui.ps1`을 빼면 예전 사용자의 업데이트가 실패한다. 저장소 이름(`AppInfo.Repo`)을 바꿔도 GitHub가 예전 주소를 새 주소로 넘겨 주므로 예전 버전의 업데이트 확인도 계속 된다.
 - `BusDepot.exe`, `obj2x.exe`, `BusDepot.ini`, `obj2x.ini`는 저장소에 넣지 않는다(`.gitignore`). exe는 릴리스 zip으로만 배포한다.

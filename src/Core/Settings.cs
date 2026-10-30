@@ -37,6 +37,7 @@ public class Settings {
     public int ObjAlpha = 1;
     public string Spl = "";          // 스플라인 값 (SplSpec이 읽고 쓴다)
     public string SplName = "busdepot_road", SplFolder = "BusDepot";
+    public string BlendExe = "";     // .blend 저장에 쓸 Blender (비우면 설치된 것 중 가장 새 버전)
     public static readonly string[] CoptKeys = new string[] { "zup", "sep", "det", "spec", "mat", "vert", "nrm", "sub" };
 
     public const string DiscMinVer = "2.0";
@@ -102,6 +103,7 @@ public class Settings {
         if (kv.TryGetValue("objfixed", out v)) s.ObjFixed = B(v, true);
         if (kv.TryGetValue("objalpha", out v)) { int n; if (int.TryParse(v, out n) && n >= 0 && n <= 2) s.ObjAlpha = n; }
         if (kv.TryGetValue("spl", out v)) s.Spl = v;
+        if (kv.TryGetValue("blendexe", out v)) s.BlendExe = v;
         if (kv.TryGetValue("splname", out v) && v.Length > 0) s.SplName = v;
         if (kv.TryGetValue("splfolder", out v) && v.Length > 0) s.SplFolder = v;
         if (kv.TryGetValue("copt", out v)) {
@@ -163,6 +165,7 @@ public class Settings {
             o.Add("objfixed=" + (ObjFixed ? "1" : "0"));
             o.Add("objalpha=" + ObjAlpha);
             o.Add("spl=" + Spl);
+            o.Add("blendexe=" + BlendExe);
             o.Add("splname=" + SplName);
             o.Add("splfolder=" + SplFolder);
             List<string> ex = new List<string>();

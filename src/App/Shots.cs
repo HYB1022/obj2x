@@ -94,7 +94,7 @@ public static class Shots {
         Motion.Off = true;
         string dir = Path.GetDirectoryName(Path.GetFullPath(outFile));
         Settings s = new Settings(); s.Path = Path.Combine(dir, "shot.ini"); s.Lang = "ko"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
-        if (blender != null) s.Blender = blender;
+        if (blender != null) s.BlendExe = blender;
         MainWindow f = Open(s, AppDomain.CurrentDomain.BaseDirectory);
         f.VM.Page = "viewer"; f.VM.LoadModel(cfg);
         for (int i = 0; i < 1200 && f.VM.ViewBusy; i++) Pump.Run(50);
