@@ -108,7 +108,7 @@ public static class SelfTest {
         d.AgreedVer = "1.10"; T("면책: 1.10도 2.0 미만", d.NeedDisclaimer(), "");
         d.AgreedVer = "2.0"; T("면책: 2.0이면 불필요", !d.NeedDisclaimer(), "");
         d.AgreedVer = "2.1"; T("면책: 2.1이면 불필요", !d.NeedDisclaimer(), "");
-        T("업데이트: 버전 비교", Updater.IsNewer("2.1", "2.0") && !Updater.IsNewer("2.0", "2.0") && Updater.IsNewer("2.10", "2.9"), "");
+        T("업데이트: 버전 비교", Updater.IsNewer("2.1", "2.0") && !Updater.IsNewer("2.0", "2.0") && Updater.IsNewer("2.10", "2.9") && Updater.IsNewer("2.7.1", "2.7") && !Updater.IsNewer("2.7", "2.7.1"), "");
 
         // 3. FastO3D
         string od = Path.Combine(root, "obj"); Directory.CreateDirectory(Path.Combine(od, "sub"));
