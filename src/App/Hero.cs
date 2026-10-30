@@ -98,8 +98,11 @@ public class AboutHero : Drawn {
         double blockH = tH + 6 + vH + 10 + vH;
         // HyperOS '휴대전화 정보'처럼: 새 버전이 있으면 제목 묶음이 부드럽게 위로 올라가고 그 아래에 [업데이트] 버튼이 생긴다
         if (Motion.Disabled) btnIn = BtnTarget;
-        double be = Motion.EaseInOut(btnIn), bH = 56, bGap = 34;
-        double y = Math.Max(28, (heroH - blockH - be * (bGap + bH)) / 2 - 6);
+        // 버튼은 항목 목록 바로 위쪽(아래로 64px 띄움)에 자리 잡고, 제목 묶음은 버튼 위 빈 곳으로 올라간다
+        double be = Motion.EaseInOut(btnIn), bH = 62, bR = 22, bw = Math.Min(440, cw * 0.6);
+        double bTop = listY - 64 - bH;
+        double y0 = Math.Max(28, (heroH - blockH) / 2 - 6), y1 = Math.Max(28, Math.Min(y0, bTop - 56 - blockH));
+        double y = y0 + (y1 - y0) * be;
         double a, off;
 
         a = Appear(0); off = (1 - a) * 22;
@@ -111,11 +114,14 @@ public class AboutHero : Drawn {
         Art.Text(dc, Art.Ft(L.T("about_desc"), fV, false, Theme.A(sub, a)), new Rect(x0, y + off, cw, vH), TextAlignment.Center);
         y += vH;
         if (btnIn > 0.001) {
-            double ba = a * Motion.EaseOut(btnIn), bw = Math.Min(340, cw), rise = (1 - be) * 18;
-            Rect br = new Rect((W - bw) / 2, y + bGap + rise, bw, bH);
-            Glass(dc, br, 18, ba, hov[5], true);
-            if (fx.Active) { dc.PushClip(new RectangleGeometry(br, 18, 18)); fx.Draw(dc, RippleFx.Tint(txt), 5); dc.Pop(); }
-            Art.Text(dc, Art.Ft(Busy ? L.T("about_upd_installing") : L.T("about_pill_update"), fB, true, Theme.A(txt, ba)), br, TextAlignment.Center);
+            double ba = a * Motion.EaseOut(btnIn), rise = (1 - be) * 18, h5 = hov[5];
+            Rect br = new Rect((W - bw) / 2, bTop + rise, bw, bH);
+            // HyperOS 업데이트 버튼: 뒤 그라데이션이 비치는 반투명 흰 판 + 가는 흰 테두리, 큰 글자
+            Color bf = Theme.Dark ? Color.FromArgb((byte)(26 + 16 * h5), 255, 255, 255) : Color.FromArgb((byte)(150 + 40 * h5), 255, 255, 255);
+            Color bb = Theme.Dark ? Color.FromArgb(52, 255, 255, 255) : Color.FromArgb(235, 255, 255, 255);
+            dc.DrawRoundedRectangle(Theme.Brush(Theme.A(bf, ba)), Art.Pen(Theme.A(bb, ba), 1.2), new Rect(br.X + 0.6, br.Y + 0.6, br.Width - 1.2, br.Height - 1.2), bR, bR);
+            if (fx.Active) { dc.PushClip(new RectangleGeometry(br, bR, bR)); fx.Draw(dc, RippleFx.Tint(txt), 5); dc.Pop(); }
+            Art.Text(dc, Art.Ft(Busy ? L.T("about_upd_installing") : L.T("about_pill_update"), 17.5, true, Theme.A(txt, ba)), br, TextAlignment.Center);
             if (btnIn > 0.5) hits.Add(new KeyValuePair<Rect, int>(br, 5));
         }
         y += 32;
