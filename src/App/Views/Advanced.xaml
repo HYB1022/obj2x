@@ -1,6 +1,6 @@
 <ScrollViewer xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-              xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x"
+              xmlns:ui="clr-namespace:Obj2x.UI;assembly=BusDepot"
               VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
   <!-- 고급 (HyperOS 설정 화면 모양, 개발자 옵션과 같은 줄 스타일): OmsiXConv 세부 옵션, Blender 내보내기 추가 옵션, 실행 프로그램 경로 -->
   <StackPanel Margin="24,20,24,28" MaxWidth="820">

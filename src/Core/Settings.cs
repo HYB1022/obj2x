@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 
 namespace Obj2x {
-// obj2x.ini (PowerShell 버전과 같은 형식) 읽고 쓰기
+// BusDepot.ini (v2.7.2까지는 obj2x.ini, PowerShell 버전과 같은 형식) 읽고 쓰기
 public class Settings {
     public string Blender = @"C:\Program Files\Blender Foundation\Blender\blender.exe";
     public string Conv = "";
@@ -30,6 +30,13 @@ public class Settings {
     public List<string> Recent = new List<string>();
     public string ExOpt = "";        // 여러 줄 (줄바꿈)
     public Dictionary<string, int> Copt = new Dictionary<string, int>();
+    // OMSI 제작 (오브젝트/스플라인)
+    public string OmsiDir = "";
+    public string ObjModels = "", ObjFolder = "", ObjName = "", ObjGroup = "Bus Depot";
+    public bool ObjCombine = false, ObjColl = true, ObjSurf = false, ObjShadow = true, ObjFixed = true;
+    public int ObjAlpha = 1;
+    public string Spl = "";          // 스플라인 값 (SplSpec이 읽고 쓴다)
+    public string SplName = "busdepot_road", SplFolder = "BusDepot";
     public static readonly string[] CoptKeys = new string[] { "zup", "sep", "det", "spec", "mat", "vert", "nrm", "sub" };
 
     public const string DiscMinVer = "2.0";
@@ -83,6 +90,20 @@ public class Settings {
             foreach (string p in v.Split('|')) { if (p.Length > 0 && s.Recent.Count < 5) s.Recent.Add(p); }
         }
         if (kv.TryGetValue("exopt", out v)) s.ExOpt = v.Replace("|", "\r\n");
+        if (kv.TryGetValue("omsidir", out v)) s.OmsiDir = v;
+        if (kv.TryGetValue("objmodels", out v)) s.ObjModels = v;
+        if (kv.TryGetValue("objfolder", out v)) s.ObjFolder = v;
+        if (kv.TryGetValue("objname", out v)) s.ObjName = v;
+        if (kv.TryGetValue("objgroup", out v)) s.ObjGroup = v;
+        if (kv.TryGetValue("objcombine", out v)) s.ObjCombine = B(v, false);
+        if (kv.TryGetValue("objcoll", out v)) s.ObjColl = B(v, true);
+        if (kv.TryGetValue("objsurf", out v)) s.ObjSurf = B(v, false);
+        if (kv.TryGetValue("objshadow", out v)) s.ObjShadow = B(v, true);
+        if (kv.TryGetValue("objfixed", out v)) s.ObjFixed = B(v, true);
+        if (kv.TryGetValue("objalpha", out v)) { int n; if (int.TryParse(v, out n) && n >= 0 && n <= 2) s.ObjAlpha = n; }
+        if (kv.TryGetValue("spl", out v)) s.Spl = v;
+        if (kv.TryGetValue("splname", out v) && v.Length > 0) s.SplName = v;
+        if (kv.TryGetValue("splfolder", out v) && v.Length > 0) s.SplFolder = v;
         if (kv.TryGetValue("copt", out v)) {
             foreach (string pair in v.Split(',')) {
                 string[] p = pair.Split(':');
@@ -130,6 +151,20 @@ public class Settings {
             o.Add("agreed=" + (Agreed ? "1" : "0"));
             o.Add("agreedver=" + AgreedVer);
             o.Add("recent=" + string.Join("|", Recent.ToArray()));
+            o.Add("omsidir=" + OmsiDir);
+            o.Add("objmodels=" + ObjModels);
+            o.Add("objfolder=" + ObjFolder);
+            o.Add("objname=" + ObjName);
+            o.Add("objgroup=" + ObjGroup);
+            o.Add("objcombine=" + (ObjCombine ? "1" : "0"));
+            o.Add("objcoll=" + (ObjColl ? "1" : "0"));
+            o.Add("objsurf=" + (ObjSurf ? "1" : "0"));
+            o.Add("objshadow=" + (ObjShadow ? "1" : "0"));
+            o.Add("objfixed=" + (ObjFixed ? "1" : "0"));
+            o.Add("objalpha=" + ObjAlpha);
+            o.Add("spl=" + Spl);
+            o.Add("splname=" + SplName);
+            o.Add("splfolder=" + SplFolder);
             List<string> ex = new List<string>();
             foreach (string ln in ExOpt.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)) { if (ln.Trim().Length > 0) ex.Add(ln.Trim()); }
             o.Add("exopt=" + string.Join("|", ex.ToArray()));

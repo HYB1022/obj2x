@@ -19,6 +19,9 @@ public interface IUi {
     void Exit();
     void Toast(string text);          // 화면 아래에 잠깐 뜨는 알림
     string ScaleText { get; }         // 화면 배율 설명 (개발자 옵션 앱 정보)
+    void Confirm(string title, string body, string okText, Action<bool> done);   // 확인/취소 대화 상자
+    void OpenFolder(string path);     // 탐색기로 폴더 열기
+    void Finished(bool failed);       // 변환이 끝남 (창이 비활성이면 작업 표시줄 단추를 깜빡인다)
 }
 
 // 결과 표 한 줄
@@ -79,13 +82,15 @@ public partial class MainViewModel : Observable {
 
     public MainViewModel(Settings s, string here, IUi ui) {
         S = s; Here = here; this.ui = ui;
-        PyPath = Path.Combine(here, "obj2x.py");
+        PyPath = Path.Combine(here, "BusDepot.py");
         NavCmd = new Cmd(delegate(object p) { Page = (string)p; });
         InitDashboard();
         InitWizard();
         InitSettings();
         InitUpdate();
         InitDev();
+        InitOmsi();
+        InitViewer();
         WireEngine();
         // 저장해 둔 문구(상태, 배너, 마법사 안내)는 새 언어로 다시 만든 뒤 모든 속성을 다시 읽게 한다
         Loc.Changed += delegate {

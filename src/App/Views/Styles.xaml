@@ -1,6 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x">
+                    xmlns:ui="clr-namespace:Obj2x.UI;assembly=BusDepot">
   <!-- 공통 스타일. 색은 모두 Theme.cs가 넣는 브러시({DynamicResource 이름})를 쓴다. -->
   <BooleanToVisibilityConverter x:Key="Vis"/>
 

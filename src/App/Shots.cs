@@ -9,7 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace Obj2x.UI {
-// 개발용: 2초 기다린 뒤 3초 동안 프레임 간격을 재서 파일로 남긴다 (obj2x.exe --fps [--page about])
+// 개발용: 2초 기다린 뒤 3초 동안 프레임 간격을 재서 파일로 남긴다 (BusDepot.exe --fps [--page about])
 // step이 있으면 재는 동안 0.4초마다 불러서 페이지 전환 같은 애니메이션을 일으킨다 (--fps nav)
 public static class FrameMeter {
     public static void Start(Window w, string path) { Start(w, path, null); }
@@ -48,7 +48,7 @@ public static class FrameMeter {
     }
 }
 
-// 개발용: 화면을 PNG로 저장한다 (obj2x.exe --shots 폴더, --readme-shots 폴더)
+// 개발용: 화면을 PNG로 저장한다 (BusDepot.exe --shots 폴더, --readme-shots 폴더)
 // 화면을 복사하지 않고 창 내용을 직접 그려서 저장하므로, 다른 창에 가려져도 같은 결과가 나온다.
 public static class Shots {
     static void Save(MainWindow f, string path) { Save(f, f.Host, path); }
@@ -72,6 +72,39 @@ public static class Shots {
         if (pp != null && pp.Child is FrameworkElement) Save(f, (FrameworkElement)pp.Child, path);
         cb.IsDropDownOpen = false; Pump.Run(100);
     }
+    // 개발용: --view-shot <model.cfg|.sco> <png> [light|dark] [ext|int|all] — 모델 보기 화면에 모델을 띄워 찍는다
+    public static int ViewShot(string cfg, string png, string theme, string preset) {
+        Motion.Off = true;
+        string dir = Path.GetDirectoryName(Path.GetFullPath(png));
+        Settings s = new Settings(); s.Path = Path.Combine(dir, "shot.ini"); s.Theme = theme; s.Lang = "ko"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
+        MainWindow f = Open(s, dir);
+        f.VM.Page = "viewer"; Pump.Run(100);
+        f.VM.LoadModel(cfg);
+        for (int i = 0; i < 600 && f.VM.ViewBusy; i++) Pump.Run(50);
+        if (preset != "ext") f.VM.ViewPreset = preset;
+        Pump.Run(300);
+        Save(f, png);
+        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.ViewStatus, new UTF8Encoding(true));
+        f.Close();
+        return 0;
+    }
+
+    // 개발용: --save-model <model.cfg|.sco> <출력 .blend|.obj> [blender.exe] — 모델 보기에서 저장하기를 대화 상자 없이
+    public static int SaveModel(string cfg, string outFile, string blender) {
+        Motion.Off = true;
+        string dir = Path.GetDirectoryName(Path.GetFullPath(outFile));
+        Settings s = new Settings(); s.Path = Path.Combine(dir, "shot.ini"); s.Lang = "ko"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
+        if (blender != null) s.Blender = blender;
+        MainWindow f = Open(s, AppDomain.CurrentDomain.BaseDirectory);
+        f.VM.Page = "viewer"; f.VM.LoadModel(cfg);
+        for (int i = 0; i < 1200 && f.VM.ViewBusy; i++) Pump.Run(50);
+        f.VM.ExportTo(outFile.EndsWith(".blend", StringComparison.OrdinalIgnoreCase), Path.GetFullPath(outFile), null);
+        for (int i = 0; i < 12000 && f.VM.ViewBusy; i++) Pump.Run(50);
+        File.WriteAllText(outFile + ".txt", (f.VM.LastExportError ?? "OK") + "\r\n" + f.VM.ViewStatus, new UTF8Encoding(true));
+        f.Close();
+        return f.VM.LastExportError == null ? 0 : 1;
+    }
+
     static MainWindow Open(Settings s, string dir) {
         Loc.SetLang(s.Lang); Theme.Apply(s.Theme, s.Accent, s.Font);
         MainWindow f = new MainWindow(s, dir, false);
@@ -91,20 +124,39 @@ public static class Shots {
         return r;
     }
 
+    // 지금 보이는 페이지를 맨 아래로 스크롤
+    static void PageBottom(MainWindow f) {
+        foreach (ScrollViewer sv in UiTreeAll<ScrollViewer>(f.Host)) if (sv.IsVisible && sv.ActualWidth > 500) { sv.ScrollToEnd(); Pump.Run(50); return; }
+    }
+
     public static int Run(string dir) {
         Directory.CreateDirectory(dir);
         Motion.Off = true;
         string sample = Path.Combine(dir, "sample_obj"); Directory.CreateDirectory(sample);
         File.WriteAllText(Path.Combine(sample, "x.obj"), "v 0 0 0\nv 1 0 0\nv 1 1 0\nf 1 2 3\n");
+        // 오브젝트 만들기 화면용 o3d 모델
+        string models = Path.Combine(dir, "Bushaltestelle"); Directory.CreateDirectory(models);
+        int nv, nt, nm; string wn;
+        foreach (string mn in new string[] { "dach", "glas", "sitzbank" }) {
+            File.WriteAllText(Path.Combine(models, mn + ".obj"), "mtllib " + mn + ".mtl\nv 0 0 0\nv 1 0 0\nv 1 1 0\nvt 0 0\nvt 1 0\nvt 1 1\nvn 0 0 1\nusemtl m\nf 1/1/1 2/2/1 3/3/1\n");
+            File.WriteAllText(Path.Combine(models, mn + ".mtl"), "newmtl m\nmap_Kd " + mn + (mn == "glas" ? ".tga" : ".bmp") + "\n");
+            FastO3D.ConvertEx(Path.Combine(models, mn + ".obj"), Path.Combine(models, mn + ".o3d"), out nv, out nt, out nm, out wn);
+        }
+        byte[] tga = new byte[18]; tga[2] = 2; tga[16] = 32; tga[17] = 8;
+        File.WriteAllBytes(Path.Combine(models, "glas.tga"), tga); File.WriteAllBytes(Path.Combine(models, "dach.bmp"), new byte[] { 0x42, 0x4D });
         foreach (string[] v in new string[][] { new string[] { "light", "ko", "indigo" }, new string[] { "dark", "en", "teal" }, new string[] { "light", "de", "rose" }, new string[] { "dark", "zh", "indigo" }, new string[] { "light", "ja", "teal" } }) {
             Settings s = new Settings(); s.Path = Path.Combine(dir, "shot.ini");
-            s.Theme = v[0]; s.Lang = v[1]; s.Accent = v[2]; s.Inp = sample; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
+            s.Theme = v[0]; s.Lang = v[1]; s.Accent = v[2]; s.Inp = sample; s.ObjModels = models; s.ObjFolder = "Bushaltestelle"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
             s.AddRecent(sample); s.AddRecent(@"C:\Models\Bus\ELE19"); s.AddRecent(@"D:\OMSI\Vehicles\Regs_SD77"); s.AddRecent(@"E:\gone\folder");
             MainWindow f = Open(s, dir);
             string tag = v[0] + "_" + v[1];
             f.VM.Page = "dashboard"; Save(f, Path.Combine(dir, tag + "_dash.png"));
             f.VM.Page = "wizard"; Save(f, Path.Combine(dir, tag + "_wiz1.png"));
             for (int i = 2; i <= 4; i++) { f.VM.WizStep = i; Save(f, Path.Combine(dir, tag + "_wiz" + i + ".png")); }
+            f.VM.Page = "object"; Save(f, Path.Combine(dir, tag + "_obj.png"));
+            PageBottom(f); Save(f, Path.Combine(dir, tag + "_obj2.png"));
+            f.VM.Page = "spline"; Save(f, Path.Combine(dir, tag + "_spl.png"));
+            PageBottom(f); Save(f, Path.Combine(dir, tag + "_spl2.png"));
             f.VM.Page = "advanced"; Save(f, Path.Combine(dir, tag + "_adv.png"));
             f.VM.Page = "settings"; Save(f, Path.Combine(dir, tag + "_set.png"));
             SaveDrop(f, Path.Combine(dir, tag + "_set_lang.png"));
@@ -151,7 +203,7 @@ public static class Shots {
         return 0;
     }
 
-    // 개발용: README 맨 위 움직이는 그림용 환영 화면 프레임 (obj2x.exe --welcome-frames 폴더 [light|dark])
+    // 개발용: README 맨 위 움직이는 그림용 환영 화면 프레임 (BusDepot.exe --welcome-frames 폴더 [light|dark])
     // 인사말 한 바퀴(Period초)를 초당 Fps장으로, 앞에 Blend초를 더 찍는다. 이음매 없이 반복되게 섞는 것은 바깥 스크립트가 한다.
     // 파일 이름: f_0000.png ... (0번 = -Blend초), 첫 줄에 times.txt로 장 수/초당 장 수/한 바퀴 시간을 남긴다.
     public static int WelcomeFrames(string dir, string theme) {
@@ -172,13 +224,13 @@ public static class Shots {
         return 0;
     }
 
-    // 개발용: README에 넣을 화면 (obj2x.exe --readme-shots 폴더)
+    // 개발용: README에 넣을 화면 (BusDepot.exe --readme-shots 폴더)
     // 가짜 blender.exe/OmsiXConv.exe로 경로 경고를 없애고, 샘플 obj를 빠른 변환으로 실제 변환해 결과 표를 채운다.
     // 사용자 경로가 보이는 화면(마법사 경로 단계, 고급의 프로그램 경로, 설정의 백업 폴더)은 찍지 않는다.
     public static int Readme(string dir) {
         Directory.CreateDirectory(dir);
         Motion.Off = true;
-        string work = Path.Combine(Path.GetTempPath(), "obj2x_readme");
+        string work = Path.Combine(Path.GetTempPath(), "BusDepot_readme");
         string models = Path.Combine(work, "ELE19");
         try { if (Directory.Exists(work)) Directory.Delete(work, true); } catch (Exception) { }
         Directory.CreateDirectory(models);
@@ -214,6 +266,7 @@ public static class Shots {
     }
 
     // ---- 샘플 모델 (버스 부품 흉내: 상자/원통)
+    public static void SampleModelsPublic(string dir) { SampleModels(dir); }
     static void SampleModels(string dir) {
         File.WriteAllText(Path.Combine(dir, "parts.mtl"),
             "newmtl body\nKd 0.85 0.85 0.88\nnewmtl glass\nKd 0.2 0.3 0.35\nd 0.4\nnewmtl tyre\nKd 0.08 0.08 0.08\nnewmtl rim\nKd 0.7 0.7 0.72\nnewmtl seat\nKd 0.2 0.25 0.6\n");

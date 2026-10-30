@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
@@ -75,6 +76,9 @@ public static class Art {
             case "dev": return Color.FromRgb(96, 125, 139);
             case "lang": return Color.FromRgb(52, 199, 89);
             case "view": return Color.FromRgb(255, 45, 85);
+            case "object": return Color.FromRgb(0, 178, 190);
+            case "spline": return Color.FromRgb(52, 168, 108);
+            case "viewer": return Color.FromRgb(255, 69, 58);
             default: return Theme.Accent;
         }
     }
@@ -147,6 +151,34 @@ public static class Art {
                 dc.DrawGeometry(wb, null, g);
                 break;
             }
+            case "object": {    // 정육면체 (OMSI 오브젝트)
+                Point top = new Point(x + 12 * k, y + 5.5 * k), l = new Point(x + 6 * k, y + 8.8 * k), r = new Point(x + 18 * k, y + 8.8 * k);
+                Point c = new Point(x + 12 * k, y + 12.1 * k), lb = new Point(x + 6 * k, y + 15.4 * k), rb = new Point(x + 18 * k, y + 15.4 * k), b = new Point(x + 12 * k, y + 18.7 * k);
+                dc.DrawGeometry(Theme.Brush(Theme.A(Colors.White, alpha * 0.35)), null, Poly(true, top, r, c, l));
+                dc.DrawGeometry(null, p, Poly(true, top, r, rb, b, lb, l));
+                dc.DrawGeometry(null, p, Poly(false, l, c, r));
+                dc.DrawLine(p, c, b);
+                break;
+            }
+            case "spline": {    // 멀리 뻗은 도로 + 가운데 점선 (OMSI 스플라인)
+                dc.DrawLine(p, new Point(x + 10 * k, y + 5.5 * k), new Point(x + 5.5 * k, y + 18.5 * k));
+                dc.DrawLine(p, new Point(x + 14 * k, y + 5.5 * k), new Point(x + 18.5 * k, y + 18.5 * k));
+                Pen dash = RoundPen(wc, Math.Max(1.0, 1.5 * k));
+                dc.DrawLine(dash, new Point(x + 12 * k, y + 6.5 * k), new Point(x + 12 * k, y + 8.5 * k));
+                dc.DrawLine(dash, new Point(x + 12 * k, y + 11 * k), new Point(x + 12 * k, y + 13.2 * k));
+                dc.DrawLine(dash, new Point(x + 12 * k, y + 15.8 * k), new Point(x + 12 * k, y + 18.3 * k));
+                break;
+            }
+            case "viewer": {    // 버스 옆모습 (모델 보기)
+                dc.DrawRoundedRectangle(null, p, new Rect(x + 4.5 * k, y + 7 * k, 15 * k, 8.5 * k), 1.8 * k, 1.8 * k);
+                Pen thin = RoundPen(wc, Math.Max(1.0, 1.3 * k));
+                dc.DrawLine(thin, new Point(x + 4.8 * k, y + 11 * k), new Point(x + 19.2 * k, y + 11 * k));
+                dc.DrawLine(thin, new Point(x + 9.5 * k, y + 7.3 * k), new Point(x + 9.5 * k, y + 11 * k));
+                dc.DrawLine(thin, new Point(x + 14.5 * k, y + 7.3 * k), new Point(x + 14.5 * k, y + 11 * k));
+                dc.DrawEllipse(tb, p, new Point(x + 8.3 * k, y + 16 * k), 1.8 * k, 1.8 * k);
+                dc.DrawEllipse(tb, p, new Point(x + 15.7 * k, y + 16 * k), 1.8 * k, 1.8 * k);
+                break;
+            }
             case "update":      // 아래 화살표 + 받침
                 dc.DrawLine(p, new Point(x + 12 * k, y + 6 * k), new Point(x + 12 * k, y + 14 * k));
                 dc.DrawGeometry(null, p, Poly(false, new Point(x + 8.5 * k, y + 10.8 * k), new Point(x + 12 * k, y + 14.3 * k), new Point(x + 15.5 * k, y + 10.8 * k)));
@@ -171,10 +203,37 @@ public static class Art {
         gb.Freeze();
         dc.DrawRoundedRectangle(gb, null, back, 34 * s, 34 * s);
         dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.Accent, 150 / 255.0)), Pen(Color.FromArgb(110, 255, 255, 255), Math.Max(1, 1.5 * s)), new Rect(x, y, 150 * s, 150 * s), 34 * s, 34 * s);
-        FormattedText t1 = Ft("OBJ", Math.Max(6, 24 * s), true, Colors.White);
-        FormattedText t2 = Ft("2X", Math.Max(8, 44 * s), true, Colors.White);
-        dc.DrawText(t1, new Point(x + 8 * s + (134 * s - t1.Width) / 2, y + 18 * s + (44 * s - t1.Height) / 2));
-        dc.DrawText(t2, new Point(x + 8 * s + (134 * s - t2.Width) / 2, y + 60 * s + (70 * s - t2.Height) / 2));
+        // 앞 타일 위에 흰 버스 앞모습 (Bus Depot): 행선지 띠, 앞 유리, 전조등, 바퀴
+        Brush wb = Theme.Brush(Colors.White), ab = Theme.Brush(Theme.Mix(Theme.Accent, Colors.Black, 0.15)), lb = Theme.Brush(Color.FromRgb(255, 214, 102));
+        dc.DrawRoundedRectangle(ab, null, new Rect(x + 42 * s, y + 108 * s, 18 * s, 22 * s), 5 * s, 5 * s);
+        dc.DrawRoundedRectangle(ab, null, new Rect(x + 90 * s, y + 108 * s, 18 * s, 22 * s), 5 * s, 5 * s);
+        dc.DrawRoundedRectangle(wb, null, new Rect(x + 32 * s, y + 24 * s, 86 * s, 92 * s), 16 * s, 16 * s);
+        dc.DrawRoundedRectangle(ab, null, new Rect(x + 44 * s, y + 31 * s, 62 * s, 9 * s), 3 * s, 3 * s);
+        dc.DrawRoundedRectangle(ab, null, new Rect(x + 40 * s, y + 46 * s, 70 * s, 38 * s), 7 * s, 7 * s);
+        dc.DrawEllipse(lb, null, new Point(x + 49 * s, y + 99 * s), 6 * s, 6 * s);
+        dc.DrawEllipse(lb, null, new Point(x + 101 * s, y + 99 * s), 6 * s, 6 * s);
+        dc.DrawRoundedRectangle(ab, null, new Rect(x + 62 * s, y + 96 * s, 26 * s, 6 * s), 3 * s, 3 * s);
+    }
+
+    // 아이콘 파일(.ico): 16~256 크기를 PNG로 담는다 (개발용 --make-icon)
+    public static void WriteIco(string path) {
+        int[] sizes = new int[] { 16, 24, 32, 48, 64, 128, 256 };
+        List<byte[]> pngs = new List<byte[]>();
+        foreach (int z in sizes) {
+            BitmapSource b = Render(z, z, delegate(DrawingContext dc) { Logo(dc, z * 0.02, z * 0.02, z * 0.96); });
+            PngBitmapEncoder enc = new PngBitmapEncoder(); enc.Frames.Add(BitmapFrame.Create(b));
+            using (MemoryStream ms = new MemoryStream()) { enc.Save(ms); pngs.Add(ms.ToArray()); }
+        }
+        using (BinaryWriter w = new BinaryWriter(File.Create(path))) {
+            w.Write((ushort)0); w.Write((ushort)1); w.Write((ushort)sizes.Length);
+            int off = 6 + 16 * sizes.Length;
+            for (int i = 0; i < sizes.Length; i++) {
+                w.Write((byte)(sizes[i] >= 256 ? 0 : sizes[i])); w.Write((byte)(sizes[i] >= 256 ? 0 : sizes[i])); w.Write((byte)0); w.Write((byte)0);
+                w.Write((ushort)1); w.Write((ushort)32); w.Write(pngs[i].Length); w.Write(off);
+                off += pngs[i].Length;
+            }
+            foreach (byte[] b in pngs) w.Write(b);
+        }
     }
 
     public static BitmapSource Render(int w, int h, Action<DrawingContext> draw) {

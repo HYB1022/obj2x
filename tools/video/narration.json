@@ -1,0 +1,60 @@
+{
+  "_comment": "Bus Depot 소개 영상 대본. scenes의 id는 BusDepot.exe --video-frames의 장면 이름과 같아야 한다. min = 최소 길이(초)",
+  "voices": {
+    "ko": ["ko-KR-SunHiNeural", "kor", "한국어"],
+    "en": ["en-US-AriaNeural", "eng", "English"],
+    "de": ["de-DE-KatjaNeural", "deu", "Deutsch"],
+    "ja": ["ja-JP-NanamiNeural", "jpn", "日本語"],
+    "zh": ["zh-CN-XiaoxiaoNeural", "zho", "中文"]
+  },
+  "scenes": [
+    { "id": "intro", "min": 4.5, "text": {
+      "ko": "Bus Depot은 OMSI 2 제작자를 위한 무료 도구입니다.",
+      "en": "Bus Depot is a free toolkit for OMSI 2 creators.",
+      "de": "Bus Depot ist ein kostenloses Werkzeug für OMSI-2-Modder.",
+      "ja": "Bus Depotは、OMSI 2のクリエイターのための無料ツールです。",
+      "zh": "Bus Depot 是一款面向 OMSI 2 制作者的免费工具。" } },
+    { "id": "convert", "min": 5, "text": {
+      "ko": "Blender에서 내보낸 obj 폴더를 끌어다 놓으면, 폴더째 o3d로 변환합니다.",
+      "en": "Drag in a folder of OBJ files exported from Blender, and the whole folder is converted to o3d.",
+      "de": "Zieh einen Ordner mit OBJ-Dateien aus Blender hinein, und der ganze Ordner wird zu o3d konvertiert.",
+      "ja": "Blenderから書き出したobjのフォルダーをドラッグするだけで、フォルダーごとo3dに変換します。",
+      "zh": "把从 Blender 导出的 obj 文件夹拖进来,即可整个文件夹转换为 o3d。" } },
+    { "id": "dash", "min": 4.5, "text": {
+      "ko": "진행 상황은 작업 표시줄에도 보이고, 실패한 파일만 골라 다시 변환할 수 있습니다.",
+      "en": "Progress shows on the taskbar too, and you can retry just the files that failed.",
+      "de": "Der Fortschritt erscheint auch in der Taskleiste, und nur fehlgeschlagene Dateien lassen sich erneut konvertieren.",
+      "ja": "進行状況はタスクバーにも表示され、失敗したファイルだけを再変換できます。",
+      "zh": "进度也会显示在任务栏上,还可以只重新转换失败的文件。" } },
+    { "id": "object", "min": 5, "text": {
+      "ko": "변환한 모델로 OMSI 오브젝트를 만들면, 텍스처까지 알아서 복사해 줍니다.",
+      "en": "Turn your models into OMSI scenery objects, with the textures copied automatically.",
+      "de": "Mach aus deinen Modellen OMSI-Objekte – die Texturen werden automatisch mitkopiert.",
+      "ja": "変換したモデルからOMSIのオブジェクトを作り、テクスチャも自動でコピーします。",
+      "zh": "用转换好的模型制作 OMSI 物件,贴图也会自动复制。" } },
+    { "id": "spline", "min": 5, "text": {
+      "ko": "차선 수와 인도 폭만 정하면, 도로 스플라인이 바로 만들어집니다.",
+      "en": "Set the lanes and sidewalks, and your road spline is ready in seconds.",
+      "de": "Leg Fahrspuren und Gehwege fest, und schon ist die Straßenspline fertig.",
+      "ja": "車線数と歩道の幅を決めるだけで、道路スプラインがすぐに完成します。",
+      "zh": "只需设置车道数和人行道宽度,道路样条即刻生成。" } },
+    { "id": "viewer", "min": 6, "text": {
+      "ko": "버스 모델을 3D로 둘러보고, 그대로 Blender 파일로 저장할 수도 있습니다.",
+      "en": "Inspect bus models in 3D, and save them straight to a Blender file.",
+      "de": "Sieh dir Busmodelle in 3D an und speichere sie direkt als Blender-Datei.",
+      "ja": "バスのモデルを3Dで眺めて、そのままBlenderファイルとして保存することもできます。",
+      "zh": "以 3D 查看巴士模型,还能直接保存为 Blender 文件。" } },
+    { "id": "langs", "min": 5, "text": {
+      "ko": "다섯 개 언어와 다크 모드를 지원합니다.",
+      "en": "It speaks five languages, and comes with a dark mode.",
+      "de": "Verfügbar in fünf Sprachen, mit dunklem Modus.",
+      "ja": "5つの言語とダークモードに対応しています。",
+      "zh": "支持五种语言和深色模式。" } },
+    { "id": "outro", "min": 4, "text": {
+      "ko": "지금 GitHub에서 무료로 받아 보세요.",
+      "en": "Get it free on GitHub.",
+      "de": "Jetzt kostenlos auf GitHub.",
+      "ja": "今すぐGitHubから無料でダウンロードできます。",
+      "zh": "现在就去 GitHub 免费下载吧。" } }
+  ]
+}

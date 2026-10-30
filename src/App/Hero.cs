@@ -106,7 +106,7 @@ public class AboutHero : Drawn {
         double a, off;
 
         a = Appear(0); off = (1 - a) * 22;
-        Art.Text(dc, Art.Ft("obj2x", fT, true, Theme.A(txt, a)), new Rect(0, y + off, W, tH), TextAlignment.Center);
+        Art.Text(dc, Art.Ft(AppInfo.Name, fT, true, Theme.A(txt, a)), new Rect(0, y + off, W, tH), TextAlignment.Center);
         y += tH + 6;
         a = Appear(1); off = (1 - a) * 18;
         Art.Text(dc, Art.Ft("v" + AppInfo.Version, fV, false, Theme.A(sub, a)), new Rect(0, y + off, W, vH), TextAlignment.Center);

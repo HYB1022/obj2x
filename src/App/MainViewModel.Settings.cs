@@ -90,7 +90,7 @@ public partial class MainViewModel {
     public bool DelX { get { return S.DelX; } set { S.DelX = value; S.Save(); Raise("DelX"); } }
 
     // ---- 설정: 파일
-    public string BackupPath { get { return Path.Combine(Here, "obj2x_backup"); } }
+    public string BackupPath { get { return Path.Combine(Here, "BusDepot_backup"); } }
     List<string> TempFiles() { return new List<string> { Conversion.TempJobFile, Conversion.TempLogFile }; }
     public string TempText {
         get {

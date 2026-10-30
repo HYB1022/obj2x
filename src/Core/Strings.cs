@@ -136,7 +136,7 @@ public static class L {
         Directory.CreateDirectory(UserDir);
         List<KeyValuePair<string, string>> items = new List<KeyValuePair<string, string>>();
         items.Add(new KeyValuePair<string, string>("_name", "Language name in that language (e.g. Français)"));
-        items.Add(new KeyValuePair<string, string>("_help", "Copy this file as <code>.json (e.g. fr.json), translate the values, keep {0} {1} placeholders, then restart obj2x. Missing keys fall back to English."));
+        items.Add(new KeyValuePair<string, string>("_help", "Copy this file as <code>.json (e.g. fr.json), translate the values, keep {0} {1} placeholders, then restart Bus Depot. Missing keys fall back to English."));
         foreach (string k in ko.Keys) { string v; items.Add(new KeyValuePair<string, string>(k, en.TryGetValue(k, out v) ? v : ko[k])); }
         File.WriteAllText(Path.Combine(UserDir, "_template.json"), Json.WriteObject(items), new UTF8Encoding(false));
         return UserDir;

@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Runtime.InteropServices;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shell;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
@@ -21,7 +24,7 @@ public class MainWindow : Window, IUi {
     readonly ScaleTransform zoom = new ScaleTransform(1, 1);
     string shown = "dashboard";
     public DialogHost LastDialog;
-    public static readonly string[] PageNames = new string[] { "dashboard", "wizard", "advanced", "settings", "dev", "about" };
+    public static readonly string[] PageNames = new string[] { "dashboard", "wizard", "object", "spline", "viewer", "advanced", "settings", "dev", "about" };
     // 개발자 옵션: 알림(토스트), 새로 고침 빈도 표시, 레이아웃 경계 표시
     readonly Grid toastLayer = new Grid();
     readonly TextBlock fpsText = new TextBlock();
@@ -49,6 +52,8 @@ public class MainWindow : Window, IUi {
         fpsText.HorizontalAlignment = HorizontalAlignment.Right; fpsText.VerticalAlignment = VerticalAlignment.Top; fpsText.Margin = new Thickness(0, 6, 8, 0);
         fpsText.IsHitTestVisible = false; fpsText.Visibility = Visibility.Collapsed;
         host.Children.Add(fpsText);
+        dropLayer = DropHint();
+        host.Children.Add(dropLayer);
         Content = host;
         pageHost = (Grid)shell.FindName("PageHost");
         overlay = (Grid)shell.FindName("Overlay");
@@ -63,6 +68,24 @@ public class MainWindow : Window, IUi {
         VM.PropertyChanged += delegate(object o, System.ComponentModel.PropertyChangedEventArgs e) {
             if (e.PropertyName == "DevFps" || e.PropertyName == "DevMode" || e.PropertyName == null) SetFps(VM.DevFps);
             if (e.PropertyName == "DevBounds" || e.PropertyName == "DevMode" || e.PropertyName == null) bounds.Visibility = VM.DevBounds ? Visibility.Visible : Visibility.Collapsed;
+        };
+        // 작업 표시줄 단추에 변환 진행률
+        TaskbarItemInfo = new TaskbarItemInfo();
+        VM.PropertyChanged += delegate(object o, System.ComponentModel.PropertyChangedEventArgs e) {
+            if (e.PropertyName == "Progress" || e.PropertyName == "Running") {
+                TaskbarItemInfo.ProgressState = VM.Running ? TaskbarItemProgressState.Normal : TaskbarItemProgressState.None;
+                TaskbarItemInfo.ProgressValue = VM.Progress;
+            }
+        };
+        // 폴더/파일을 창 위에 끌어다 놓기
+        AllowDrop = true;
+        DragEnter += delegate(object o, DragEventArgs e) { OnDrag(e); };
+        DragOver += delegate(object o, DragEventArgs e) { OnDrag(e); };
+        DragLeave += delegate { ShowDrop(false); };
+        Drop += delegate(object o, DragEventArgs e) {
+            ShowDrop(false);
+            string p = DroppedPath(e);
+            if (p != null) { Activate(); VM.DropPath(p); }
         };
         VM.LogAppended += delegate(string chunk) { logBox.AppendText(chunk); logBox.ScrollToEnd(); };
         VM.LogCleared += delegate { logBox.Clear(); };
@@ -148,7 +171,7 @@ public class MainWindow : Window, IUi {
 
 
     // ------------------------------------------------------------ IUi
-    public void Msg(string text) { LastDialog = Dialogs.Msg(overlay, "obj2x", text); }
+    public void Msg(string text) { LastDialog = Dialogs.Msg(overlay, AppInfo.Name, text); }
 
     public void Disclaimer(bool review, Action<bool> done) {
         LastDialog = Dialogs.Disclaimer(overlay, review, delegate(bool ok) {
@@ -196,6 +219,64 @@ public class MainWindow : Window, IUi {
     public void ApplyLook() { Theme.Crossfade(host, delegate { Theme.Apply(S.Theme, S.Accent, S.Font); Theme.TitleBar(this); }); }
 
     public void Exit() { Close(); }
+
+    public void Confirm(string title, string body, string okText, Action<bool> done) { LastDialog = Dialogs.Confirm(overlay, title, body, okText, done); }
+
+    public void OpenFolder(string path) {
+        try { System.Diagnostics.Process.Start("explorer.exe", "\"" + path + "\""); } catch (Exception ex) { Msg(ex.Message); }
+    }
+
+    // 변환이 끝났을 때 다른 창을 보고 있으면 작업 표시줄 단추를 깜빡여 알린다 (소리 없음). 실패가 있으면 진행 막대를 빨갛게 잠깐 남긴다
+    public void Finished(bool failed) {
+        if (failed) { TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Error; TaskbarItemInfo.ProgressValue = 1; }
+        if (IsActive) return;
+        if (failed) Activated += ClearError;
+        try {
+            FLASHWINFO f = new FLASHWINFO();
+            f.cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO));
+            f.hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            f.dwFlags = 3 | 12;   // FLASHW_ALL | FLASHW_TIMERNOFG: 창을 다시 볼 때까지
+            FlashWindowEx(ref f);
+        } catch (Exception) { }
+    }
+    void ClearError(object s, EventArgs e) {
+        Activated -= ClearError;
+        if (!VM.Running) TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    struct FLASHWINFO { public uint cbSize; public IntPtr hwnd; public uint dwFlags; public uint uCount; public uint dwTimeout; }
+    [DllImport("user32.dll")] static extern bool FlashWindowEx(ref FLASHWINFO pwfi);
+
+    // ------------------------------------------------------------ 끌어다 놓기
+    readonly Border dropLayer;
+    Border DropHint() {
+        Border b = new Border(); b.IsHitTestVisible = false; b.Visibility = Visibility.Collapsed; b.Margin = new Thickness(14);
+        b.CornerRadius = new CornerRadius(24); b.BorderThickness = new Thickness(2.5);
+        b.SetResourceReference(Border.BorderBrushProperty, "Accent");
+        b.Background = Theme.Brush(Color.FromArgb(150, 0, 0, 0));
+        TextBlock t = new TextBlock(); t.Foreground = Brushes.White; t.FontSize = 22; t.FontWeight = FontWeights.Bold;
+        t.HorizontalAlignment = HorizontalAlignment.Center; t.VerticalAlignment = VerticalAlignment.Center;
+        b.Child = t;
+        return b;
+    }
+    static string DroppedPath(DragEventArgs e) {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return null;
+        string[] f = e.Data.GetData(DataFormats.FileDrop) as string[];
+        return f != null && f.Length > 0 ? f[0] : null;
+    }
+    void OnDrag(DragEventArgs e) {
+        bool ok = DroppedPath(e) != null && OverlayCount == 0;
+        e.Effects = ok ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+        ShowDrop(ok);
+    }
+    public void DropPreview(bool on) { ShowDrop(on); }   // 개발용(소개 영상)
+    void ShowDrop(bool on) {
+        if (on == (dropLayer.Visibility == Visibility.Visible)) return;
+        ((TextBlock)dropLayer.Child).Text = L.T(VM.Page == "object" ? "drop_hint_obj" : VM.Page == "spline" ? "drop_hint_tex" : VM.Page == "viewer" ? "drop_hint_view" : "drop_hint");
+        dropLayer.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        if (on && !Motion.Disabled) dropLayer.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, Motion.D(0.15)));
+    }
 
     // ------------------------------------------------------------ 알림 (화면 아래 가운데에 잠깐 떴다 사라진다)
     Border toast; DispatcherTimer toastTimer;

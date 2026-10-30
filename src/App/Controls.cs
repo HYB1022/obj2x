@@ -416,4 +416,105 @@ public static class Behave {
         };
     }
 }
+
+// ---------------------------------------------------------------- 스플라인 미리보기: 위에서 본 도로(차선, 방향 화살표, 인도) + 폭 + 단면(연석 높이는 과장)
+public class SplinePreview : Drawn {
+    public static readonly DependencyProperty SpecProperty = Dp("Spec", typeof(SplineSpec), typeof(SplinePreview), null);
+    public static readonly DependencyProperty VersionProperty = Dp("Version", typeof(int), typeof(SplinePreview), 0);
+    public SplineSpec Spec { get { return (SplineSpec)GetValue(SpecProperty); } set { SetValue(SpecProperty, value); } }
+    public int Version { get { return (int)GetValue(VersionProperty); } set { SetValue(VersionProperty, value); } }
+    public SplinePreview() { Height = 236; }
+
+    protected override void OnRender(DrawingContext dc) {
+        SplineSpec sp = Spec;
+        double W = ActualWidth;
+        if (sp == null || W < 50) return;
+        string err; bool ok = sp.Valid(out err);
+        double total = Math.Max(0.1, sp.TotalW), pad = 24;
+        double k = (W - pad * 2) / total, x0 = pad, top = 14, bot = 146;
+        bool dark = Theme.Dark;
+        Color asph = dark ? Color.FromRgb(62, 64, 70) : Color.FromRgb(78, 80, 86);
+        Color walk = dark ? Color.FromRgb(104, 100, 94) : Color.FromRgb(214, 208, 198);
+        Color joint = dark ? Color.FromRgb(88, 85, 80) : Color.FromRgb(190, 184, 174);
+        Color white = Color.FromRgb(240, 240, 240), yellow = Color.FromRgb(250, 200, 40);
+        if (!ok) { dc.PushOpacity(0.35); }
+        double xl = x0, xr0 = x0 + sp.WalkL * k, xr1 = xr0 + sp.RoadW * k;
+        dc.PushClip(new RectangleGeometry(new Rect(x0, top, total * k, bot - top), 12, 12));
+        // 인도 (보도블록 줄눈)
+        DrawWalk(dc, new Rect(xl, top, sp.WalkL * k, bot - top), walk, joint, sp.WalkRepeat * k);
+        DrawWalk(dc, new Rect(xr1, top, sp.WalkR * k, bot - top), walk, joint, sp.WalkRepeat * k);
+        // 도로
+        dc.DrawRectangle(Theme.Brush(asph), null, new Rect(xr0, top, sp.RoadW * k, bot - top));
+        Pen edge = Art.Pen(Theme.A(white, 0.9), 2);
+        dc.DrawLine(edge, new Point(xr0 + 3, top), new Point(xr0 + 3, bot));
+        dc.DrawLine(edge, new Point(xr1 - 3, top), new Point(xr1 - 3, bot));
+        List<SplineSpec.PathDef> paths = sp.Paths();
+        int back = sp.OneWay ? 0 : sp.Lanes / 2;
+        for (int i = 1; i < sp.Lanes; i++) {
+            double lx = xr0 + i * sp.LaneW * k;
+            if (i == back) {   // 마주 오는 차선 사이: 노란 겹선
+                Pen y = Art.Pen(yellow, 2);
+                dc.DrawLine(y, new Point(lx - 2.5, top), new Point(lx - 2.5, bot));
+                dc.DrawLine(y, new Point(lx + 2.5, top), new Point(lx + 2.5, bot));
+            } else {
+                Pen d = Art.Pen(Theme.A(white, 0.85), 2);
+                for (double yy = top + 6; yy < bot; yy += 26) dc.DrawLine(d, new Point(lx, yy), new Point(lx, Math.Min(bot, yy + 13)));
+            }
+        }
+        // 차/사람 길: 차선마다 방향 화살표, 인도는 점선
+        foreach (SplineSpec.PathDef pd in paths) {
+            double px = x0 + (pd.X + sp.RoadW / 2 + sp.WalkL) * k;
+            if (pd.Kind == 0) Arrow(dc, px, (top + bot) / 2, pd.Dir == 0, Theme.A(white, 0.95));
+            else {
+                Pen d = Art.RoundPen(Theme.A(Theme.Accent, 0.9), 2.2);
+                for (double yy = top + 8; yy < bot - 4; yy += 12) dc.DrawLine(d, new Point(px, yy), new Point(px, yy + 3));
+            }
+        }
+        dc.Pop();
+        if (!ok) dc.Pop();
+        // 폭 표시
+        Color mut = Theme.Muted;
+        double ly = bot + 8;
+        Pen tick = Art.Pen(Theme.A(mut, 0.6), 1);
+        List<double[]> parts = new List<double[]>();
+        if (sp.WalkL > 0) parts.Add(new double[] { xl, xr0, sp.WalkL });
+        if (sp.PerLane || sp.Lanes <= 4) for (int i = 0; i < sp.Lanes; i++) parts.Add(new double[] { xr0 + i * sp.LaneW * k, xr0 + (i + 1) * sp.LaneW * k, sp.LaneW });
+        else parts.Add(new double[] { xr0, xr1, sp.RoadW });
+        if (sp.WalkR > 0) parts.Add(new double[] { xr1, xr1 + sp.WalkR * k, sp.WalkR });
+        foreach (double[] pt in parts) {
+            dc.DrawLine(tick, new Point(pt[0] + 1, ly + 4), new Point(pt[1] - 1, ly + 4));
+            dc.DrawLine(tick, new Point(pt[0] + 1, ly), new Point(pt[0] + 1, ly + 8));
+            dc.DrawLine(tick, new Point(pt[1] - 1, ly), new Point(pt[1] - 1, ly + 8));
+            FormattedText ft = Art.Ft(pt[2].ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + " m", 11, false, mut);
+            if (ft.Width < pt[1] - pt[0] - 4) dc.DrawText(ft, new Point((pt[0] + pt[1] - ft.Width) / 2, ly + 10));
+        }
+        // 단면: 연석 높이를 보이게 과장 (최대 14px)
+        double py = 222, ch = sp.Curb > 0 ? Math.Min(14, 4 + sp.Curb * 40) : 0;
+        Pen prof = Art.RoundPen(Theme.Text, 2);
+        List<Point> pts = new List<Point>();
+        pts.Add(new Point(xl, py - (sp.WalkL > 0 ? ch : 0)));
+        if (sp.WalkL > 0) { pts.Add(new Point(xr0, py - ch)); pts.Add(new Point(xr0, py)); }
+        pts.Add(new Point(xr1, py));
+        if (sp.WalkR > 0) { pts.Add(new Point(xr1, py - ch)); pts.Add(new Point(xr1 + sp.WalkR * k, py - ch)); }
+        dc.DrawGeometry(null, prof, Art.Poly(false, pts.ToArray()));
+    }
+
+    static void DrawWalk(DrawingContext dc, Rect r, Color fill, Color joint, double tile) {
+        if (r.Width <= 0.5) return;
+        dc.DrawRectangle(Theme.Brush(fill), null, r);
+        Pen j = Art.Pen(joint, 1);
+        tile = Math.Max(6, tile / 2);
+        dc.PushClip(new RectangleGeometry(r));
+        for (double x = r.X + tile; x < r.Right; x += tile) dc.DrawLine(j, new Point(x, r.Top), new Point(x, r.Bottom));
+        for (double y = r.Y + tile; y < r.Bottom; y += tile) dc.DrawLine(j, new Point(r.X, y), new Point(r.Right, y));
+        dc.Pop();
+    }
+
+    static void Arrow(DrawingContext dc, double x, double y, bool up, Color c) {
+        double s = up ? -1 : 1;
+        Pen p = Art.RoundPen(c, 2.6);
+        dc.DrawLine(p, new Point(x, y - 16 * s), new Point(x, y + 16 * s));
+        dc.DrawGeometry(null, p, Art.Poly(false, new Point(x - 7, y + 9 * s), new Point(x, y + 16 * s), new Point(x + 7, y + 9 * s)));
+    }
+}
 }

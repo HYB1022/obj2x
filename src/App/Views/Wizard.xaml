@@ -1,6 +1,6 @@
 <Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x">
+      xmlns:ui="clr-namespace:Obj2x.UI;assembly=BusDepot">
   <!-- 변환 마법사: 종류 → 경로 → 옵션 → 확인 -->
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="64"/></Grid.RowDefinitions>
   <TextBlock Text="{ui:Tr wiz_title}" Style="{StaticResource TTitle}" Margin="24,20,24,0"/>

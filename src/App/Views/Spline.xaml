@@ -1,0 +1,166 @@
+<ScrollViewer xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI;assembly=BusDepot"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- OMSI 스플라인 만들기: 차선/인도 값으로 도로 단면(.sli)을 만들어 Splines에 저장 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="820">
+    <TextBlock Text="{ui:Tr nav_spline}" Style="{StaticResource PageTitle}" Margin="8,4,0,4"/>
+    <TextBlock Text="{ui:Tr spl_intro}" Style="{StaticResource DevSub}" Margin="8,0,8,6"/>
+    <TextBlock Text="{ui:Tr spl_sec_preview}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}" Padding="0,18,0,16">
+      <StackPanel>
+        <ui:SplinePreview Spec="{Binding SplSpec}" Version="{Binding SplVersion}"/>
+        <TextBlock Text="{Binding SplSummary}" Style="{StaticResource DevSub}" Margin="24,10,24,0"/>
+        <TextBlock Text="{Binding SplError}" Foreground="{DynamicResource Bad}" FontSize="12.5" Margin="24,4,24,0"/>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr spl_sec_road}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:NumBox DockPanel.Dock="Right" Value="{Binding SplLanes}" Minimum="1" Maximum="12" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_lanes}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr spl_lanes_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Text="m" Style="{StaticResource DevValue}" Margin="8,0,0,0"/>
+            <TextBox DockPanel.Dock="Right" Width="80" VerticalAlignment="Center" Margin="16,0,0,0" TextAlignment="Right" Text="{Binding SplLaneW, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_lanew}" Style="{StaticResource DevTitle}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="two=spl_two;one=spl_one" Value="{Binding SplDir}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_dir}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr spl_dir_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Command="{Binding PickRoadTexCmd}" Margin="8,0,0,0"/>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr spl_tex_reset}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Command="{Binding ClearRoadTexCmd}" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_road_tex}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding SplRoadTexText}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="road=spl_fit_road;lane=spl_fit_lane" Value="{Binding SplTexFit}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_fit}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr spl_fit_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Text="m" Style="{StaticResource DevValue}" Margin="8,0,0,0"/>
+            <TextBox DockPanel.Dock="Right" Width="80" VerticalAlignment="Center" Margin="16,0,0,0" TextAlignment="Right" Text="{Binding SplRoadRepeat, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_repeat}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr spl_repeat_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr spl_sec_walk}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Text="m" Style="{StaticResource DevValue}" Margin="8,0,0,0"/>
+            <TextBox DockPanel.Dock="Right" Width="80" VerticalAlignment="Center" Margin="16,0,0,0" TextAlignment="Right" Text="{Binding SplWalkL, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_walkl}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr spl_walk_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Text="m" Style="{StaticResource DevValue}" Margin="8,0,0,0"/>
+            <TextBox DockPanel.Dock="Right" Width="80" VerticalAlignment="Center" Margin="16,0,0,0" TextAlignment="Right" Text="{Binding SplWalkR, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_walkr}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr spl_walk_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Text="m" Style="{StaticResource DevValue}" Margin="8,0,0,0"/>
+            <TextBox DockPanel.Dock="Right" Width="80" VerticalAlignment="Center" Margin="16,0,0,0" TextAlignment="Right" Text="{Binding SplCurb, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_curb}" Style="{StaticResource DevTitle}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Command="{Binding PickWalkTexCmd}" Margin="8,0,0,0"/>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr spl_tex_reset}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Command="{Binding ClearWalkTexCmd}" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_walk_tex}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding SplWalkTexText}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Text="m" Style="{StaticResource DevValue}" Margin="8,0,0,0"/>
+            <TextBox DockPanel.Dock="Right" Width="80" VerticalAlignment="Center" Margin="16,0,0,0" TextAlignment="Right" Text="{Binding SplWalkRepeat, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_tile}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr spl_tile_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr spl_sec_save}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Style="{StaticResource DevRow}" Command="{Binding BrowseOmsiCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr omsi_dir}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding OmsiDirText}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center" Margin="16,0,0,0" Text="{Binding SplFolder, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_folder}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr spl_folder_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center" Margin="16,0,0,0" Text="{Binding SplName, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_name}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding SplOutText}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+    <Button Content="{ui:Tr spl_make}" Style="{StaticResource BtnPrimary}" Command="{Binding MakeSplCmd}" HorizontalAlignment="Right" Height="40" MinWidth="140" Margin="0,22,8,0"/>
+  </StackPanel>
+</ScrollViewer>

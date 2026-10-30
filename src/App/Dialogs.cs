@@ -128,6 +128,7 @@ public static class Dialogs {
         for (int i = 0; i < People.Length; i++) {
             if (i > 0) { Run dot = new Run("  ·  "); dot.SetResourceReference(TextElement.ForegroundProperty, "Muted"); names.Inlines.Add(dot); }
             string url = People[i][1];
+            if (url == null) { Run plain = new Run(People[i][0]); plain.SetResourceReference(TextElement.ForegroundProperty, "Text"); names.Inlines.Add(plain); continue; }
             Hyperlink h = new Hyperlink(new Run(People[i][0])); h.TextDecorations = null; h.Cursor = System.Windows.Input.Cursors.Hand;
             h.SetResourceReference(TextElement.ForegroundProperty, "Accent");
             h.ToolTip = url;
@@ -136,6 +137,12 @@ public static class Dialogs {
         }
         sp.Children.Add(names);
         return sp;
+    }
+
+    // 취소 / [확인 문구] 두 단추. 확인이면 true
+    public static DialogHost Confirm(Panel layer, string title, string body, string okText, Action<bool> done) {
+        return DialogHost.Show(layer, title, body, null, new string[] { L.T("btn_cancel"), okText }, 1, 500,
+            delegate(int i) { if (done != null) done(i == 1); });
     }
 
     // 라디오 선택. 확인하면 고른 값, 취소하면 null

@@ -1,4 +1,4 @@
-# 빌드 결과물 (build.bat으로 생성, 배포는 Releases의 obj2x.zip으로)
+# 빌드 결과물 (build.bat으로 생성, 배포는 Releases의 BusDepot.zip으로)
 *.exe
 *.exe.old
 *.pdb
@@ -41,3 +41,10 @@ lang/_template.json
 
 # MiSans: license forbids redistribution; users install it themselves
 fonts/MiSans*
+
+# Bus Depot (v2.7.3부터의 이름)
+BusDepot.exe
+BusDepot.ini
+BusDepot_backup/
+BusDepot_selftest.txt
+BusDepot_fps.txt

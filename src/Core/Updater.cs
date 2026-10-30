@@ -27,7 +27,7 @@ public static class Updater {
     static WebClient Client() {
         try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072; } catch (Exception) { }
         WebClient wc = new WebClient();
-        wc.Headers[HttpRequestHeader.UserAgent] = "obj2x";
+        wc.Headers[HttpRequestHeader.UserAgent] = AppInfo.Exe;
         wc.Encoding = Encoding.UTF8;
         return wc;
     }
@@ -51,19 +51,21 @@ public static class Updater {
     // exePath는 지금 실행 중인 exe, here는 그 폴더.
     public static string Install(UpdateInfo u, string here, string exePath) {
         if (u == null || !u.ZipUrl.StartsWith("https://")) return "no zip";
-        string tmp = Path.Combine(Path.GetTempPath(), "obj2x_upd_" + Guid.NewGuid().ToString("N"));
+        string tmp = Path.Combine(Path.GetTempPath(), "BusDepot_upd_" + Guid.NewGuid().ToString("N"));
         try {
             Directory.CreateDirectory(tmp);
             string zip = Path.Combine(tmp, "update.zip");
             Client().DownloadFile(u.ZipUrl, zip);
             string ex = Path.Combine(tmp, "x");
             ZipFile.ExtractToDirectory(zip, ex);
-            string[] found = Directory.GetFiles(ex, "obj2x.exe", SearchOption.AllDirectories);
+            // 새 이름(BusDepot.exe)을 먼저, 없으면 예전 이름(obj2x.exe)이 있는 폴더를 쓴다
+            string[] found = Directory.GetFiles(ex, AppInfo.Exe + ".exe", SearchOption.AllDirectories);
+            if (found.Length == 0) found = Directory.GetFiles(ex, "obj2x.exe", SearchOption.AllDirectories);
             if (found.Length == 0) return L.T("upd_nofile");
             string root = Path.GetDirectoryName(found[0]);
-            string bak = Path.Combine(here, "obj2x_backup");
+            string bak = Path.Combine(here, AppInfo.Exe + "_backup");
             Directory.CreateDirectory(bak);
-            foreach (string n in new string[] { "obj2x.exe", "obj2x.bat", "obj2x.py", "obj2x_gui.ps1" }) {
+            foreach (string n in new string[] { "BusDepot.exe", "BusDepot.bat", "BusDepot.py", "obj2x.exe", "obj2x.bat", "obj2x.py", "obj2x_gui.ps1" }) {
                 string src = Path.Combine(here, n);
                 if (File.Exists(src)) File.Copy(src, Path.Combine(bak, n + ".v" + AppInfo.Version), true);
             }
@@ -82,6 +84,8 @@ public static class Updater {
     // 지난 업데이트가 남긴 exe.old 지우기 (시작할 때)
     public static void CleanupOld(string exePath) {
         try { string old = exePath + ".old"; if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
+        // v2.7.2 이하에서 올라오면 그 업데이터가 남긴 obj2x.exe.old (예전 본체)도 지운다
+        try { string old = Path.Combine(Path.GetDirectoryName(exePath), "obj2x.exe.old"); if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
     }
 
     // 실행 중인 앱이 fonts 폴더의 글꼴 파일을 열고 있어서 덮어쓰지 못할 수 있다.
@@ -90,7 +94,7 @@ public static class Updater {
     static void CopyTree(string src, string dst, bool top) {
         foreach (string f in Directory.GetFiles(src)) {
             string name = Path.GetFileName(f);
-            if (string.Equals(name, "obj2x.ini", StringComparison.OrdinalIgnoreCase)) continue;
+            if (string.Equals(name, "obj2x.ini", StringComparison.OrdinalIgnoreCase) || string.Equals(name, AppInfo.Exe + ".ini", StringComparison.OrdinalIgnoreCase)) continue;
             string to = Path.Combine(dst, name);
             if (SameFile(f, to)) continue;
             try { File.Copy(f, to, true); }

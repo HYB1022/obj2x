@@ -1,0 +1,86 @@
+<ScrollViewer xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI;assembly=BusDepot"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- 모델 보기: 버스 model.cfg / 오브젝트 .sco를 3D로 보고, 켜 둔 부품을 .blend(Blender) 또는 .obj로 저장 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="980">
+    <TextBlock Text="{ui:Tr nav_viewer}" Style="{StaticResource PageTitle}" Margin="8,4,0,4"/>
+    <TextBlock Text="{ui:Tr view_intro}" Style="{StaticResource DevSub}" Margin="8,0,8,6"/>
+    <TextBlock Text="{ui:Tr view_sec_file}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <Button Style="{StaticResource DevRow}" Command="{Binding BrowseCfgCmd}">
+        <DockPanel>
+          <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr view_file}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{Binding ViewPath}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+          </StackPanel>
+        </DockPanel>
+      </Button>
+    </Border>
+    <Border Style="{StaticResource DevCard}" Margin="0,14,0,0" Padding="10">
+      <Grid Height="460">
+        <ui:ModelView x:Name="View3D" Parts="{Binding Parts}" Scene="{Binding ViewScene}" Show="{Binding ViewShow}"/>
+        <TextBlock Text="{ui:Tr view_empty}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   TextAlignment="Center" Margin="40,0" Visibility="{Binding ViewEmpty, Converter={StaticResource Vis}}"/>
+        <TextBlock Text="{Binding ViewStatus}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   Visibility="{Binding ViewBusy, Converter={StaticResource Vis}}"/>
+      </Grid>
+    </Border>
+    <TextBlock Text="{Binding ViewStatus}" Style="{StaticResource DevSub}" Margin="24,8,24,0"/>
+    <TextBlock Text="{ui:Tr view_controls}" Style="{StaticResource DevSub}" Margin="24,2,24,0"/>
+
+    <TextBlock Text="{ui:Tr view_sec_parts}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="ext=view_ext;int=view_int;all=view_all" Value="{Binding ViewPreset}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_preset}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr view_preset_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ScrollViewer MaxHeight="400" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding Parts}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding Checked}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource DevTitle}"/>
+                    <TextBlock Text="{Binding Sub}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                  </StackPanel>
+                </CheckBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
+
+    <TextBlock Text="{ui:Tr view_sec_export}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Style="{StaticResource DevRow}" Command="{Binding SaveBlendCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_blend}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr view_blend_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+        <Button Style="{StaticResource DevRow}" Command="{Binding SaveObjCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_obj}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr view_obj_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</ScrollViewer>

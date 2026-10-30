@@ -61,7 +61,7 @@ public static class Conversion {
         return objs;
     }
 
-    public static string TempJobFile { get { return Path.Combine(Path.GetTempPath(), "obj2x_job.txt"); } }
-    public static string TempLogFile { get { return Path.Combine(Path.GetTempPath(), "obj2x_log.txt"); } }
+    public static string TempJobFile { get { return Path.Combine(Path.GetTempPath(), "BusDepot_job.txt"); } }
+    public static string TempLogFile { get { return Path.Combine(Path.GetTempPath(), "BusDepot_log.txt"); } }
 }
 }

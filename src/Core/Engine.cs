@@ -54,7 +54,10 @@ public class Engine {
 
     public volatile bool Cancel;
     public volatile bool Running;
-    public List<string> Failed = new List<string>();   // 재시도용 .x 경로
+    public List<string> Failed = new List<string>();   // 재시도용 .x 경로 (OmsiXConv 단계에서 실패)
+    public List<ObjItem> FailedObjs = new List<ObjItem>();   // 재시도용 obj (Blender/빠른 변환 단계에서 실패)
+    public string LastMode = "std";
+    public int FailCount { get { lock (Failed) { return Failed.Count + FailedObjs.Count; } } }
     Thread th;
     Process blender;
     readonly object procLock = new object();
@@ -71,17 +74,22 @@ public class Engine {
     void Row(ResRow r) { if (OnRow != null) OnRow(r); }
 
     // ------------------------------------------------------------ 시작/중지
-    public void Start(RunOptions o, List<ObjItem> objs) {
+    public void Start(RunOptions o, List<ObjItem> objs) { Start(o, objs, null); }
+    void Start(RunOptions o, List<ObjItem> objs, List<string> extraX) {
         if (Running) return;
         Cancel = false; Running = true;
+        LastMode = o.Mode;
+        lock (Failed) { Failed.Clear(); FailedObjs.Clear(); }
+        if (OnFailedChanged != null) OnFailedChanged();
         th = new Thread(delegate() {
             bool stopped = false;
             try {
                 if (o.Mode == "fast") RunFast(o, objs);
-                else RunBlender(o, objs);
+                else RunBlender(o, objs, extraX);
             } catch (Exception ex) { Say(ex.Message); }
             stopped = Cancel;
             if (stopped) Say(L.T("m_stopped"));
+            else if (FailCount > 0) Say(L.T("m_failed_hint", FailCount));
             Running = false;
             if (OnFinish != null) OnFinish(stopped);
         });
@@ -89,14 +97,18 @@ public class Engine {
         th.Start();
     }
 
+    // 실패한 것만 다시: obj 단계에서 실패한 것은 처음부터, .x까지 만든 것은 OmsiXConv만 다시
     public void StartRetry(RunOptions o) {
         if (Running) return;
-        List<string> files = new List<string>(Failed);
+        List<string> files; List<ObjItem> objs;
+        lock (Failed) { files = new List<string>(Failed); objs = new List<ObjItem>(FailedObjs); }
+        if (objs.Count > 0) { Start(o, objs, files); return; }
         Cancel = false; Running = true;
         th = new Thread(delegate() {
             try { O3dStage(o, files); } catch (Exception ex) { Say(ex.Message); }
             bool stopped = Cancel;
             if (stopped) Say(L.T("m_stopped"));
+            else if (FailCount > 0) Say(L.T("m_failed_hint", FailCount));
             Running = false;
             if (OnFinish != null) OnFinish(stopped);
         });
@@ -175,6 +187,8 @@ public class Engine {
                 ResRow r = new ResRow();
                 r.Name = it.Rel + ".o3d"; r.V = "-"; r.T = "-"; r.M = "-"; r.Sec = "-"; r.Status = L.T("r_fail", msg); r.Kind = 2;
                 Row(r);
+                lock (Failed) { FailedObjs.Add(it); }
+                if (OnFailedChanged != null) OnFailedChanged();
                 Say(L.T("m_fast_fail", it.Name, msg));
             }
             Prog((double)i / Math.Max(1, objs.Count));
@@ -195,7 +209,7 @@ public class Engine {
         return l.IndexOf("rror", StringComparison.Ordinal) >= 0;
     }
 
-    void RunBlender(RunOptions o, List<ObjItem> objs) {
+    void RunBlender(RunOptions o, List<ObjItem> objs, List<string> extraX) {
         DateTime t0 = DateTime.Now;
         List<string> names = new List<string>();
         List<string> jl = new List<string>();
@@ -203,11 +217,8 @@ public class Engine {
         foreach (string ln in o.ExOpt.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)) {
             if (Regex.IsMatch(ln.Trim(), "^[^=]+=")) jl.Add("opt:" + ln.Trim());
         }
-        string jobFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "obj2x_job.txt");
+        string jobFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "BusDepot_job.txt");
         File.WriteAllLines(jobFile, jl.ToArray(), new UTF8Encoding(true));
-        lock (Failed) { Failed.Clear(); }
-        if (OnFailedChanged != null) OnFailedChanged();
-
         Prog(0);
         Stat(L.T("m_blender_run"));
         Say(L.T("m_blender_run"));
@@ -247,11 +258,18 @@ public class Engine {
         if (Cancel) return;
 
         List<string> xs = new List<string>();
-        foreach (string n in names) {
-            string xp = System.IO.Path.Combine(o.Out, n + ".x");
-            if (File.Exists(xp)) xs.Add(xp);
+        foreach (ObjItem it in objs) {
+            string xp = System.IO.Path.Combine(o.Out, it.Rel + ".x");
+            if (File.Exists(xp) && File.GetLastWriteTime(xp) >= t0.AddSeconds(-2)) { xs.Add(xp); continue; }
+            // Blender가 .x를 만들지 못한 obj: 결과 표에 남기고 재시도 목록에 넣는다
+            ResRow r = new ResRow();
+            r.Name = it.Rel + ".x"; r.V = "-"; r.T = "-"; r.M = "-"; r.Sec = "-"; r.Status = L.T("r_fail", L.T("f_nox")); r.Kind = 2;
+            Row(r);
+            lock (Failed) { FailedObjs.Add(it); }
         }
+        if (FailedObjs.Count > 0 && OnFailedChanged != null) OnFailedChanged();
         Say(L.T("m_x_done", xs.Count, names.Count, Math.Round((DateTime.Now - t0).TotalSeconds, 1).ToString("0.0")));
+        if (extraX != null) foreach (string x in extraX) if (!xs.Contains(x) && File.Exists(x)) xs.Add(x);
         if (o.Mode == "std" && xs.Count > 0) {
             if (!File.Exists(o.Conv)) { Say(L.T("m_conv_skip")); }
             else { O3dStage(o, xs); return; }
@@ -313,6 +331,10 @@ public class Engine {
                     done++;
                     Prog((double)done / Math.Max(1, total));
                     Stat("OmsiXConv " + done + " / " + total);
+                    ResRow row = new ResRow();
+                    row.Name = j.Name + ".o3d"; row.V = "-"; row.T = "-"; row.M = "-"; row.Sec = (DateTime.Now - j.T0).TotalSeconds.ToString("0.0");
+                    if (r == "ok") { row.Status = "OK"; row.Kind = 0; } else { row.Status = L.T("r_fail", FailText(r.Substring(5))); row.Kind = 2; }
+                    Row(row);
                     if (r == "ok") {
                         okN++;
                         Say(L.T("m_o3_ok", done, total, j.Name, j.TSetup.ToString("0.0"), (DateTime.Now - j.T0).TotalSeconds.ToString("0.0")));
@@ -327,7 +349,6 @@ public class Engine {
             Thread.Sleep(100);
         }
         Say(L.T("m_o3_end", okN, total, Math.Round((DateTime.Now - start).TotalSeconds, 1).ToString("0.0")));
-        if (Failed.Count > 0) Say(L.T("m_failed_hint", Failed.Count));
         Stat(L.T("m_o3_stat", okN, total));
         Say(L.T("m_done"));
     }

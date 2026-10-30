@@ -5,13 +5,14 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Controls.Primitives;
 
 namespace Obj2x.UI {
 
-// obj2x.exe --selftest : 설정/문구/변환기/엔진(중지 포함)/XAML 화면/ViewModel을 자동으로 점검한다.
+// BusDepot.exe --selftest : 설정/문구/변환기/엔진(중지 포함)/XAML 화면/ViewModel을 자동으로 점검한다.
 public static class SelfTest {
     static int fail = 0;
     static StringBuilder sb = new StringBuilder();
@@ -36,6 +37,8 @@ public static class SelfTest {
         return r.ToString();
     }
 
+    static int Count(string s, string sub) { int n = 0, i = 0; while ((i = s.IndexOf(sub, i, StringComparison.Ordinal)) >= 0) { n++; i += sub.Length; } return n; }
+
     static void T(string name, bool ok, string detail) {
         string line = ok ? "PASS " + name : "FAIL " + name + ": " + detail;
         if (!ok) fail++;
@@ -44,7 +47,7 @@ public static class SelfTest {
 
     public static int Run(string here, string outFile) {
         Motion.Off = true;
-        string root = Path.Combine(Path.GetTempPath(), "obj2x_selftest_cs");
+        string root = Path.Combine(Path.GetTempPath(), "BusDepot_selftest_cs");
         try { if (Directory.Exists(root)) Directory.Delete(root, true); } catch (Exception) { }
         Directory.CreateDirectory(root);
 
@@ -143,6 +146,144 @@ public static class SelfTest {
         for (int i = 0; i < 300 && !fin2; i++) Thread.Sleep(20);
         T("엔진(빠른 변환): 중간에 중지", fin2 && stopped2 && rows2 == 5 && !File.Exists(Path.Combine(big2, "m10.o3d")), rows2 + " fin=" + fin2 + " stopped=" + stopped2);
         T("엔진: 중지 뒤 다시 시작 가능", !e2.Running, "");
+        // 실패한 것만 다시: 빠른 변환에서 깨진 obj는 재시도 목록에 들어가고, 고친 뒤 다시 하면 비워진다
+        string bad3 = Path.Combine(root, "bad3"); Directory.CreateDirectory(bad3);
+        File.WriteAllText(Path.Combine(bad3, "ok.obj"), objText.Replace("mtllib a.mtl\n", ""), Encoding.ASCII);
+        File.WriteAllText(Path.Combine(bad3, "broken.obj"), "v 0 0 0\n", Encoding.ASCII);
+        ro = new RunOptions(); ro.Mode = "fast"; ro.In = bad3; ro.Out = bad3;
+        Engine e3 = new Engine(); bool fin3 = false;
+        e3.OnFinish = delegate(bool st) { fin3 = true; };
+        e3.Start(ro, Engine.FindObjs(bad3, false));
+        for (int i = 0; i < 300 && !fin3; i++) Thread.Sleep(20);
+        bool listed = e3.FailCount == 1 && e3.FailedObjs[0].Name == "broken" && e3.LastMode == "fast";
+        File.WriteAllText(Path.Combine(bad3, "broken.obj"), objText.Replace("mtllib a.mtl\n", ""), Encoding.ASCII);
+        fin3 = false; int rows3 = 0; e3.OnRow = delegate(ResRow r) { rows3++; };
+        e3.StartRetry(ro);
+        for (int i = 0; i < 300 && !fin3; i++) Thread.Sleep(20);
+        T("엔진: 실패한 것만 다시 (빠른 변환)", listed && fin3 && rows3 == 1 && e3.FailCount == 0 && File.Exists(Path.Combine(bad3, "broken.o3d")), listed + " rows=" + rows3 + " fail=" + e3.FailCount);
+
+        // 4-1. 변환 전 텍스처 검사
+        List<ObjItem> texObjs = Engine.FindObjs(od, false);
+        List<string> texMiss = Omsi.MissingTextures(texObjs);
+        File.WriteAllBytes(Path.Combine(od, "tex.bmp"), new byte[] { 0x42, 0x4D });
+        T("텍스처 검사: mtl에 있는데 없는 텍스처", texMiss.Count == 1 && texMiss[0] == "a: tex.bmp" && Omsi.MissingTextures(texObjs).Count == 0, string.Join(", ", texMiss.ToArray()));
+
+        // 4-2. OMSI 오브젝트(.sco): o3d의 텍스처 이름 읽기, 알파 판별, 모델/텍스처 복사
+        string md = Path.Combine(root, "models"); Directory.CreateDirectory(md);
+        File.WriteAllText(Path.Combine(md, "house.mtl"), "newmtl m1\nmap_Kd wall.bmp\nnewmtl m2\nmap_Kd glass.tga\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(md, "house.obj"), objText.Replace("a.mtl", "house.mtl") + "usemtl m2\nf 1/1/1 3/3/1 4/3/1\n", Encoding.ASCII);
+        FastO3D.ConvertEx(Path.Combine(md, "house.obj"), Path.Combine(md, "house.o3d"), out nv, out nt, out nm, out wn);
+        FastO3D.ConvertEx(Path.Combine(od, "a.obj"), Path.Combine(md, "fence.o3d"), out nv, out nt, out nm, out wn);
+        File.Delete(Path.Combine(md, "house.obj"));
+        File.WriteAllBytes(Path.Combine(md, "wall.bmp"), new byte[] { 0x42, 0x4D, 0, 0 });
+        byte[] tga = new byte[18]; tga[2] = 2; tga[16] = 32; tga[17] = 8;
+        Directory.CreateDirectory(Path.Combine(md, "texture"));
+        File.WriteAllBytes(Path.Combine(md, "texture", "glass.tga"), tga);
+        List<string> ht = Omsi.O3dTextures(Path.Combine(md, "house.o3d"));
+        T("OMSI: o3d에서 텍스처 이름 읽기", ht.Count == 2 && ht[0] == "wall.bmp" && ht[1] == "glass.tga", string.Join(",", ht.ToArray()));
+        T("OMSI: 알파 채널 판별 (tga 32비트 / bmp)", Omsi.HasAlpha(Path.Combine(md, "texture", "glass.tga")) && !Omsi.HasAlpha(Path.Combine(md, "wall.bmp")), "");
+        string so = Path.Combine(root, "omsi", "Sceneryobjects", "test");
+        ScoOptions sop = new ScoOptions(); sop.Alpha = 2;
+        ScoResult sr = ScoMaker.Make(new List<string> { Path.Combine(md, "house.o3d"), Path.Combine(md, "fence.o3d") }, so, sop);
+        string sco = File.Exists(Path.Combine(so, "house.sco")) ? File.ReadAllText(Path.Combine(so, "house.sco"), Encoding.Default) : "";
+        T("OMSI: 모델마다 .sco + 모델/텍스처 복사, 없는 텍스처 보고", sr.Sco.Count == 2 && File.Exists(Path.Combine(so, "model", "house.o3d")) && File.Exists(Path.Combine(so, "texture", "glass.tga"))
+            && File.Exists(Path.Combine(so, "texture", "wall.bmp")) && sr.Missing.Count == 1 && sr.Missing[0] == "fence: tex.bmp", sr.Sco.Count + " missing=" + string.Join(",", sr.Missing.ToArray()));
+        T("OMSI: .sco 내용 (메시, 충돌, 투명 재질)", sco.Contains("[mesh]\r\nhouse.o3d") && sco.Contains("[collision_mesh]\r\nhouse.o3d") && sco.Contains("[matl]\r\nglass.tga\r\n0\r\n[matl_alpha]\r\n2")
+            && !sco.Contains("[matl]\r\nwall.bmp") && sco.Contains("[groups]\r\n1\r\nBus Depot") && sco.Contains("[fixed]"), sco);
+        sop.Combine = true; sop.Name = "Haus"; sop.Collision = false;
+        ScoResult sr2 = ScoMaker.Make(new List<string> { Path.Combine(md, "house.o3d"), Path.Combine(md, "fence.o3d") }, so, sop);
+        string sco2 = sr2.Sco.Count == 1 ? File.ReadAllText(sr2.Sco[0], Encoding.Default) : "";
+        T("OMSI: 하나로 합친 .sco", sr2.Sco.Count == 1 && sr2.Sco[0].EndsWith("Haus.sco") && sco2.Contains("house.o3d") && sco2.Contains("fence.o3d") && !sco2.Contains("[collision_mesh]"), sco2);
+
+        // 4-3. OMSI 스플라인(.sli)
+        SplineSpec sp1 = new SplineSpec();
+        string sli = sp1.Text("road.bmp", "walk.bmp");
+        List<SplineSpec.PathDef> pth = sp1.Paths();
+        T("OMSI: 스플라인 기본값 (인도 2 + 도로 1 프로필, 경로 4개, 오른쪽 통행)", Count(sli, "[profile]") == 3 && Count(sli, "[path]") == 4 && Count(sli, "[texture]") == 2
+            && pth[0].Dir == 1 && pth[1].Dir == 0 && pth[2].Kind == 1 && pth[2].Dir == 2 && Math.Abs(sp1.TotalW - 10.5) < 1e-9, sli);
+        sp1.Lanes = 3; sp1.OneWay = true; sp1.PerLane = true; sp1.WalkL = 0;
+        string sli2 = sp1.Text("road.bmp", "walk.bmp");
+        T("OMSI: 일방통행 3차선, 차선마다 텍스처, 왼쪽 인도 없음", Count(sli2, "[profile]") == 4 && sp1.Paths().TrueForAll(delegate(SplineSpec.PathDef q) { return q.Kind == 1 || q.Dir == 0; })
+            && sli2.Contains("[profilepnt]\r\n-4.875\r\n0\r\n0\r\n0.2"), sli2);
+        SplineSpec sp2 = SplineSpec.Unpack(sp1.Pack());
+        T("OMSI: 스플라인 값 저장/복원", sp2.Lanes == 3 && sp2.OneWay && sp2.PerLane && sp2.WalkL == 0 && sp2.Pack() == sp1.Pack() && SplineSpec.Unpack("x|y").Lanes == 2, sp1.Pack());
+        string sdir = Path.Combine(root, "omsi", "Splines", "BusDepot");
+        sp1.WalkL = 2;
+        string sf = sp1.Save(sdir, "Test Road");
+        byte[] bm = File.Exists(Path.Combine(sdir, "texture", "busdepot_asphalt.bmp")) ? File.ReadAllBytes(Path.Combine(sdir, "texture", "busdepot_asphalt.bmp")) : new byte[0];
+        T("OMSI: 스플라인 저장 + 기본 텍스처 (256x256 BMP)", File.Exists(sf) && sf.EndsWith("Test Road.sli") && bm.Length == 54 + 256 * 256 * 3 && bm[0] == 'B' && bm[1] == 'M'
+            && File.Exists(Path.Combine(sdir, "texture", "busdepot_pavement.bmp")), sf + " " + bm.Length);
+        string err0; SplineSpec sp3 = new SplineSpec(); sp3.LaneW = 0.2;
+        T("OMSI: 잘못된 값 거르기", !sp3.Valid(out err0) && err0 == "spl_err_lanew", err0);
+
+        // 4-4. 모델 보기: o3d 버전 1/7(긴 번호), 암호화 거부, cfg 읽기(LOD, [visible], [matl_alpha], 도색), obj 내보내기 방향
+        O3dModel m1 = O3dModel.Load(Path.Combine(md, "house.o3d"));
+        T("o3d 읽기: 버전 1 (정점/삼각형/재질)", m1.Version == 1 && m1.VCount == 4 && m1.TCount == 3 && m1.Mats.Count == 2 && m1.Mats[1].Tex == "glass.tga", m1.VCount + "/" + m1.TCount + "/" + m1.Mats.Count);
+        string v7 = Path.Combine(md, "v7.o3d");
+        using (BinaryWriter bw = new BinaryWriter(File.Create(v7))) {
+            bw.Write(new byte[] { 0x84, 0x19, 0x07, 0x01 }); bw.Write(0xFFFFFFFFu);
+            bw.Write((byte)0x17); bw.Write(3);
+            float[][] vv = new float[][] { new float[] { 0, 0, 0 }, new float[] { 1, 0, 0 }, new float[] { 0, 1, 2 } };
+            foreach (float[] q in vv) { bw.Write(q[0]); bw.Write(q[1]); bw.Write(q[2]); bw.Write(0f); bw.Write(0f); bw.Write(-1f); bw.Write(q[0]); bw.Write(q[1]); }
+            bw.Write((byte)0x49); bw.Write(1); bw.Write(0); bw.Write(1); bw.Write(2); bw.Write((ushort)0);
+            bw.Write((byte)0x26); bw.Write((ushort)1); for (int i = 0; i < 11; i++) bw.Write(1f); bw.Write((byte)8); bw.Write(Encoding.ASCII.GetBytes("wall.bmp"));
+            bw.Write((byte)0x79); for (int i = 0; i < 16; i++) bw.Write(i % 5 == 0 ? 1f : 0f);
+        }
+        O3dModel m7 = O3dModel.Load(v7);
+        T("o3d 읽기: 버전 7 + 32비트 번호", m7.Version == 7 && m7.VCount == 3 && m7.TCount == 1 && m7.T[2] == 2 && m7.V[8 * 2 + 2] == 2f && m7.Mats[0].Tex == "wall.bmp", m7.Version + " " + m7.VCount);
+        byte[] enc7 = File.ReadAllBytes(v7); enc7[4] = 0x12; File.WriteAllBytes(Path.Combine(md, "enc.o3d"), enc7);
+        string encErr = ""; try { O3dModel.Load(Path.Combine(md, "enc.o3d")); } catch (Exception ex) { encErr = ex.Message; }
+        T("o3d 읽기: 암호화된 파일은 거부", encErr == L.T("o3d_err_encrypted"), encErr);
+        T("o3d 읽기: 버전 7 텍스처 목록", Omsi.O3dTextures(v7).Count == 1, "");
+        // 버스 폴더 모양: Vehicles\Bus\Model\model.cfg, Texture\, 도색 폴더
+        string bus = Path.Combine(root, "Bus"), bm2 = Path.Combine(bus, "Model"), bt = Path.Combine(bus, "Texture"), bw2 = Path.Combine(bt, "Werbung");
+        Directory.CreateDirectory(Path.Combine(bm2, "parts")); Directory.CreateDirectory(bw2);
+        File.Copy(Path.Combine(md, "house.o3d"), Path.Combine(bm2, "parts", "body.o3d"), true);
+        File.Copy(v7, Path.Combine(bm2, "parts", "wheel.o3d"), true);
+        File.WriteAllBytes(Path.Combine(bt, "wall.bmp"), new byte[] { 0x42, 0x4D });
+        File.WriteAllBytes(Path.Combine(bt, "glass.tga"), tga);
+        File.WriteAllBytes(Path.Combine(bw2, "wall_Red.bmp"), new byte[] { 0x42, 0x4D });
+        File.WriteAllText(Path.Combine(bm2, "model.cfg"), "[CTC]\r\nColorscheme\r\nTexture\\Werbung\r\n0\r\n[LOD]\r\n1\r\n[mesh]\r\nparts\\body.o3d\r\n[matl]\r\nglass.tga\r\n0\r\n[matl_alpha]\r\n2\r\n" +
+            "[mesh]\r\nparts\\wheel.o3d\r\n[visible]\r\nwheel_type\r\n1\r\n[mesh]\r\nparts\\wheel.o3d\r\n[visible]\r\nwheel_type\r\n2\r\n[mesh]\r\nparts\\inside.o3d\r\n[viewpoint]\r\n2\r\n" +
+            "[LOD]\r\n0.1\r\n[mesh]\r\nparts\\body.o3d\r\n", Encoding.ASCII);
+        ModelCfg mc = ModelCfg.Load(Path.Combine(bm2, "model.cfg"));
+        T("cfg 읽기: 부품, LOD, [visible], [viewpoint], [matl_alpha]", mc.Meshes.Count == 5 && mc.BestLod == 1 && mc.Meshes[1].VisVar == "wheel_type" && mc.Meshes[3].ViewPoint == 2
+            && mc.Meshes[0].UsesAlpha("glass.tga") && !mc.Meshes[0].UsesAlpha("wall.bmp") && mc.Meshes[4].Lod == 2, mc.Meshes.Count + " best=" + mc.BestLod);
+        T("cfg 읽기: 처음 보이는 부품 (자세한 LOD, 밖, 조건부는 첫 값만)", mc.DefaultOn(mc.Meshes[0]) && mc.DefaultOn(mc.Meshes[1]) && !mc.DefaultOn(mc.Meshes[2]) && !mc.DefaultOn(mc.Meshes[3]) && !mc.DefaultOn(mc.Meshes[4]), "");
+        string ft = mc.FindTex("wall.bmp", mc.Meshes[0]), fg = mc.FindTex("glass.tga", mc.Meshes[0]);
+        T("cfg 읽기: 도색 폴더의 텍스처를 먼저, 없으면 Texture", ft != null && ft.EndsWith("wall_Red.bmp") && fg != null && fg.EndsWith(Path.Combine("Texture", "glass.tga")), ft + " | " + fg);
+        // cfg가 Model\cfg\ 안에 있고 [mesh]는 Model 기준인 차량 (실제 차량에서 흔한 모양)
+        File.WriteAllText(Path.Combine(bus, "Bus.bus"), "[model]\r\nmodel\\cfg\\nested.cfg\r\n", Encoding.ASCII);
+        Directory.CreateDirectory(Path.Combine(bm2, "cfg"));
+        File.WriteAllText(Path.Combine(bm2, "cfg", "nested.cfg"), "[mesh]\r\nparts\\body.o3d\r\n[mesh]\r\nparts\\wheel.o3d\r\n[mesh]\r\nparts\\none.o3d\r\n", Encoding.ASCII);
+        ModelCfg mn = ModelCfg.Load(Path.Combine(bm2, "cfg", "nested.cfg"));
+        T("cfg 읽기: Model\\cfg\\ 안의 cfg도 차량 폴더를 찾아 부품/텍스처를 찾음", mn.VehicleDir == bus && mn.Meshes[0].Exists && mn.Meshes[1].Exists && !mn.Meshes[2].Exists
+            && mn.FindTex("glass.tga", mn.Meshes[0]) != null && mn.FindTex("glass.tga", mn.Meshes[0]).EndsWith(Path.Combine("Texture", "glass.tga")), mn.VehicleDir + " | " + mn.Meshes[0].Path);
+        string sco3 = Path.Combine(so, "house.sco");
+        ModelCfg ms = ModelCfg.Load(sco3);
+        T("cfg 읽기: 오브젝트 .sco (model\\, texture\\ 기준)", ms.Meshes.Count == 1 && ms.Meshes[0].Exists && ms.FindTex("glass.tga", ms.Meshes[0]) != null, ms.Meshes.Count.ToString());
+        List<string> exErr = new List<string>();
+        string objOut = Path.Combine(root, "export", "bus.obj"); Directory.CreateDirectory(Path.GetDirectoryName(objOut));
+        List<string> exMiss = ObjExport.Write(mc, new List<CfgMesh> { mc.Meshes[0], mc.Meshes[1], mc.Meshes[3] }, objOut, exErr);
+        string objTxt = File.ReadAllText(objOut), mtlTxt = File.ReadAllText(Path.ChangeExtension(objOut, ".mtl"));
+        // wheel.o3d의 세 번째 정점 (0, 1, 2) → obj에서는 z를 뒤집어 (0, 1, -2), UV v도 뒤집음, 면 방향 반대 (1 3 2)
+        T("obj 내보내기: 부품마다 o, z 뒤집기, 면 방향, 텍스처 경로, 투명은 [matl_alpha]만", objTxt.Contains("o body") && objTxt.Contains("o wheel") && objTxt.Contains("v 0 1 -2")
+            && objTxt.Contains("vt 0 0\n") == false && objTxt.Contains("f 5/5/5 7/7/7 6/6/6") && mtlTxt.Contains("map_Kd " + Path.Combine(bw2, "wall_Red.bmp")) && mtlTxt.Contains("map_d " + Path.Combine(bt, "glass.tga"))
+            && Count(mtlTxt, "map_d") == 1 && exErr.Count == 1 && exErr[0].StartsWith(@"parts\inside.o3d"), objTxt.Length + " err=" + string.Join(",", exErr.ToArray()) + "\n" + mtlTxt);
+
+        // 4-5. 텍스처 읽기: tga(무압축/RLE), dds(DXT1/DXT5)
+        byte[] t2 = new byte[18 + 4 * 4]; t2[2] = 2; t2[12] = 2; t2[14] = 2; t2[16] = 32; t2[17] = 8 | 0x20;
+        for (int i = 0; i < 4; i++) { t2[18 + i * 4] = (byte)(i * 60); t2[19 + i * 4] = 10; t2[20 + i * 4] = 20; t2[21 + i * 4] = 128; }
+        byte[] t10 = new byte[] { 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 24, 0x20, 0x83, 1, 2, 3 };   // RLE: 같은 픽셀 4개
+        BitmapSource b2 = TexLoad.Tga(t2), b10 = TexLoad.Tga(t10);
+        byte[] px2 = new byte[16], px10 = new byte[16];
+        b2.CopyPixels(px2, 8, 0); b10.CopyPixels(px10, 8, 0);
+        T("텍스처: TGA 무압축 32비트 + RLE 24비트", px2[4] == 60 && px2[7] == 128 && px10[12] == 1 && px10[13] == 2 && px10[14] == 3 && px10[15] == 255, px2[4] + " " + px10[12]);
+        byte[] dds = new byte[128 + 8]; Encoding.ASCII.GetBytes("DDS ").CopyTo(dds, 0);
+        BitConverter.GetBytes(4).CopyTo(dds, 12); BitConverter.GetBytes(4).CopyTo(dds, 16); BitConverter.GetBytes(4).CopyTo(dds, 80); Encoding.ASCII.GetBytes("DXT1").CopyTo(dds, 84);
+        dds[128] = 0x00; dds[129] = 0xF8; dds[130] = 0x1F; dds[131] = 0x00;   // color0 = 빨강(F800), color1 = 파랑(001F), 모든 픽셀 0번 = 빨강
+        BitmapSource bd = TexLoad.Dds(dds); byte[] pd = new byte[64]; bd.CopyPixels(pd, 16, 0);
+        T("텍스처: DDS DXT1", bd.PixelWidth == 4 && pd[2] == 255 && pd[1] == 0 && pd[0] == 0 && pd[3] == 255, pd[0] + "," + pd[1] + "," + pd[2]);
 
         // 5. 변환 준비 (Core)
         Settings cs = new Settings(); cs.Inp = @"C:\no\such\folder"; cs.Blender = ""; cs.Conv = "";
@@ -193,8 +334,37 @@ public static class SelfTest {
             Loc.SetLang("ko"); Theme.Apply("light", "indigo", "nanum");
             MainWindow f = new MainWindow(us, root, false);
             f.FixClientSize(1040, 686); f.Show(); Pump.Run(200);
-            foreach (string pg in new string[] { "wizard", "advanced", "settings", "about", "dashboard" }) { f.VM.Page = pg; Pump.Run(50); }
+            foreach (string pg in new string[] { "wizard", "object", "spline", "viewer", "advanced", "settings", "about", "dashboard" }) { f.VM.Page = pg; Pump.Run(50); }
             T("화면: 모든 페이지 전환", f.VM.Page == "dashboard", f.VM.Page);
+            T("작업 표시줄: 진행률 표시 준비", f.TaskbarItemInfo != null, "");
+            // 끌어다 놓기: obj 폴더는 마법사 경로 단계로, o3d 파일은 오브젝트 만들기로
+            f.VM.DropPath(Path.Combine(od, "a.obj")); Pump.Run(60);
+            T("끌어다 놓기: obj 파일 → 마법사 경로 단계", f.VM.Page == "wizard" && f.VM.WizStep == 2 && f.VM.InPath == od, f.VM.Page + " " + f.VM.WizStep + " " + f.VM.InPath);
+            f.VM.DropPath(Path.Combine(md, "house.o3d")); Pump.Run(60);
+            T("끌어다 놓기: o3d → 오브젝트 만들기 + 모델 목록", f.VM.Page == "object" && f.VM.ObjModels == md && f.VM.Models.Count == 4 && f.VM.ObjFolder == "models",
+                f.VM.Page + " " + f.VM.Models.Count + " " + f.VM.ObjFolder);
+            // 스플라인 화면: 값을 바꾸면 미리보기가 다시 그려진다
+            f.VM.Page = "spline"; Pump.Run(80);
+            SplinePreview spv = FindAll<SplinePreview>(f.Host).Find(delegate(SplinePreview q) { return q.IsVisible; });
+            int v0 = spv == null ? -1 : spv.Version;
+            f.VM.SplLanes = 4; f.VM.SplLaneW = "3,5"; Pump.Run(30);
+            T("스플라인 화면: 미리보기 + 값 바꾸면 다시 그림", spv != null && spv.ActualWidth > 300 && spv.Version > v0 && f.VM.SplSpec.Lanes == 4 && Math.Abs(f.VM.SplSpec.LaneW - 3.5) < 1e-9
+                && f.VM.SplSummary.Contains("14"), spv == null ? "없음" : spv.ActualWidth + " " + f.VM.SplSummary);
+            f.VM.SplLaneW = "abc"; Pump.Run(10);
+            T("스플라인 화면: 숫자가 아니면 이전 값 유지, 입력은 그대로", Math.Abs(f.VM.SplSpec.LaneW - 3.5) < 1e-9 && f.VM.SplLaneW == "abc", f.VM.SplLaneW);
+            // 모델 보기: 다른 스레드에서 읽은 부품이 3D 화면에 보이고, 묶음을 바꾸면 켜진 부품이 바뀐다
+            f.VM.DropPath(Path.Combine(bm2, "model.cfg")); Pump.Run(60);
+            for (int i = 0; i < 200 && f.VM.ViewBusy; i++) Pump.Run(30);
+            Pump.Run(100);
+            ModelView mv3 = FindAll<ModelView>(f.Host).Find(delegate(ModelView q) { return q.IsVisible; });
+            int onParts = 0; foreach (PartItem pi in f.VM.Parts) if (pi.Checked) onParts++;
+            T("모델 보기: cfg를 끌어다 놓으면 열림 + 3D에 부품 표시", f.VM.Page == "viewer" && f.VM.Parts.Count == 5 && onParts == 2 && mv3 != null && mv3.Visible == 2 && f.VM.ViewStatus.Contains("2 / 5"),
+                f.VM.Page + " parts=" + f.VM.Parts.Count + " on=" + onParts + " vis=" + (mv3 == null ? -1 : mv3.Visible) + " " + f.VM.ViewStatus);
+            f.VM.ViewPreset = "all"; Pump.Run(50);
+            T("모델 보기: '전체'는 자세한 LOD의 조건부 부품까지", mv3 != null && mv3.Visible == 3, mv3 == null ? "없음" : mv3.Visible.ToString());
+            f.VM.Parts[0].Checked = false; Pump.Run(30);
+            T("모델 보기: 부품 스위치를 끄면 3D에서 사라짐", mv3 != null && mv3.Visible == 2, mv3 == null ? "없음" : mv3.Visible.ToString());
+            f.VM.InPath = big; f.VM.Page = "dashboard"; Pump.Run(60);   // 끌어다 놓기로 바꾼 입력 폴더를 되돌린다 (아래 마법사 점검용)
             foreach (string th in new string[] { "dark", "light", "system" }) foreach (string ac in new string[] { "indigo", "teal", "rose" }) {
                 f.VM.ThemeName = th; f.VM.AccentName = ac; Pump.Run(20);
             }
@@ -236,7 +406,7 @@ public static class SelfTest {
                     string tx = InlineText(tb.Inlines);   // 링크(Hyperlink) 안의 글자까지
                     if (tx.Contains("qbasys08")) credits = tx;
                 }
-                T("면책: 맨 아래 크레딧 (HYB1022 · qbasys08 · Claude)", credits != null && credits.Contains("HYB1022") && credits.Contains("Claude"), credits ?? "없음");
+                T("면책: 맨 아래 크레딧 (HYB1022 · qbasys08 · Claude)", credits != null && credits.Contains("HYB1022") && !credits.Contains("Junyoung") && credits.Contains("Claude"), credits ?? "없음");
                 Button okb = dh.Btn[dh.Btn.Length - 1];
                 T("면책: 체크 전에는 계속 버튼 비활성", !okb.IsEnabled, "");
                 dh.Check.IsChecked = true; Pump.Run(20);

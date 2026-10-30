@@ -115,7 +115,7 @@ public partial class MainViewModel {
         // 이 exe를 그 자리에서 --selftest로 한 번 더 실행하고, 결과만 임시 폴더의 파일로 받는다.
         // (예전처럼 exe를 임시 폴더에 복사해서 숨겨 실행하면 Windows Defender가 악성 코드로 오진했다)
         string exe = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        string result = Path.Combine(Path.GetTempPath(), "obj2x_selftest_" + Process.GetCurrentProcess().Id + ".txt");
+        string result = Path.Combine(Path.GetTempPath(), "BusDepot_selftest_" + Process.GetCurrentProcess().Id + ".txt");
         Thread th = new Thread(delegate() {
             int pass = 0, fail = 0; string err = null;
             try {

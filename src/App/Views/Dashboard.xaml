@@ -1,6 +1,6 @@
 <Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x" Margin="16">
+      xmlns:ui="clr-namespace:Obj2x.UI;assembly=BusDepot" Margin="16">
   <!-- 대시보드: 상태 카드, 경로 경고 배너, 작업 내역(로그/결과 표) -->
   <Grid.RowDefinitions><RowDefinition Height="96"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
 

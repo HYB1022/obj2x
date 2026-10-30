@@ -1,6 +1,6 @@
 <ScrollViewer xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-              xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x"
+              xmlns:ui="clr-namespace:Obj2x.UI;assembly=BusDepot"
               VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
   <!-- 설정 (HyperOS 설정 화면 모양, 개발자 옵션과 같은 줄 스타일): 모양, 동작, 파일 -->
   <StackPanel Margin="24,20,24,28" MaxWidth="820">
