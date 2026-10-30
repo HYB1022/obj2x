@@ -23,7 +23,11 @@ public class MainWindow : Window, IUi {
     readonly ScaleTransform zoom = new ScaleTransform(1, 1);
     string shown = "dashboard";
     public DialogHost LastDialog;
-    public static readonly string[] PageNames = new string[] { "dashboard", "wizard", "advanced", "settings", "about" };
+    public static readonly string[] PageNames = new string[] { "dashboard", "wizard", "advanced", "settings", "dev", "about" };
+    // 개발자 옵션: 알림(토스트), 새로 고침 빈도 표시, 레이아웃 경계 표시
+    readonly Grid toastLayer = new Grid();
+    readonly TextBlock fpsText = new TextBlock();
+    readonly BoundsLayer bounds = new BoundsLayer();
 
     public MainWindow(Settings s, string here, bool upgrade) {
         S = s; this.upgrade = upgrade;
@@ -38,6 +42,15 @@ public class MainWindow : Window, IUi {
         shell = (FrameworkElement)Xaml.Load("Shell.xaml");
         shell.LayoutTransform = zoom;
         host.Children.Add(shell);
+        bounds.Target = shell; bounds.Visibility = Visibility.Collapsed;
+        host.Children.Add(bounds);
+        toastLayer.IsHitTestVisible = false;
+        host.Children.Add(toastLayer);
+        fpsText.FontFamily = new FontFamily("Consolas"); fpsText.FontSize = 13; fpsText.Foreground = Theme.Brush(Color.FromRgb(80, 230, 120));
+        fpsText.Background = Theme.Brush(Color.FromArgb(170, 0, 0, 0)); fpsText.Padding = new Thickness(8, 3, 8, 3);
+        fpsText.HorizontalAlignment = HorizontalAlignment.Right; fpsText.VerticalAlignment = VerticalAlignment.Top; fpsText.Margin = new Thickness(0, 6, 8, 0);
+        fpsText.IsHitTestVisible = false; fpsText.Visibility = Visibility.Collapsed;
+        host.Children.Add(fpsText);
         Content = host;
         pageHost = (Grid)shell.FindName("PageHost");
         overlay = (Grid)shell.FindName("Overlay");
@@ -51,6 +64,12 @@ public class MainWindow : Window, IUi {
         pages["dashboard"].Visibility = Visibility.Visible;
 
         VM.PageChanged += ShowPage;
+        VM.PropertyChanged += delegate(object o, System.ComponentModel.PropertyChangedEventArgs e) {
+            if (e.PropertyName == "DevMode" || e.PropertyName == null)   // 메뉴가 생기거나 사라지면 알약 위치를 다시
+                Dispatcher.BeginInvoke(new Action(delegate { MovePill(shown, false); }), DispatcherPriority.Loaded);
+            if (e.PropertyName == "DevFps" || e.PropertyName == "DevMode" || e.PropertyName == null) SetFps(VM.DevFps);
+            if (e.PropertyName == "DevBounds" || e.PropertyName == "DevMode" || e.PropertyName == null) bounds.Visibility = VM.DevBounds ? Visibility.Visible : Visibility.Collapsed;
+        };
         VM.LogAppended += delegate(string chunk) { logBox.AppendText(chunk); logBox.ScrollToEnd(); };
         VM.LogCleared += delegate { logBox.Clear(); };
         Loc.Changed += delegate { Title = L.T("app_title"); };
@@ -60,6 +79,8 @@ public class MainWindow : Window, IUi {
             UpdateZoom();
             MovePill(shown, false);
             PreloadPages();
+            SetFps(VM.DevFps);
+            bounds.Visibility = VM.DevBounds ? Visibility.Visible : Visibility.Collapsed;
             if (S.UpdCheck) VM.StartUpdateCheck();
             if (this.upgrade && S.NeedDisclaimer()) Disclaimer(false, null);
         };
@@ -116,7 +137,7 @@ public class MainWindow : Window, IUi {
         if (name != shown) {
             pages[shown].Visibility = Visibility.Hidden;
             np.Visibility = Visibility.Visible;
-            if (!Motion.Off) {
+            if (!Motion.Disabled) {
                 // 전환하는 동안만 페이지를 비트맵 한 장으로 굳혀서 그래픽카드가 옮기게 한다 (글자/상자를 매 프레임 다시 그리지 않음)
                 BitmapCache cache = new BitmapCache(zoom.ScaleX); cache.SnapsToDevicePixels = true;
                 np.CacheMode = cache;
@@ -140,7 +161,7 @@ public class MainWindow : Window, IUi {
         double top = ni.TranslatePoint(new Point(0, 0), pillLayer).Y + 2;
         TranslateTransform tt = pill.RenderTransform as TranslateTransform;
         if (tt == null) { tt = new TranslateTransform(); pill.RenderTransform = tt; }
-        if (!anim || Motion.Off) { tt.BeginAnimation(TranslateTransform.YProperty, null); tt.Y = top; return; }
+        if (!anim || Motion.Disabled) { tt.BeginAnimation(TranslateTransform.YProperty, null); tt.Y = top; return; }
         DoubleAnimation a = new DoubleAnimation(top, Motion.D(0.25));
         a.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
         tt.BeginAnimation(TranslateTransform.YProperty, a);
@@ -192,8 +213,59 @@ public class MainWindow : Window, IUi {
         foreach (Action a in batch) a();
     }
 
-    public void ApplyLook() { Theme.Crossfade(host, delegate { Theme.Apply(S.Theme, S.Accent, S.SysFont); Theme.TitleBar(this); }); }
+    public void ApplyLook() { Theme.Crossfade(host, delegate { Theme.Apply(S.Theme, S.Accent, S.Font); Theme.TitleBar(this); }); }
 
     public void Exit() { Close(); }
+
+    // ------------------------------------------------------------ 알림 (화면 아래 가운데에 잠깐 떴다 사라진다)
+    Border toast; DispatcherTimer toastTimer;
+    public void Toast(string text) {
+        if (toast != null) toastLayer.Children.Remove(toast);
+        TextBlock t = new TextBlock(); t.Text = text; t.Foreground = Brushes.White; t.FontSize = 13; t.TextWrapping = TextWrapping.Wrap; t.MaxWidth = 460;
+        toast = new Border(); toast.Child = t; toast.CornerRadius = new CornerRadius(18); toast.Padding = new Thickness(18, 10, 18, 10);
+        toast.Background = Theme.Brush(Color.FromArgb(225, 34, 36, 44));
+        toast.HorizontalAlignment = HorizontalAlignment.Center; toast.VerticalAlignment = VerticalAlignment.Bottom; toast.Margin = new Thickness(0, 0, 0, 40);
+        TranslateTransform tt = new TranslateTransform(0, 12); toast.RenderTransform = tt;
+        toastLayer.Children.Add(toast);
+        Border me = toast;
+        DoubleAnimation fin = new DoubleAnimation(0, 1, Motion.D(0.2)), up = new DoubleAnimation(12, 0, Motion.D(0.25));
+        up.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+        me.BeginAnimation(OpacityProperty, fin); tt.BeginAnimation(TranslateTransform.YProperty, up);
+        if (toastTimer != null) toastTimer.Stop();
+        toastTimer = new DispatcherTimer(); toastTimer.Interval = TimeSpan.FromSeconds(2.2);
+        toastTimer.Tick += delegate {
+            toastTimer.Stop();
+            DoubleAnimation fout = new DoubleAnimation(0, Motion.D(0.25));
+            fout.Completed += delegate { toastLayer.Children.Remove(me); if (toast == me) toast = null; };
+            me.BeginAnimation(OpacityProperty, fout);
+        };
+        toastTimer.Start();
+    }
+    public bool FpsVisible { get { return fpsText.Visibility == Visibility.Visible; } }   // 셀프 테스트용
+    public string LastToast { get { return toast != null ? ((TextBlock)toast.Child).Text : null; } }   // 셀프 테스트용
+
+    public string ScaleText {
+        get {
+            double dpi = 1;
+            PresentationSource ps = PresentationSource.FromVisual(this);
+            if (ps != null && ps.CompositionTarget != null) dpi = ps.CompositionTarget.TransformToDevice.M11;
+            return Math.Round(dpi * 100) + "% · " + zoom.ScaleX.ToString("0.0") + "x";
+        }
+    }
+
+    // ------------------------------------------------------------ 새로 고침 빈도 표시 (오른쪽 위, 0.5초마다 갱신)
+    bool fpsOn; int fpsFrames; DateTime fpsStart;
+    void SetFps(bool on) {
+        if (on == fpsOn) return;
+        fpsOn = on;
+        fpsText.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        if (on) { fpsFrames = 0; fpsStart = DateTime.Now; fpsText.Text = "-- fps"; CompositionTarget.Rendering += FpsFrame; }
+        else CompositionTarget.Rendering -= FpsFrame;
+    }
+    void FpsFrame(object s, EventArgs e) {
+        fpsFrames++;
+        double sec = (DateTime.Now - fpsStart).TotalSeconds;
+        if (sec >= 0.5) { fpsText.Text = Math.Round(fpsFrames / sec) + " fps"; fpsFrames = 0; fpsStart = DateTime.Now; }
+    }
 }
 }

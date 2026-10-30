@@ -31,6 +31,7 @@ public static class L {
         foreach (string res in asm.GetManifestResourceNames()) {
             if (!res.StartsWith("Obj2x.Lang.") || !res.EndsWith(".json")) continue;
             string code = res.Substring(11, res.Length - 16);
+            if (code.StartsWith("_")) continue;              // _template 같은 것은 언어가 아니다
             using (Stream s = asm.GetManifestResourceStream(res))
             using (StreamReader r = new StreamReader(s, Encoding.UTF8)) Merge(code, Json.ParseObject(r.ReadToEnd()));
             builtin.Add(code);

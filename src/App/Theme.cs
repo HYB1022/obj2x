@@ -32,7 +32,7 @@ public static class Theme {
         return false;
     }
 
-    public static void Apply(string theme, string accent, bool sysFont) {
+    public static void Apply(string theme, string accent, string font) {
         bool dark = theme == "dark" || (theme == "system" && SystemIsDark());
         Dark = dark;
         AccentName = (accent == "teal" || accent == "rose") ? accent : "indigo";
@@ -63,25 +63,35 @@ public static class Theme {
             BnBg = C(255, 240, 186); BnBorder = C(224, 168, 16); BnText = C(33, 28, 10);
             BnBtnBg = C(30, 24, 10); BnBtnFg = Colors.White; BnBtnHov = C(62, 52, 28);
         }
-        Font = MakeFont(sysFont);
+        Font = MakeFont(font);
         Push();
         if (Changed != null) Changed();
     }
 
-    // 글꼴: exe 옆 fonts 폴더의 나눔스퀘어 네오(없으면 설치된 것, 그것도 없으면 맑은 고딕).
-    // 나눔스퀘어 네오에는 한자/가나가 없어서 중국어/일본어일 땐 그 언어 글꼴이 먼저 대신 그리게 한다.
-    public static FontFamily MakeFont(bool sysFont) {
+    // 글꼴: nanum(나눔스퀘어 네오) | noto(Noto Sans KR) | system(Windows 기본). exe 옆 fonts 폴더의 것을 먼저 쓰고,
+    // 없으면 설치된 것, 그것도 없으면 맑은 고딕. 한자/가나가 없는 글꼴이라 중국어/일본어일 땐 그 언어 글꼴이 먼저 대신 그린다.
+    static readonly string[][] Bundled = new string[][] {
+        new string[] { "nanum", "NanumSquare Neo", "NanumSquareNeo-bRg.ttf" },
+        new string[] { "noto", "Noto Sans KR", "NotoSansKR-Regular.ttf" } };
+    public static FontFamily MakeFont(string font) {
         string cjk = L.Lang == "zh" ? "Microsoft YaHei UI, Microsoft YaHei, " : (L.Lang == "ja" ? "Yu Gothic UI, Meiryo UI, Meiryo, " : "");
         string tail = cjk + "Malgun Gothic, Microsoft YaHei UI, Yu Gothic UI, Segoe UI";
         try {
-            if (sysFont) return new FontFamily(SystemFonts.MessageFontFamily.Source + ", " + tail);
-            string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts");
-            if (System.IO.File.Exists(System.IO.Path.Combine(dir, "NanumSquareNeo-bRg.ttf")))
-                return new FontFamily(new Uri(dir + System.IO.Path.DirectorySeparatorChar), "./#NanumSquare Neo, " + tail);
+            if (font == "system") return new FontFamily(SystemFonts.MessageFontFamily.Source + ", " + tail);
+            foreach (string[] b in Bundled) {
+                if (b[0] != font) continue;
+                string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts");
+                if (System.IO.File.Exists(System.IO.Path.Combine(dir, b[2])))
+                    return new FontFamily(new Uri(dir + System.IO.Path.DirectorySeparatorChar), "./#" + b[1] + ", " + tail);
+                return new FontFamily(b[1] + ", " + tail);
+            }
         } catch (Exception) { }
-        return new FontFamily("NanumSquare Neo, " + tail);
+        return new FontFamily(tail);
     }
-    public static bool BundledFont { get { return System.IO.File.Exists(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts", "NanumSquareNeo-bRg.ttf")); } }
+    public static bool BundledFont(string font) {
+        foreach (string[] b in Bundled) if (b[0] == font) return System.IO.File.Exists(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts", b[2]));
+        return false;
+    }
 
     // 앱 리소스에 브러시로 넣는다
     static void Push() {
@@ -117,7 +127,7 @@ public static class Theme {
     // 테마를 바꿀 때 지금 화면을 찍어 위에 덮고, 새 테마를 적용한 뒤 찍은 화면을 서서히 지운다
     public static void Crossfade(Panel host, Action apply) {
         int w = (int)host.ActualWidth, h = (int)host.ActualHeight;
-        if (Motion.Off || w < 1 || h < 1 || !host.IsVisible) { apply(); return; }
+        if (Motion.Disabled || w < 1 || h < 1 || !host.IsVisible) { apply(); return; }
         double sc = 1;
         PresentationSource ps = PresentationSource.FromVisual(host);
         if (ps != null && ps.CompositionTarget != null) sc = ps.CompositionTarget.TransformToDevice.M11;
@@ -153,7 +163,9 @@ public static class Theme {
 // 움직임 공통 설정
 public static class Motion {
     public static bool Off;          // 셀프 테스트/화면 캡처: 모든 움직임을 즉시 끝낸다
-    public static Duration D(double sec) { return new Duration(TimeSpan.FromSeconds(Off ? 0 : sec)); }
+    public static double Scale = 1;  // 개발자 옵션 '애니메이션 배율' (0 = 끔)
+    public static bool Disabled { get { return Off || Scale <= 0; } }
+    public static Duration D(double sec) { return new Duration(TimeSpan.FromSeconds(Disabled ? 0 : sec * Scale)); }
     public static double EaseOut(double t) { if (t <= 0) return 0; if (t >= 1) return 1; double u = 1 - t; return 1 - u * u * u; }
 }
 }

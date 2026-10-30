@@ -66,7 +66,17 @@ public partial class MainViewModel {
     }
     public string ThemeName { get { return S.Theme; } set { if (value == S.Theme) return; S.Theme = value; ui.ApplyLook(); S.Save(); Raise("ThemeName"); } }
     public string AccentName { get { return S.Accent; } set { if (value == S.Accent) return; S.Accent = value; ui.ApplyLook(); S.Save(); Raise("AccentName"); } }
-    public bool SysFont { get { return S.SysFont; } set { S.SysFont = value; ui.ApplyLook(); S.Save(); Raise("SysFont"); } }
+    // 글꼴 목록은 이름이 언어마다 달라서 언어를 바꿀 때 새로 만든다. 그때 드롭다운이 null을 보내도 무시한다.
+    public List<LangItem> Fonts {
+        get { return new List<LangItem> { new LangItem("nanum", L.T("font_nanum")), new LangItem("noto", L.T("font_noto")), new LangItem("system", L.T("font_system")) }; }
+    }
+    public string FontName {
+        get { return S.Font; }
+        set {
+            if (value == null || value == S.Font || (value != "nanum" && value != "noto" && value != "system")) return;
+            S.Font = value; ui.ApplyLook(); S.Save(); Raise("FontName");
+        }
+    }
 
     // ---- 설정: 동작
     public bool UpdCheck { get { return S.UpdCheck; } set { S.UpdCheck = value; S.Save(); Raise("UpdCheck"); } }
@@ -94,7 +104,7 @@ public partial class MainViewModel {
     void InitUpdate() {
         UpdateCmd = new Cmd(delegate {
             if (upd != null) Install();
-            else if (!updChecking) { updText = "upd_link_checking"; RaiseUpdate(); StartUpdateCheck(); }
+            else if (!updChecking) StartUpdateCheck(false);
         });
         RepoCmd = new Cmd(delegate { Updater.OpenUrl(AppInfo.RepoUrl); });
         DisclaimerCmd = new Cmd(delegate { ui.Disclaimer(true, null); });
@@ -104,20 +114,24 @@ public partial class MainViewModel {
     public string UpdVersion { get { return upd != null ? upd.Version : ""; } }
     public bool UpdBusy { get { return updInstalling; } }
     public string UpdNavBadge { get { return upd != null ? "about_pill_update" : null; } }
+    // 정보 탭 '업데이트' 줄 오른쪽: 버전 번호 없이 짧게. 새 버전이면 '업데이트' 알약이 올라오며 나타난다.
     public string UpdValue {
         get {
-            if (updText == "upd_link_new") return L.T("about_upd_new", UpdVersion);
-            if (updText == "upd_link_latest") return L.T("upd_link_latest", AppInfo.Version);
+            if (updInstalling) return L.T("about_upd_installing");
+            if (updText == "upd_link_new") return L.T("about_pill_update");
+            if (updText == "upd_link_latest") return L.T("about_upd_latest");
             if (updText != null) return L.T(updText);
             return L.T("about_upd_idle");
         }
     }
-    void RaiseUpdate() { Raise("UpdIsNew", "UpdVersion", "UpdBusy", "UpdNavBadge", "UpdValue"); }
+    void RaiseUpdate() { Raise("UpdIsNew", "UpdVersion", "UpdBusy", "UpdNavBadge", "UpdValue", "DevCheckValue"); }
 
     // GitHub 최신 릴리스 조회 (백그라운드). 새 버전이 있으면 창을 띄우지 않고 정보 탭의 업데이트 줄과 메뉴의 [업데이트] 표시로만 알린다.
-    public void StartUpdateCheck() {
+    public void StartUpdateCheck() { StartUpdateCheck(false); }
+    // toast=true: 결과를 알림으로도 보여 준다 (개발자 옵션 '지금 업데이트 확인')
+    public void StartUpdateCheck(bool toast) {
         if (updChecking) return;
-        updChecking = true;
+        updChecking = true; updText = "upd_link_checking"; RaiseUpdate();
         Thread th = new Thread(delegate() {
             UpdateInfo u = Updater.Latest();
             ui.Post(delegate {
@@ -126,6 +140,7 @@ public partial class MainViewModel {
                 else if (Updater.IsNewer(u.Version, AppInfo.Version)) { upd = u; updText = "upd_link_new"; }
                 else updText = "upd_link_latest";
                 RaiseUpdate();
+                if (toast) ui.Toast(u == null ? L.T("toast_upd_fail") : (upd != null ? L.T("about_pill_update") + " · v" + upd.Version : L.T("toast_upd_none")));
             });
         });
         th.IsBackground = true; th.Start();
@@ -134,10 +149,10 @@ public partial class MainViewModel {
     // 개발용(--shots): 새 버전이 있는 것처럼 표시한다
     public void FakeUpdate(string ver) { upd = new UpdateInfo(); upd.Version = ver; updText = "upd_link_new"; RaiseUpdate(); }
 
-    void Install() {
-        if (updInstalling) return;
+    void Install() { if (upd != null) Install(upd); }
+    void Install(UpdateInfo u) {
+        if (updInstalling || u == null) return;
         if (running) { ui.Msg(L.T("upd_busy")); return; }
-        UpdateInfo u = upd;
         if (!u.ZipUrl.StartsWith("https://")) { Updater.OpenUrl(u.PageUrl); return; }
         updInstalling = true; RaiseUpdate();
         Say(L.T("upd_dl", u.Version));

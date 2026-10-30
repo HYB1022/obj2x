@@ -35,6 +35,7 @@ public static class Conversion {
         o.Par = s.Par; o.Sub = s.Sub; o.Inc = s.Inc; o.DelX = s.DelX;
         foreach (KeyValuePair<string, int> kv in s.Copt) o.Copt[kv.Key] = kv.Value;
         o.ExOpt = s.ExOpt;
+        o.Verbose = s.DevMode && s.DevVerbose;
         return o;
     }
 

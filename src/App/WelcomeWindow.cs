@@ -69,7 +69,7 @@ public class WelcomeWindow : Window {
 
     void ApplyAll() {
         Loc.SetLang(S.Lang);
-        Theme.Apply(S.Theme, S.Accent, S.SysFont);
+        Theme.Apply(S.Theme, S.Accent, S.Font);
         Title = L.T("app_title");
         foreach (string[] l in L.Languages) if (l[0] == L.Lang) lblLang.Text = l[1];
         lblView.Text = L.T("wel_view");

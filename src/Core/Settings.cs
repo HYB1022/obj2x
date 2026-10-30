@@ -21,7 +21,10 @@ public class Settings {
     public string Theme = "light";   // system | light | dark
     public string Accent = "indigo"; // indigo | teal | rose
     public string Lang = "";
-    public bool SysFont = false;
+    public string Font = "nanum";    // nanum | noto | system
+    // 개발자 옵션 (정보 탭에서 버전을 7번 누르면 켜진다)
+    public bool DevMode = false, DevFps = false, DevBounds = false, DevVerbose = false;
+    public double DevAnim = 1;       // 애니메이션 배율 (0 = 끔)
     public bool Agreed = false;
     public string AgreedVer = "";
     public List<string> Recent = new List<string>();
@@ -67,7 +70,13 @@ public class Settings {
         if (kv.TryGetValue("theme", out v) && (v == "light" || v == "dark" || v == "system")) s.Theme = v;
         if (kv.TryGetValue("accent", out v) && (v == "indigo" || v == "teal" || v == "rose")) s.Accent = v;
         if (kv.TryGetValue("lang", out v)) s.Lang = v;
-        if (kv.TryGetValue("sysfont", out v)) s.SysFont = B(v, false);
+        if (kv.TryGetValue("font", out v) && (v == "nanum" || v == "noto" || v == "system")) s.Font = v;
+        else if (kv.TryGetValue("sysfont", out v) && B(v, false)) s.Font = "system";   // v2.5 이하의 '시스템 서체 사용'
+        if (kv.TryGetValue("devmode", out v)) s.DevMode = B(v, false);
+        if (kv.TryGetValue("devfps", out v)) s.DevFps = B(v, false);
+        if (kv.TryGetValue("devbounds", out v)) s.DevBounds = B(v, false);
+        if (kv.TryGetValue("devverbose", out v)) s.DevVerbose = B(v, false);
+        if (kv.TryGetValue("devanim", out v)) { double a; if (double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out a) && a >= 0 && a <= 10) s.DevAnim = a; }
         if (kv.TryGetValue("agreed", out v)) s.Agreed = B(v, false);
         if (kv.TryGetValue("agreedver", out v)) s.AgreedVer = v;
         if (kv.TryGetValue("recent", out v)) {
@@ -112,7 +121,12 @@ public class Settings {
             o.Add("theme=" + Theme);
             o.Add("accent=" + Accent);
             o.Add("lang=" + Lang);
-            o.Add("sysfont=" + (SysFont ? "1" : "0"));
+            o.Add("font=" + Font);
+            o.Add("devmode=" + (DevMode ? "1" : "0"));
+            o.Add("devfps=" + (DevFps ? "1" : "0"));
+            o.Add("devbounds=" + (DevBounds ? "1" : "0"));
+            o.Add("devverbose=" + (DevVerbose ? "1" : "0"));
+            o.Add("devanim=" + DevAnim.ToString(System.Globalization.CultureInfo.InvariantCulture));
             o.Add("agreed=" + (Agreed ? "1" : "0"));
             o.Add("agreedver=" + AgreedVer);
             o.Add("recent=" + string.Join("|", Recent.ToArray()));

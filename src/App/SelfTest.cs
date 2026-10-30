@@ -14,6 +14,17 @@ namespace Obj2x.UI {
 public static class SelfTest {
     static int fail = 0;
     static StringBuilder sb = new StringBuilder();
+    static List<T> FindAll<T>(DependencyObject root) where T : DependencyObject {
+        List<T> r = new List<T>();
+        if (root == null) return r;
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++) {
+            DependencyObject c = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (c is T) r.Add((T)c);
+            r.AddRange(FindAll<T>(c));
+        }
+        return r;
+    }
+
     static void T(string name, bool ok, string detail) {
         string line = ok ? "PASS " + name : "FAIL " + name + ": " + detail;
         if (!ok) fail++;
@@ -132,14 +143,14 @@ public static class SelfTest {
         T("준비: 빠른 변환은 도구 없이 가능", prep != null && prep.Count == 1, err);
         T("준비: 없는 도구 목록", Conversion.MissingTools(cs).Count == 2, "");
 
-        // 5-1. 글꼴: fonts 폴더가 있으면 나눔스퀘어 네오, 중국어/일본어 글자는 대체 글꼴이 그린다
-        if (Theme.BundledFont) {
-            System.Windows.Media.GlyphTypeface gt;
-            bool nanum = new System.Windows.Media.Typeface(Theme.MakeFont(false), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal).TryGetGlyphTypeface(out gt)
-                && gt.FamilyNames.Values.Contains("NanumSquare Neo");
-            System.Windows.Media.GlyphTypeface gb;
-            bool bold = new System.Windows.Media.Typeface(Theme.MakeFont(false), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal).TryGetGlyphTypeface(out gb) && gb.Weight == FontWeights.Bold;
-            T("글꼴: 나눔스퀘어 네오 (보통/굵게)", nanum && bold, nanum + " " + bold);
+        // 5-1. 글꼴: fonts 폴더가 있으면 나눔스퀘어 네오 / Noto Sans KR, 중국어/일본어 글자는 대체 글꼴이 그린다
+        foreach (string[] fn in new string[][] { new string[] { "nanum", "NanumSquare Neo" }, new string[] { "noto", "Noto Sans KR" } }) {
+            if (!Theme.BundledFont(fn[0])) { T("글꼴: " + fn[1] + " 파일", false, "fonts 폴더 없음"); continue; }
+            System.Windows.Media.GlyphTypeface gt, gb;
+            bool reg = new System.Windows.Media.Typeface(Theme.MakeFont(fn[0]), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal).TryGetGlyphTypeface(out gt)
+                && gt.FamilyNames.Values.Contains(fn[1]);
+            bool bold = new System.Windows.Media.Typeface(Theme.MakeFont(fn[0]), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal).TryGetGlyphTypeface(out gb) && gb.Weight == FontWeights.Bold;
+            T("글꼴: " + fn[1] + " (보통/굵게)", reg && bold, reg + " " + bold);
         }
 
         // 6. XAML 화면
@@ -151,7 +162,7 @@ public static class SelfTest {
         try {
             Settings us = new Settings(); us.Path = Path.Combine(root, "ui.ini"); us.Lang = "ko"; us.Theme = "light"; us.Inp = big; us.AddRecent(big); us.AddRecent(@"C:\no\such\folder");
             us.Blender = ""; us.Conv = ""; us.UpdCheck = false;
-            Loc.SetLang("ko"); Theme.Apply("light", "indigo", false);
+            Loc.SetLang("ko"); Theme.Apply("light", "indigo", "nanum");
             MainWindow f = new MainWindow(us, root, false);
             f.FixClientSize(1040, 686); f.Show(); Pump.Run(200);
             foreach (string pg in new string[] { "wizard", "advanced", "settings", "about", "dashboard" }) { f.VM.Page = pg; Pump.Run(50); }
@@ -207,10 +218,37 @@ public static class SelfTest {
             if (lc != null) { lc.SelectedValue = "en"; Pump.Run(30); }
             T("설정: 드롭다운으로 언어 전환", L.Lang == "en" && us.Lang == "en", L.Lang);
             f.VM.Lang = "ko"; Pump.Run(20);
+            f.VM.FontName = "noto"; Pump.Run(30);
+            bool noto = us.Font == "noto" && Theme.Font.Source.Contains("Noto Sans KR");
+            f.VM.FontName = "system"; Pump.Run(30);
+            bool sys = us.Font == "system" && !Theme.Font.Source.Contains("./#");
+            f.VM.FontName = "bogus"; f.VM.FontName = "nanum"; Pump.Run(30);
+            T("설정: 글꼴 드롭다운 (나눔/Noto/시스템)", noto && sys && us.Font == "nanum" && f.VM.Fonts.Count == 3, noto + " " + sys + " " + us.Font);
+
+            // 개발자 옵션: 정보 화면의 버전을 7번 누르면 메뉴에 생긴다
+            FrameworkElement navDev = LogicalTreeHelper.FindLogicalNode(f, "Nav_dev") as FrameworkElement;
+            bool hidden = navDev != null && navDev.Visibility != Visibility.Visible;
+            f.VM.Page = "about"; Pump.Run(30);
+            for (int i = 0; i < 6; i++) f.VM.VersionTapCmd.Execute(null);
+            bool notYet = !f.VM.DevMode && f.LastToast == L.T("toast_dev_steps", 1);
+            f.VM.VersionTapCmd.Execute(null); Pump.Run(30);
+            T("개발자: 버전 7번 → 메뉴 생김 + 알림", hidden && notYet && f.VM.DevMode && us.DevMode && navDev.Visibility == Visibility.Visible && f.LastToast == L.T("toast_dev_on"),
+                hidden + " " + notYet + " " + f.VM.DevMode + " " + f.LastToast);
+            f.VM.Page = "dev"; Pump.Run(60);
+            ComboBox anim = null;
+            foreach (ComboBox cb in FindAll<ComboBox>(f.Host)) if (cb.IsVisible) anim = cb;
+            T("개발자: 화면 열기 + 애니메이션 배율 선택", f.VM.Page == "dev" && anim != null && (string)anim.SelectedValue == "1" && anim.Items.Count == 7, anim == null ? "없음" : anim.Items.Count.ToString());
+            f.VM.DevFps = true; f.VM.DevAnim = "0"; Pump.Run(30);
+            T("개발자: FPS 표시 + 애니메이션 끄기", f.FpsVisible && Motion.Scale == 0 && Motion.Disabled, f.FpsVisible + " " + Motion.Scale);
+            f.VM.DevMode = false; Pump.Run(60);
+            T("개발자: 끄면 메뉴 사라지고 정보로 돌아감", f.VM.Page == "about" && navDev.Visibility != Visibility.Visible && !f.FpsVisible && Motion.Scale == 1,
+                f.VM.Page + " " + navDev.Visibility + " " + Motion.Scale);
+            f.VM.DevAnim = "1"; f.VM.DevFps = false;
 
             // 업데이트 알림: 창 없이 메뉴 표시
             f.VM.FakeUpdate("9.9"); Pump.Run(20);
             T("업데이트: 정보 메뉴에 [업데이트] 표시, 대화 상자 없음", f.VM.UpdNavBadge == "about_pill_update" && f.OverlayCount == 0, "");
+            T("업데이트: 정보 화면 줄에는 '업데이트' 글자만 (버전 없음)", f.VM.UpdValue == L.T("about_pill_update"), f.VM.UpdValue);
             f.Close();
         } catch (Exception ex) { T("화면 구성", false, ex.ToString()); }
 

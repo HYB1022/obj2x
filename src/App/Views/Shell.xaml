@@ -32,6 +32,8 @@
           <TextBlock Text="{ui:Tr nav_tools_hdr}" Style="{StaticResource TTiny}" Margin="22,16,0,10"/>
           <ui:NavItem x:Name="Nav_advanced" Page="advanced" Key="nav_advanced" Current="{Binding Page}" Command="{Binding NavCmd}" HorizontalAlignment="Left" Margin="10,0,0,0"/>
           <ui:NavItem x:Name="Nav_settings" Page="settings" Key="nav_settings" Current="{Binding Page}" Command="{Binding NavCmd}" HorizontalAlignment="Left" Margin="10,4,0,0"/>
+          <ui:NavItem x:Name="Nav_dev" Page="dev" Key="nav_dev" Current="{Binding Page}" Command="{Binding NavCmd}" HorizontalAlignment="Left" Margin="10,4,0,0"
+                      Visibility="{Binding DevMode, Converter={StaticResource Vis}}"/>
           <ui:NavItem x:Name="Nav_about" Page="about" Key="nav_info" Current="{Binding Page}" Command="{Binding NavCmd}" Badge="{Binding UpdNavBadge}" HorizontalAlignment="Left" Margin="10,4,0,0"/>
         </StackPanel>
       </Grid>

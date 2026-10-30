@@ -32,10 +32,11 @@
           </StackPanel>
         </DockPanel>
         <DockPanel Height="60">
-          <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding SysFont}"/>
+          <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="180" VerticalAlignment="Center"
+                    ItemsSource="{Binding Fonts}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FontName}"/>
           <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{ui:Tr lbl_sysfont}"/>
-            <TextBlock Text="{ui:Tr lbl_sysfont_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
+            <TextBlock Text="{ui:Tr lbl_font}"/>
+            <TextBlock Text="{ui:Tr lbl_font_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
           </StackPanel>
         </DockPanel>
       </StackPanel>

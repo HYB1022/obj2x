@@ -26,6 +26,7 @@ public class RunOptions {
     public bool Sub, Inc, DelX;
     public Dictionary<string, int> Copt = new Dictionary<string, int>();
     public string ExOpt = "";
+    public bool Verbose;             // Blender 출력을 거르지 않고 모두 로그에 (개발자 옵션)
 }
 
 // OmsiXConv 한 개를 자동으로 조작하는 작업 상태
@@ -222,7 +223,7 @@ public class Engine {
         Process p = new Process();
         p.StartInfo = psi;
         DataReceivedEventHandler h = delegate(object s, DataReceivedEventArgs e) {
-            if (KeepLine(e.Data)) {
+            if (o.Verbose ? e.Data != null : KeepLine(e.Data)) {
                 Say(e.Data);
                 if (e.Data.StartsWith("OK")) {
                     okLines++;

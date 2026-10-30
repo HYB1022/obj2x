@@ -72,6 +72,7 @@ public static class Art {
             case "advanced": return Color.FromRgb(255, 149, 0);
             case "settings": return Color.FromRgb(142, 142, 147);
             case "about": return Color.FromRgb(0, 122, 255);
+            case "dev": return Color.FromRgb(96, 125, 139);
             default: return Theme.Accent;
         }
     }
@@ -118,6 +119,11 @@ public static class Art {
             case "about":       // i
                 dc.DrawEllipse(wb, null, new Point(x + 12 * k, y + 7.2 * k), 1.4 * k, 1.4 * k);
                 dc.DrawLine(RoundPen(wc, 2.4 * k), new Point(x + 12 * k, y + 11 * k), new Point(x + 12 * k, y + 17.5 * k));
+                break;
+            case "dev":         // </> (개발자 옵션)
+                dc.DrawGeometry(null, p, Poly(false, new Point(x + 9 * k, y + 8 * k), new Point(x + 5.5 * k, y + 12 * k), new Point(x + 9 * k, y + 16 * k)));
+                dc.DrawGeometry(null, p, Poly(false, new Point(x + 15 * k, y + 8 * k), new Point(x + 18.5 * k, y + 12 * k), new Point(x + 15 * k, y + 16 * k)));
+                dc.DrawLine(p, new Point(x + 13.2 * k, y + 6.8 * k), new Point(x + 10.8 * k, y + 17.2 * k));
                 break;
             case "update":      // 아래 화살표 + 받침
                 dc.DrawLine(p, new Point(x + 12 * k, y + 6 * k), new Point(x + 12 * k, y + 14 * k));

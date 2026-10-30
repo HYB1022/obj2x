@@ -316,6 +316,101 @@
     </Setter>
   </Style>
 
+  <!-- 개발자 옵션 (HyperOS 설정 화면 모양): 큰 제목, 둥근 카드, 제목/설명 줄, 오른쪽에 스위치·화살표·값 선택 -->
+  <Style x:Key="DevCard" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Card}"/>
+    <Setter Property="CornerRadius" Value="20"/>
+    <Setter Property="Padding" Value="0,6"/>
+  </Style>
+  <Style x:Key="DevCaption" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    <Setter Property="Margin" Value="24,18,0,8"/>
+  </Style>
+  <Style x:Key="DevTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="15"/>
+    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource DisText}"/></Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="DevSub" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    <Setter Property="Margin" Value="0,4,0,0"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource DisText}"/></Trigger>
+    </Style.Triggers>
+  </Style>
+  <Style x:Key="DevValue" TargetType="TextBlock" BasedOn="{StaticResource DevSub}">
+    <Setter Property="Margin" Value="16,0,0,0"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="TextWrapping" Value="NoWrap"/>
+    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+  </Style>
+  <Style x:Key="DevChevron" TargetType="Path">
+    <Setter Property="Data" Value="M 0,0 L 5.5,5.5 L 0,11"/>
+    <Setter Property="Stroke" Value="{DynamicResource Muted}"/>
+    <Setter Property="StrokeThickness" Value="1.6"/>
+    <Setter Property="StrokeStartLineCap" Value="Round"/><Setter Property="StrokeEndLineCap" Value="Round"/><Setter Property="StrokeLineJoin" Value="Round"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="Margin" Value="14,0,0,0"/>
+  </Style>
+  <!-- 누를 수 있는 줄: 누르면 살짝 어두워진다 -->
+  <Style x:Key="DevRow" TargetType="Button">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Grid Background="Transparent">
+            <Border x:Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+            <ContentPresenter Margin="24,14"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="Opacity" Value="0.6"/></Trigger>
+            <Trigger Property="IsPressed" Value="True"><Setter TargetName="hov" Property="Opacity" Value="1"/></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter Property="Cursor" Value="Arrow"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <!-- 값 선택 (오른쪽에 값 + ⌃⌄, 누르면 목록) -->
+  <Style x:Key="DevSelect" TargetType="ComboBox">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="ItemContainerStyle" Value="{StaticResource DropItem}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBox">
+          <Grid>
+            <ToggleButton Focusable="False" ClickMode="Press" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+              <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton"><Border Background="Transparent"/></ControlTemplate>
+              </ToggleButton.Template>
+            </ToggleButton>
+            <StackPanel Orientation="Horizontal" IsHitTestVisible="False" VerticalAlignment="Center" HorizontalAlignment="Right">
+              <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" VerticalAlignment="Center" TextElement.Foreground="{DynamicResource Muted}" TextElement.FontSize="13"/>
+              <Path Data="M 0,4 L 4,0 L 8,4 M 0,9 L 4,13 L 8,9" Stroke="{DynamicResource Muted}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                    StrokeLineJoin="Round" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            </StackPanel>
+            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Placement="Bottom" HorizontalOffset="-60" VerticalOffset="6" PopupAnimation="Fade" Focusable="False">
+              <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBdr}" BorderThickness="1" CornerRadius="14" Padding="4" Margin="0,0,10,12" MinWidth="200">
+                <Border.Effect><DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Opacity="0.18"/></Border.Effect>
+                <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer>
+              </Border>
+            </Popup>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <!-- 얇은 스크롤 막대 (라이트/다크 모두) -->
   <Style x:Key="ThumbStyle" TargetType="Thumb">
     <Setter Property="Template">

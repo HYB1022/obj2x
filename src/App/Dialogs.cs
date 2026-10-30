@@ -63,7 +63,7 @@ public class DialogHost : Grid {
         return a;
     }
     void Intro() {
-        if (Motion.Off) { shade.Opacity = 0.59; return; }
+        if (Motion.Disabled) { shade.Opacity = 0.59; return; }
         card.Opacity = 0; sc.ScaleX = sc.ScaleY = 0.92; tt.Y = 10;
         shade.BeginAnimation(OpacityProperty, Anim(0.59, 0.22));
         card.BeginAnimation(OpacityProperty, Anim(1, 0.18));
@@ -75,7 +75,7 @@ public class DialogHost : Grid {
     public void Close(int idx) {
         if (closing) return;
         closing = true;
-        if (Motion.Off) { Remove(idx); return; }
+        if (Motion.Disabled) { Remove(idx); return; }
         DoubleAnimation fade = Anim(0, 0.15);
         fade.Completed += delegate { Remove(idx); };
         card.BeginAnimation(OpacityProperty, Anim(0, 0.12));

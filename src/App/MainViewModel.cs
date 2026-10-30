@@ -17,6 +17,8 @@ public interface IUi {
     void Post(Action a);              // 화면 스레드에서 실행
     void ApplyLook();                 // 테마/글꼴이 바뀜
     void Exit();
+    void Toast(string text);          // 화면 아래에 잠깐 뜨는 알림
+    string ScaleText { get; }         // 화면 배율 설명 (개발자 옵션 앱 정보)
 }
 
 // 결과 표 한 줄
@@ -72,6 +74,7 @@ public partial class MainViewModel : Observable {
         InitWizard();
         InitSettings();
         InitUpdate();
+        InitDev();
         WireEngine();
         // 저장해 둔 문구(상태, 배너, 마법사 안내)는 새 언어로 다시 만든 뒤 모든 속성을 다시 읽게 한다
         Loc.Changed += delegate { RefreshStatus(); RaiseAll(); RecentRefresh(); };

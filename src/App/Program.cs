@@ -29,7 +29,8 @@ public static class Program {
         Updater.CleanupOld(System.Reflection.Assembly.GetExecutingAssembly().Location);
         Settings s = Settings.Load(Path.Combine(here, "obj2x.ini"));
         Loc.SetLang(s.Lang);
-        Theme.Apply(s.Theme, s.Accent, s.SysFont);
+        Theme.Apply(s.Theme, s.Accent, s.Font);
+        Motion.Scale = s.DevMode ? s.DevAnim : 1;
 
         bool firstRun = !s.Agreed;
         Action openMain = delegate {

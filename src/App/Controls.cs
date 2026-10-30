@@ -36,7 +36,13 @@ public class NavItem : Drawn {
     public static readonly DependencyProperty PageProperty = Dp("Page", typeof(string), typeof(NavItem), "");
     public static readonly DependencyProperty KeyProperty = Dp("Key", typeof(string), typeof(NavItem), "");
     public static readonly DependencyProperty CurrentProperty = Dp("Current", typeof(string), typeof(NavItem), "");
-    public static readonly DependencyProperty BadgeProperty = Dp("Badge", typeof(string), typeof(NavItem), null);
+    // 알약이 새로 생기면 글자가 아래에서 올라오며 나타난다 (BadgeIn 0 → 1)
+    public static readonly DependencyProperty BadgeProperty = DependencyProperty.Register("Badge", typeof(string), typeof(NavItem),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            NavItem n = (NavItem)d;
+            if (string.IsNullOrEmpty(e.OldValue as string) && !string.IsNullOrEmpty(e.NewValue as string)) { n.BeginAnimation(BadgeInProperty, null); n.SetValue(BadgeInProperty, 0.0); n.Animate(BadgeInProperty, 1, 0.45); }
+        }));
+    static readonly DependencyProperty BadgeInProperty = Dp("BadgeIn", typeof(double), typeof(NavItem), 1.0);
     public static readonly DependencyProperty CommandProperty = DependencyProperty.Register("Command", typeof(ICommand), typeof(NavItem));
     static readonly DependencyProperty HoverProperty = Dp("Hover", typeof(double), typeof(NavItem), 0.0);
     public string Page { get { return (string)GetValue(PageProperty); } set { SetValue(PageProperty, value); } }
@@ -60,12 +66,15 @@ public class NavItem : Drawn {
         Art.Icon(dc, Page, ix, r.Y + (r.Height - isz) / 2, isz, 1);
         double tx = ix + isz + 12, right = r.Right - 8;
         if (!string.IsNullOrEmpty(Badge)) {
+            double e = Motion.EaseOut((double)GetValue(BadgeInProperty));
             Color fg = Theme.Dark ? Theme.Mix(Theme.Accent, Colors.White, 0.45) : Theme.Accent;
-            FormattedText bf = Art.Ft(L.T(Badge), Art.Pt(8.5), false, fg);
+            FormattedText bf = Art.Ft(L.T(Badge), Art.Pt(8.5), false, Theme.A(fg, e));
             double bw = bf.Width + 20, bh = 24;
             Rect br = new Rect(right - bw, r.Y + (r.Height - bh) / 2, bw, bh);
-            dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.Accent, Theme.Dark ? 70 / 255.0 : 34 / 255.0)), null, br, bh / 2, bh / 2);
-            dc.DrawText(bf, new Point(br.X + (bw - bf.Width) / 2, br.Y + (bh - bf.Height) / 2));
+            dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.Accent, (Theme.Dark ? 70 / 255.0 : 34 / 255.0) * e)), null, br, bh / 2, bh / 2);
+            dc.PushClip(new RectangleGeometry(br, bh / 2, bh / 2));
+            dc.DrawText(bf, new Point(br.X + (bw - bf.Width) / 2, br.Y + (bh - bf.Height) / 2 + (1 - e) * 14));
+            dc.Pop();
             right = br.X - 6;
         }
         FormattedText t = Art.Line(L.T(Key), 12, Active, Active ? Theme.NavPillText : Theme.Text, right - tx);
@@ -187,7 +196,7 @@ public class Segmented : Drawn {
         double x = 2;
         foreach (Item it in list) {
             if (it.Value == Value) {
-                if (!anim || !placed || Motion.Off) { BeginAnimation(PillXProperty, null); BeginAnimation(PillWProperty, null); SetValue(PillXProperty, x); SetValue(PillWProperty, it.W); placed = true; }
+                if (!anim || !placed || Motion.Disabled) { BeginAnimation(PillXProperty, null); BeginAnimation(PillWProperty, null); SetValue(PillXProperty, x); SetValue(PillWProperty, it.W); placed = true; }
                 else { Animate(PillXProperty, x, 0.22); Animate(PillWProperty, it.W, 0.22); }
                 return;
             }
@@ -286,6 +295,52 @@ public class NumBox : Border {
         ShowValue();
     }
     void ShowValue() { string s = Value.ToString(); if (tb.Text != s) tb.Text = s; }
+}
+
+// ---------------------------------------------------------------- 레이아웃 경계 표시 (개발자 옵션)
+// Target 아래의 보이는 요소마다 경계선(파랑)과 모서리 표시(분홍)를 그린다. 레이아웃이 바뀌면 다시 그린다.
+public class BoundsLayer : FrameworkElement {
+    public FrameworkElement Target;
+    bool queued;
+    public BoundsLayer() {
+        IsHitTestVisible = false;
+        IsVisibleChanged += delegate {
+            if (Target == null) return;
+            if (IsVisible) { Target.LayoutUpdated += OnLayout; InvalidateVisual(); } else Target.LayoutUpdated -= OnLayout;
+        };
+    }
+    void OnLayout(object s, EventArgs e) {
+        if (queued) return;
+        queued = true;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(delegate { queued = false; InvalidateVisual(); }));
+    }
+    protected override void OnRender(DrawingContext dc) {
+        if (Target == null || !IsVisible) return;
+        Pen line = Art.Pen(Color.FromArgb(150, 40, 120, 255), 1), mark = Art.Pen(Color.FromRgb(255, 40, 160), 1.5);
+        Walk(dc, Target, line, mark, 0);
+    }
+    void Walk(DrawingContext dc, DependencyObject d, Pen line, Pen mark, int depth) {
+        if (depth > 60) return;
+        int n = VisualTreeHelper.GetChildrenCount(d);
+        for (int i = 0; i < n; i++) {
+            DependencyObject c = VisualTreeHelper.GetChild(d, i);
+            FrameworkElement fe = c as FrameworkElement;
+            if (fe != null) {
+                if (!fe.IsVisible) continue;
+                if (fe.ActualWidth >= 2 && fe.ActualHeight >= 2) {
+                    try {
+                        Rect r = fe.TransformToAncestor(this.Parent as Visual ?? Target).TransformBounds(new Rect(0, 0, fe.ActualWidth, fe.ActualHeight));
+                        r = new Rect(Math.Round(r.X) + 0.5, Math.Round(r.Y) + 0.5, Math.Max(0, Math.Round(r.Width) - 1), Math.Max(0, Math.Round(r.Height) - 1));
+                        dc.DrawRectangle(null, line, r);
+                        double k = Math.Min(6, Math.Min(r.Width, r.Height) / 2);
+                        dc.DrawLine(mark, r.TopLeft, new Point(r.Left + k, r.Top)); dc.DrawLine(mark, r.TopLeft, new Point(r.Left, r.Top + k));
+                        dc.DrawLine(mark, r.BottomRight, new Point(r.Right - k, r.Bottom)); dc.DrawLine(mark, r.BottomRight, new Point(r.Right, r.Bottom - k));
+                    } catch (InvalidOperationException) { }
+                }
+            }
+            Walk(dc, c, line, mark, depth + 1);
+        }
+    }
 }
 
 // ---------------------------------------------------------------- 값이 매개변수와 같으면 보이기 (마법사 단계: ConverterParameter=2)

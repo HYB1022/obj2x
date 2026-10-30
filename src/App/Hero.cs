@@ -14,7 +14,13 @@ namespace Obj2x.UI {
 public class AboutHero : Drawn {
     public static readonly DependencyProperty IsNewProperty = Dp("IsNew", typeof(bool), typeof(AboutHero), false);
     public static readonly DependencyProperty NewVersionProperty = Dp("NewVersion", typeof(string), typeof(AboutHero), "");
-    public static readonly DependencyProperty UpdateValueProperty = Dp("UpdateValue", typeof(string), typeof(AboutHero), "");
+    // 업데이트 줄 오른쪽 글자. 바뀔 때마다 아래에서 올라오며 나타난다 (HyperOS '휴대전화 정보'의 업데이트 표시처럼)
+    public static readonly DependencyProperty UpdateValueProperty = DependencyProperty.Register("UpdateValue", typeof(string), typeof(AboutHero),
+        new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.AffectsRender, delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            AboutHero h = (AboutHero)d; h.valIn = Motion.Disabled ? 1 : 0; h.Run();
+        }));
+    public static readonly DependencyProperty VersionCommandProperty = DependencyProperty.Register("VersionCommand", typeof(ICommand), typeof(AboutHero));
+    public ICommand VersionCommand { get { return (ICommand)GetValue(VersionCommandProperty); } set { SetValue(VersionCommandProperty, value); } }
     public static readonly DependencyProperty BusyProperty = Dp("Busy", typeof(bool), typeof(AboutHero), false);
     public static readonly DependencyProperty UpdateCommandProperty = DependencyProperty.Register("UpdateCommand", typeof(ICommand), typeof(AboutHero));
     public static readonly DependencyProperty RepoCommandProperty = DependencyProperty.Register("RepoCommand", typeof(ICommand), typeof(AboutHero));
@@ -28,6 +34,7 @@ public class AboutHero : Drawn {
     public ICommand DisclaimerCommand { get { return (ICommand)GetValue(DisclaimerCommandProperty); } set { SetValue(DisclaimerCommandProperty, value); } }
 
     double intro = 10, last;                   // 등장 애니메이션 경과 시간(초)
+    double valIn = 1;                          // 업데이트 줄 글자가 올라오는 정도 (0 → 1)
     readonly Stopwatch sw = Stopwatch.StartNew();
     bool running;
     int hot = -1;
@@ -36,17 +43,18 @@ public class AboutHero : Drawn {
 
     public AboutHero() { IsVisibleChanged += delegate { if (!IsVisible) Halt(); }; }
 
-    public void StartIntro() { intro = Motion.Off ? 10 : 0; Run(); InvalidateVisual(); }
+    public void StartIntro() { intro = Motion.Disabled ? 10 : 0; Run(); InvalidateVisual(); }
     void Run() {
-        if (running || Motion.Off || !IsVisible) return;
+        if (running || Motion.Disabled || !IsVisible) return;
         running = true; last = sw.Elapsed.TotalSeconds;
         CompositionTarget.Rendering += Frame;
     }
     void Halt() { if (!running) return; running = false; CompositionTarget.Rendering -= Frame; }
     void Frame(object s, EventArgs e) {
         double now = sw.Elapsed.TotalSeconds, dt = Math.Min(0.05, Math.Max(0.001, now - last)); last = now;
-        intro += dt;
-        bool moving = intro < 1.4;
+        intro += dt / Math.Max(0.05, Motion.Scale);   // 개발자 옵션 애니메이션 배율
+        valIn = Math.Min(1, valIn + dt / (0.45 * Math.Max(0.05, Motion.Scale)));
+        bool moving = intro < 1.4 || valIn < 1;
         for (int i = 0; i < hov.Length; i++) {
             double tg = (i == hot) ? 1 : 0, d = tg - hov[i];
             if (Math.Abs(d) > 0.01) { hov[i] += d * (1 - Math.Exp(-dt * 14)); moving = true; } else hov[i] = tg;
@@ -77,9 +85,7 @@ public class AboutHero : Drawn {
 
         double fT = Art.Pt(40), fV = Art.Pt(10), fB = Art.Pt(10.5), fR = Art.Pt(10.5), fRv = Art.Pt(9.5);
         double tH = Art.Ft("Ag", fT, true, txt).Height, vH = Art.Ft("Ag", fV, false, txt).Height;
-        bool pill = IsNew;
-        double bH = 68;
-        double blockH = tH + 6 + vH + 10 + vH + (pill ? 32 + bH : 0);
+        double blockH = tH + 6 + vH + 10 + vH;
         double y = Math.Max(28, (heroH - blockH) / 2 - 6);
         double a, off;
 
@@ -92,32 +98,9 @@ public class AboutHero : Drawn {
         Art.Text(dc, Art.Ft(L.T("about_desc"), fV, false, Theme.A(sub, a)), new Rect(x0, y + off, cw, vH), TextAlignment.Center);
         y += vH + 32;
 
-        // 새 버전 줄: [아이콘] 새 버전 vX / 현재 vY ...        [업데이트]
-        if (pill) {
-            a = Appear(2); off = (1 - a) * 16;
-            Rect cr = new Rect(x0, y + off, cw, bH);
-            Glass(dc, cr, 16, a, 0, false);
-            double pad = 16, isz = 38;
-            Art.Icon(dc, "update", cr.X + pad, cr.Y + (bH - isz) / 2, isz, a);
-            string bt = L.T(Busy ? "about_upd_installing" : "about_pill_update");
-            FormattedText btf = Art.Ft(bt, fB, true, Theme.A(Busy ? sub : (Theme.Dark ? Theme.Mix(Theme.Accent, Colors.White, 0.45) : Theme.Accent), a));
-            double bw = btf.Width + 34, bh = 34;
-            Rect br0 = new Rect(cr.Right - pad - bw, cr.Y + (bH - bh) / 2, bw, bh);
-            double hv = Busy ? 0 : hov[0];
-            Color soft = Color.FromArgb((byte)(Theme.Dark ? 56 + 40 * hv : 30 + 30 * hv), Theme.Accent.R, Theme.Accent.G, Theme.Accent.B);
-            dc.DrawRoundedRectangle(Theme.Brush(Theme.A(soft, a)), null, br0, bh / 2, bh / 2);
-            dc.DrawText(btf, new Point(br0.X + (bw - btf.Width) / 2, br0.Y + (bh - btf.Height) / 2));
-            if (!Busy) hits.Add(new KeyValuePair<Rect, int>(new Rect(br0.X, br0.Y - off, br0.Width, br0.Height), 0));
-            double tx = cr.X + pad + isz + 14, tw = br0.X - 12 - tx;
-            FormattedText t1 = Art.Line(L.T("about_upd_row_title", NewVersion), fB, true, Theme.A(txt, a), tw);
-            FormattedText t2 = Art.Line(L.T("about_upd_row_sub", AppInfo.Version), fRv, false, Theme.A(sub, a), tw);
-            dc.DrawText(t1, new Point(tx, cr.Y + bH / 2 + 1 - t1.Height));
-            dc.DrawText(t2, new Point(tx, cr.Y + bH / 2 + 1));
-        }
-
         // 항목들
         string[][] rows = new string[][] {
-            new string[] { L.T("about_row_version"), "v" + AppInfo.Version, "" },
+            new string[] { L.T("about_row_version"), "v" + AppInfo.Version, "4" },
             new string[] { L.T("about_row_update"), UpdateValue ?? "", "1" },
             new string[] { L.T("about_row_repo"), AppInfo.Repo, "2" },
             new string[] { L.T("btn_disclaimer"), "", "3" } };
@@ -131,24 +114,44 @@ public class AboutHero : Drawn {
                 string[] row = rows[ri];
                 bool click = row[2].Length > 0;
                 int id = click ? int.Parse(row[2]) : -1;
+                bool chevron = click && id != 4;       // 버전 줄은 누를 수 있지만(7번 → 개발자 옵션) 화살표는 없다
                 if (click && hov[id] > 0.01) {
                     dc.PushClip(new RectangleGeometry(gr, 16, 16));
                     dc.DrawRectangle(Theme.Brush(Theme.A(Theme.Dark ? Color.FromArgb(28, 255, 255, 255) : Color.FromArgb(18, 40, 30, 80), a * hov[id])), null, rr);
                     dc.Pop();
                 }
-                double pad = 22, chev = click ? 22 : 0;
+                double pad = 22, chev = chevron ? 22 : 0;
                 Art.Text(dc, Art.Ft(row[0], fR, false, Theme.A(txt, a)), new Rect(rr.X + pad, rr.Y, rr.Width / 2 - pad, rr.Height), TextAlignment.Left);
-                Color vc = (id == 1 && IsNew) ? Theme.Accent : sub;
-                Art.Text(dc, Art.Ft(row[1], fRv, false, Theme.A(vc, a)), new Rect(rr.X + rr.Width / 3, rr.Y, rr.Width * 2 / 3 - pad - chev, rr.Height), TextAlignment.Right);
-                if (click) {
+                if (id == 1) DrawUpdateValue(dc, row[1], new Rect(rr.X + rr.Width / 3, rr.Y, rr.Width * 2 / 3 - pad - chev, rr.Height), sub, a, fRv);
+                else Art.Text(dc, Art.Ft(row[1], fRv, false, Theme.A(sub, a)), new Rect(rr.X + rr.Width / 3, rr.Y, rr.Width * 2 / 3 - pad - chev, rr.Height), TextAlignment.Right);
+                if (chevron) {
                     double mx = rr.Right - pad - 6, my = rr.Y + rr.Height / 2, s = 5;
                     dc.DrawGeometry(null, Art.RoundPen(Theme.A(sub, a), 1.6), Art.Poly(false, new Point(mx - s / 2, my - s), new Point(mx + s / 2, my), new Point(mx - s / 2, my + s)));
-                    hits.Add(new KeyValuePair<Rect, int>(new Rect(rr.X, ry + k * rh, rr.Width, rh), id));
                 }
+                if (click) hits.Add(new KeyValuePair<Rect, int>(new Rect(rr.X, ry + k * rh, rr.Width, rh), id));
                 if (k < groups[gi] - 1)
                     dc.DrawLine(Art.Pen(Theme.A(Theme.Dark ? Color.FromArgb(30, 255, 255, 255) : Color.FromArgb(22, 0, 0, 40), a), 1), new Point(rr.X + pad, rr.Bottom), new Point(rr.Right - pad, rr.Bottom));
             }
             ry += groups[gi] * rh + gap;
+        }
+    }
+
+    // 업데이트 줄 값: 새 버전이면 [업데이트] 알약, 아니면 글자. 둘 다 아래에서 올라오며 나타난다.
+    void DrawUpdateValue(DrawingContext dc, string text, Rect r, Color sub, double a, double size) {
+        double e = Motion.EaseOut(valIn), rise = (1 - e) * 14;
+        if (IsNew && !Busy) {
+            Color fg = Theme.Dark ? Theme.Mix(Theme.Accent, Colors.White, 0.45) : Theme.Accent;
+            FormattedText t = Art.Ft(text, size, true, Theme.A(fg, a * e));
+            double bw = t.Width + 24, bh = 26;
+            Rect br = new Rect(r.Right - bw, r.Y + (r.Height - bh) / 2, bw, bh);
+            dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.Accent, (Theme.Dark ? 70 / 255.0 : 34 / 255.0) * a * e)), null, br, bh / 2, bh / 2);
+            dc.PushClip(new RectangleGeometry(br, bh / 2, bh / 2));
+            dc.DrawText(t, new Point(br.X + (bw - t.Width) / 2, br.Y + (bh - t.Height) / 2 + rise));
+            dc.Pop();
+        } else {
+            dc.PushClip(new RectangleGeometry(r));
+            Art.Text(dc, Art.Ft(text, size, false, Theme.A(sub, a * e)), new Rect(r.X, r.Y + rise, r.Width, r.Height), TextAlignment.Right);
+            dc.Pop();
         }
     }
 
@@ -163,14 +166,14 @@ public class AboutHero : Drawn {
     int HitAt(Point p) { foreach (KeyValuePair<Rect, int> kv in hits) if (kv.Key.Contains(p)) return kv.Value; return -1; }
     protected override void OnMouseMove(MouseEventArgs e) {
         int h = HitAt(e.GetPosition(this));
-        if (h != hot) { hot = h; Cursor = h >= 0 ? Cursors.Hand : Cursors.Arrow; if (Motion.Off) { for (int i = 0; i < hov.Length; i++) hov[i] = i == hot ? 1 : 0; InvalidateVisual(); } else Run(); }
+        if (h != hot) { hot = h; Cursor = h >= 0 ? Cursors.Hand : Cursors.Arrow; if (Motion.Disabled) { for (int i = 0; i < hov.Length; i++) hov[i] = i == hot ? 1 : 0; InvalidateVisual(); } else Run(); }
         base.OnMouseMove(e);
     }
     protected override void OnMouseLeave(MouseEventArgs e) { hot = -1; Run(); base.OnMouseLeave(e); }
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) {
         int h = HitAt(e.GetPosition(this));
         ICommand c = null;
-        if (h == 0 || h == 1) c = UpdateCommand; else if (h == 2) c = RepoCommand; else if (h == 3) c = DisclaimerCommand;
+        if (h == 0 || h == 1) c = UpdateCommand; else if (h == 2) c = RepoCommand; else if (h == 3) c = DisclaimerCommand; else if (h == 4) c = VersionCommand;
         if (c != null) c.Execute(null);
         base.OnMouseLeftButtonUp(e);
     }
@@ -209,7 +212,7 @@ public class HeroBackdrop : FrameworkElement {
     void OnWin(object s, EventArgs e) { Wake(); }
     // 보이고, 창이 앞에 있고, 최소화되지 않았을 때만 돈다
     void Wake() {
-        bool run = !Motion.Off && IsVisible && win != null && win.IsActive && win.WindowState != WindowState.Minimized;
+        bool run = !Motion.Disabled && IsVisible && win != null && win.IsActive && win.WindowState != WindowState.Minimized;
         if (run && !running) { running = true; last = sw.Elapsed.TotalSeconds; CompositionTarget.Rendering += Frame; }
         else if (!run) Halt();
     }

@@ -1,6 +1,11 @@
 NanumSquare Neo (NanumSquareNeo-bRg.ttf, NanumSquareNeo-cBd.ttf)
 Copyright (c) 2022 NAVER Corp. All rights reserved. Font Designed by Sandoll Inc.
 
+Noto Sans KR (NotoSansKR-Regular.ttf, NotoSansKR-Bold.ttf)
+Copyright (c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+
+Both fonts are licensed under the SIL Open Font License, Version 1.1 (text below).
+
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
 https://openfontlicense.org

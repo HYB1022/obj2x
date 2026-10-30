@@ -28,7 +28,10 @@ rem 2) App: XAML views are embedded as resources named Obj2x.Views.^<file^>.xaml
 set "RES="
 for %%f in (src\App\Views\*.xaml) do set "RES=!RES! /resource:%%f,Obj2x.Views.%%~nxf"
 rem    Built-in languages: lang\<code>.json -> resource Obj2x.Lang.<code>.json (users can add/override with a lang folder next to the exe).
-for %%f in (lang\*.json) do set "RES=!RES! /resource:%%f,Obj2x.Lang.%%~nxf"
+for %%f in (lang\*.json) do (
+  set "LF=%%~nf"
+  if not "!LF:~0,1!"=="_" set "RES=!RES! /resource:%%f,Obj2x.Lang.%%~nxf"
+)
 "%CSC%" /nologo /target:winexe /optimize+ /nowarn:618 /out:"%OUT%" /win32icon:obj2x.ico %REFS% ^
   /r:System.Xaml.dll /r:"%WPF%\WindowsBase.dll" /r:"%WPF%\PresentationCore.dll" /r:"%WPF%\PresentationFramework.dll" ^
   !RES! src\Core\*.cs src\App\*.cs

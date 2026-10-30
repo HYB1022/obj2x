@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -71,12 +73,22 @@ public static class Shots {
         cb.IsDropDownOpen = false; Pump.Run(100);
     }
     static MainWindow Open(Settings s, string dir) {
-        Loc.SetLang(s.Lang); Theme.Apply(s.Theme, s.Accent, s.SysFont);
+        Loc.SetLang(s.Lang); Theme.Apply(s.Theme, s.Accent, s.Font);
         MainWindow f = new MainWindow(s, dir, false);
         f.FixClientSize(1040, 686);
         f.Left = 0; f.Top = 0;
         f.Show(); f.Activate(); Pump.Run(300);
         return f;
+    }
+
+    static List<T> UiTreeAll<T>(DependencyObject root) where T : DependencyObject {
+        List<T> r = new List<T>();
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) {
+            DependencyObject c = VisualTreeHelper.GetChild(root, i);
+            if (c is T) r.Add((T)c);
+            r.AddRange(UiTreeAll<T>(c));
+        }
+        return r;
     }
 
     public static int Run(string dir) {
@@ -98,6 +110,10 @@ public static class Shots {
             SaveDrop(f, Path.Combine(dir, tag + "_set_lang.png"));
             f.VM.Page = "about"; Save(f, Path.Combine(dir, tag + "_about.png"));
             f.VM.FakeUpdate("9.9"); Save(f, Path.Combine(dir, tag + "_about_upd.png"));
+            f.VM.DevMode = true; f.VM.Page = "dev"; Save(f, Path.Combine(dir, tag + "_dev.png"));
+            foreach (ScrollViewer sv in UiTreeAll<ScrollViewer>(f.Host)) if (sv.IsVisible) sv.ScrollToEnd();
+            Pump.Run(50); Save(f, Path.Combine(dir, tag + "_dev2.png"));
+            f.VM.DevMode = false;
             f.VM.Page = "dashboard"; f.Disclaimer(false, null); Save(f, Path.Combine(dir, tag + "_disc.png"));
             f.LastDialog.Close(1); Pump.Run(50);   // 0은 "종료"라 창이 닫힌다
             // 큰 창: 배율이 커져야 한다
