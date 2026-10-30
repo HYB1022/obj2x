@@ -218,6 +218,10 @@ public static class SelfTest {
         byte[] bm = File.Exists(Path.Combine(sdir, "texture", "busdepot_asphalt.bmp")) ? File.ReadAllBytes(Path.Combine(sdir, "texture", "busdepot_asphalt.bmp")) : new byte[0];
         T("OMSI: 스플라인 저장 + 기본 텍스처 (256x256 BMP)", File.Exists(sf) && sf.EndsWith("Test Road.sli") && bm.Length == 54 + 256 * 256 * 3 && bm[0] == 'B' && bm[1] == 'M'
             && File.Exists(Path.Combine(sdir, "texture", "busdepot_pavement.bmp")), sf + " " + bm.Length);
+        SliFile slf = SliFile.Load(sf);
+        T("스플라인 읽기(.sli): 텍스처·단면·길·폭", slf.Textures.Count == 2 && slf.Profiles.Count == sp1.Profiles().Count && slf.Paths.Count == sp1.Paths().Count
+            && Math.Abs(slf.Width - sp1.TotalW) < 1e-6 && slf.FindTex(0) != null && slf.Profiles[1].Pts.Count == 2 && Math.Abs(slf.Profiles[1].Pts[0].V - 0.2) < 1e-9,
+            slf.Textures.Count + " " + slf.Profiles.Count + " " + slf.Paths.Count + " " + slf.Width);
         string err0; SplineSpec sp3 = new SplineSpec(); sp3.LaneW = 0.2;
         T("OMSI: 잘못된 값 거르기", !sp3.Valid(out err0) && err0 == "spl_err_lanew", err0);
 
@@ -463,6 +467,13 @@ public static class SelfTest {
             f.VM.DropPath(Path.Combine(md, "house.o3d")); Pump.Run(60);
             T("끌어다 놓기: o3d → 오브젝트 만들기 + 모델 목록", f.VM.Page == "object" && f.VM.ObjModels == md && f.VM.Models.Count == 4 && f.VM.ObjFolder == "models",
                 f.VM.Page + " " + f.VM.Models.Count + " " + f.VM.ObjFolder);
+            // 끌어다 놓기: .sco → 오브젝트 탭에서 3D, .sli → 스플라인 탭에서 3D (차/사람 길 덧그림)
+            f.VM.DropPath(sr2.Sco[0]); for (int w = 0; w < 200 && f.VM.ScoBusy; w++) Pump.Run(30);
+            T("오브젝트 탭: .sco 열어 3D로 보기", f.VM.Page == "object" && f.VM.ScoParts.Count > 0 && f.VM.ScoParts[0].Model != null && !f.VM.ScoEmpty && f.VM.ScoStatus.Length > 0,
+                f.VM.Page + " " + f.VM.ScoParts.Count + " " + f.VM.ScoStatus);
+            f.VM.DropPath(sf); Pump.Run(60);
+            T("스플라인 탭: .sli 열어 3D로 보기", f.VM.Page == "spline" && f.VM.SliParts.Count == 1 && f.VM.SliParts[0].Tris > 0 && f.VM.SliOverlay != null && !f.VM.SliEmpty && f.VM.SliInfo.Length > 0,
+                f.VM.Page + " " + f.VM.SliParts.Count + " " + f.VM.SliInfo);
             // 스플라인 화면: 값을 바꾸면 미리보기가 다시 그려진다
             f.VM.Page = "spline"; Pump.Run(80);
             SplinePreview spv = FindAll<SplinePreview>(f.Host).Find(delegate(SplinePreview q) { return q.IsVisible; });

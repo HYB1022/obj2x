@@ -443,4 +443,52 @@ public class SplineSpec {
         return def;
     }
 }
+
+// ---------------------------------------------------------------- 스플라인(.sli) 읽기 (스플라인 탭의 '.sli 열어 보기')
+// [texture] 순서가 텍스처 번호, [profile] 텍스처 번호 + 그 뒤의 [profilepnt] x, y, u, v(길이 1m당), [path] 종류, x, y, 폭, 방향, [matl]/[matl_alpha]
+public class SliFile {
+    public class Pnt { public double X, Y, U, V; }
+    public class Profile { public int Tex; public List<Pnt> Pts = new List<Pnt>(); }
+    public class SliPath { public int Kind, Dir; public double X, Y, W; }
+    public string Path;
+    public List<string> Textures = new List<string>();
+    public Dictionary<string, int> Alpha = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    public List<Profile> Profiles = new List<Profile>();
+    public List<SliPath> Paths = new List<SliPath>();
+    public double MinX, MaxX;
+
+    static double D(string s) { double v; double.TryParse((s ?? "").Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out v); return v; }
+    static int I(string s) { return (int)Math.Round(D(s)); }
+
+    public static SliFile Load(string path) {
+        SliFile f = new SliFile(); f.Path = path;
+        string[] L = Omsi.AnsiLines(path);
+        Profile cur = null; string matl = null;
+        Func<int, string> at = delegate(int i) { return i < L.Length ? L[i].Trim() : ""; };
+        for (int i = 0; i < L.Length; i++) {
+            string t = L[i].Trim();
+            if (t == "[texture]") f.Textures.Add(at(i + 1));
+            else if (t == "[matl]") matl = at(i + 1);
+            else if (t == "[matl_alpha]" && matl != null) f.Alpha[matl] = I(at(i + 1));
+            else if (t == "[profile]") { cur = new Profile(); cur.Tex = I(at(i + 1)); f.Profiles.Add(cur); }
+            else if (t == "[profilepnt]" && cur != null) cur.Pts.Add(new Pnt { X = D(at(i + 1)), Y = D(at(i + 2)), U = D(at(i + 3)), V = D(at(i + 4)) });
+            else if (t == "[path]") f.Paths.Add(new SliPath { Kind = I(at(i + 1)), X = D(at(i + 2)), Y = D(at(i + 3)), W = D(at(i + 4)), Dir = I(at(i + 5)) });
+        }
+        f.MinX = double.MaxValue; f.MaxX = double.MinValue;
+        foreach (Profile pr in f.Profiles) foreach (Pnt q in pr.Pts) { f.MinX = Math.Min(f.MinX, q.X); f.MaxX = Math.Max(f.MaxX, q.X); }
+        foreach (SliPath q in f.Paths) { f.MinX = Math.Min(f.MinX, q.X - q.W / 2); f.MaxX = Math.Max(f.MaxX, q.X + q.W / 2); }
+        if (f.MinX > f.MaxX) f.MinX = f.MaxX = 0;
+        return f;
+    }
+    public double Width { get { return MaxX - MinX; } }
+
+    // 텍스처 파일: sli 옆 texture 폴더, sli 폴더, Splines 아래 texture (OMSI처럼)
+    public string FindTex(int index) {
+        if (index < 0 || index >= Textures.Count || Textures[index].Length == 0) return null;
+        string n = Textures[index], dir = System.IO.Path.GetDirectoryName(Path);
+        foreach (string c in new string[] { System.IO.Path.Combine(System.IO.Path.Combine(dir, "texture"), n), System.IO.Path.Combine(dir, n) })
+            try { if (File.Exists(c)) return c; } catch (Exception) { }
+        return null;
+    }
+}
 }

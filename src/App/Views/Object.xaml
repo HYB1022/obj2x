@@ -6,6 +6,36 @@
   <StackPanel Margin="24,20,24,28" MaxWidth="820">
     <TextBlock Text="{ui:Tr nav_object}" Style="{StaticResource PageTitle}" Margin="8,4,0,4"/>
     <TextBlock Text="{ui:Tr obj_intro}" Style="{StaticResource DevSub}" Margin="8,0,8,6"/>
+    <TextBlock Text="{ui:Tr obj_sec_view}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Style="{StaticResource DevRow}" Command="{Binding OpenScoCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr obj_view_file}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding ScoPathText}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DevCard}" Margin="0,14,0,0" Padding="10">
+      <Grid Height="380">
+        <ui:ModelView Parts="{Binding ScoParts}" Scene="{Binding ScoScene}"/>
+        <TextBlock Text="{ui:Tr obj_view_empty}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   TextAlignment="Center" Margin="40,0" Visibility="{Binding ScoEmpty, Converter={StaticResource Vis}}"/>
+        <TextBlock Text="{Binding ScoStatus}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   Visibility="{Binding ScoBusy, Converter={StaticResource Vis}}"/>
+      </Grid>
+    </Border>
+    <DockPanel Margin="24,8,8,0">
+      <Button DockPanel.Dock="Right" Content="{ui:Tr obj_view_bus}" Style="{StaticResource BtnNormal}" Command="{Binding ScoToBusCmd}" Height="34" Padding="14,0" VerticalAlignment="Top"/>
+      <StackPanel Margin="0,0,12,0">
+        <TextBlock Text="{Binding ScoStatus}" Style="{StaticResource DevSub}" TextWrapping="Wrap"/>
+        <TextBlock Text="{ui:Tr view_controls}" Style="{StaticResource DevSub}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+      </StackPanel>
+    </DockPanel>
     <TextBlock Text="{ui:Tr obj_sec_models}" Style="{StaticResource DevCaption}"/>
     <Border Style="{StaticResource DevCard}">
       <StackPanel>

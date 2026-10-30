@@ -52,7 +52,7 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 | `O3d.cs` | o3d 읽기(버전 1/3/5/7, 32비트 번호. 키가 `0xFFFFFFFF`가 아니면 암호화로 보고 거부 — 공식 차량은 암호화돼 있고 풀지 않는다), `ModelCfg`(model.cfg/.sco의 `[mesh]`·`[LOD]`·`[visible]`·`[viewpoint]`·`[matl_alpha]`·`[CTC]`·`[CTCTexture]`), `Repaint`(.cti: `[item]` 도색/자리/파일, `[setvar]` 변수/값 → `VisOn`), `ObjExport`(FastO3D의 반대: z 뒤집기, 면 방향 반대, v 뒤집기 → Blender에서 원래 방향) |
 | `BusFiles.cs` | 버스 탭 파일: `CfgDoc`(줄 단위로 값만 바꾸고 들여쓰기 유지, ANSI 저장, 처음 저장할 때 `.bak`), `AnimBlock`(`[newanim]` 파싱), `BusFile`(.bus의 `[friendlyname]`/`[model]`/`[paths]`/`[passengercabin]`), `PathsCfg`(점/연결), `CabinCfg`(좌석/입구/출구) |
 | `OmsiScript.cs` | 버스 탭용 차량 스크립트 실행기: .bus의 [script]/[constfile]을 읽어 도색 [setvar] 값으로 {init}과 {frame}(매크로 포함)을 돌려 [visible] 변수를 구한다. 계산·비교·{if}·L.L/S.L/C.L/M.L·레지스터만, 시스템 값은 0 |
-| `Omsi.cs` | OMSI 2: 설치 폴더 찾기(Steam), o3d(버전 1)/mtl에서 텍스처 이름 읽기, 알파 판별, 변환 전 텍스처 검사, `ScoMaker`(.sco + model/texture 복사), `SplineSpec`(.sli 프로필/경로/기본 텍스처 BMP). 형식은 OMSI 설치 폴더의 실제 파일들을 보고 맞췄다 |
+| `Omsi.cs` | OMSI 2: 설치 폴더 찾기(Steam), o3d(버전 1)/mtl에서 텍스처 이름 읽기, 알파 판별, 변환 전 텍스처 검사, `ScoMaker`(.sco + model/texture 복사), `SplineSpec`(.sli 프로필/경로/기본 텍스처 BMP), `SliFile`(.sli 읽기: 텍스처, `[profile]`/`[profilepnt]` x·y·u·v, `[path]`, `[matl_alpha]`). 형식은 OMSI 설치 폴더의 실제 파일들을 보고 맞췄다 |
 | `MapData.cs` | 맵 탭: `MapInfo.Load`(global.cfg는 UTF-16. 타일 `.map`의 `[object]`(0, 경로, ID, x, y, z, ...)/`[spline]`(0, 경로, ID, 앞, 뒤, x, 높이, y, 방향, 길이, 반지름), 타일 300m, 없는 오브젝트/스플라인/AI(`ailists.cfg`)/사람(`humans.txt`/`drivers.txt`), 시간표 개수), `HofFile`(이름, 종점, 정류장, 운행) |
 
 ### `src/App` (네임스페이스 `Obj2x.UI`) — WPF 화면
@@ -60,7 +60,7 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 | 파일 | 역할 |
 | --- | --- |
 | `Program.cs` | 진입점, `--selftest`/`--shots`, 첫 실행이면 환영 화면 |
-| `MainViewModel*.cs` | 화면 상태와 동작(속성/명령). 화면 컨트롤은 모르고, 대화 상자·파일 선택·알림(`Toast`)은 `IUi`로 부탁한다. `MainViewModel.Omsi.cs`는 오브젝트/스플라인 만들기, `MainViewModel.Viewer.cs`는 버스 탭의 모델 읽기/도색/부품 목록(.blend 저장은 obj를 만든 뒤 `BusDepot.py --blend`. Blender는 `Settings.BlendExe` 또는 설치된 것 중 가장 새 버전 — `Omsi.FindBlenders`가 Program Files와 Steam을 찾는다. 2.79로 저장하면 2.8 이상에서 텍스처가 안 보이고 옛 화면 배치가 열린다), `MainViewModel.Bus.cs`는 버스 탭의 애니메이션 변수/재생, 부품 블록 편집, paths/cabin 편집과 저장, `MainViewModel.Map.cs`는 맵 탭(맵 읽기, 없는 목록 복사, HOF), `MainViewModel.Dev.cs`는 개발자 옵션(정보 화면의 버전을 7번 누르면 켜짐, `Settings.DevMode`) |
+| `MainViewModel*.cs` | 화면 상태와 동작(속성/명령). 화면 컨트롤은 모르고, 대화 상자·파일 선택·알림(`Toast`)은 `IUi`로 부탁한다. `MainViewModel.Omsi.cs`는 오브젝트/스플라인 만들기, `MainViewModel.Viewer.cs`는 버스 탭의 모델 읽기/도색/부품 목록(.blend 저장은 obj를 만든 뒤 `BusDepot.py --blend`. Blender는 `Settings.BlendExe` 또는 설치된 것 중 가장 새 버전 — `Omsi.FindBlenders`가 Program Files와 Steam을 찾는다. 2.79로 저장하면 2.8 이상에서 텍스처가 안 보이고 옛 화면 배치가 열린다), `MainViewModel.Bus.cs`는 버스 탭의 애니메이션 변수/재생, 부품 블록 편집, paths/cabin 편집과 저장, `MainViewModel.Preview.cs`는 오브젝트 탭의 `.sco 열어 보기`와 스플라인 탭의 `.sli 열어 보기`(40 m 곧은 길 + 길 덧그림), `MainViewModel.Map.cs`는 맵 탭(맵 읽기, 없는 목록 복사, HOF), `MainViewModel.Dev.cs`는 개발자 옵션(정보 화면의 버전을 7번 누르면 켜짐, `Settings.DevMode`) |
 | `MainWindow.cs` | Shell/페이지 XAML을 붙이고 `IUi` 구현: 페이지 전환 애니메이션, 창 크기 배율, 대화 상자. 대시보드 외 페이지는 처음 열 때 만든다 |
 | `WelcomeWindow.cs` | 첫 실행 환영 화면 |
 | `Views/*.xaml` | `Styles`(공통 스타일), `Shell`(샤오미 태블릿 설정 앱처럼 둘로 나눈 화면: 왼쪽 큰 제목 + 앱 카드 + 카드로 묶은 메뉴), `Dashboard`, `Wizard`, `Object`/`Spline`(OMSI 제작), `Bus`(버스: 모델·애니메이션·paths/cabin 편집), `Map`(맵·HOF), `Advanced`, `Settings`, `Dev`(개발자 옵션, HyperOS 설정 화면 모양), `About` |

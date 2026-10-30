@@ -93,6 +93,7 @@ public partial class MainViewModel : Observable {
         InitOmsi();
         InitViewer();
         InitMap();
+        InitPreview();
         WireEngine();
         // 저장해 둔 문구(상태, 배너, 마법사 안내)는 새 언어로 다시 만든 뒤 모든 속성을 다시 읽게 한다
         Loc.Changed += delegate {

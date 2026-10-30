@@ -113,6 +113,17 @@ public static class Shots {
         string dir = Path.GetDirectoryName(Path.GetFullPath(png));
         Settings s = new Settings(); s.Path = Path.Combine(dir, "shot.ini"); s.Theme = theme; s.Lang = "ko"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
         MainWindow f = Open(s, dir);
+        // .sli → 스플라인 탭, preset이 obj인 .sco → 오브젝트 탭의 '열어 보기'
+        string ext = Path.GetExtension(cfg).ToLowerInvariant();
+        if (ext == ".sli" || ext == ".sco" && preset == "obj") {
+            f.VM.DropPath(cfg);
+            for (int i = 0; i < 600 && f.VM.ScoBusy; i++) Pump.Run(50);
+            Pump.Run(400);
+            Save(f, png);
+            File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.ScoStatus + "\r\n" + f.VM.SliInfo, new UTF8Encoding(true));
+            f.Close();
+            return 0;
+        }
         f.VM.Page = "bus"; Pump.Run(100);
         f.VM.LoadModel(cfg);
         for (int i = 0; i < 600 && f.VM.ViewBusy; i++) Pump.Run(50);

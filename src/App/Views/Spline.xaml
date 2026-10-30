@@ -6,6 +6,30 @@
   <StackPanel Margin="24,20,24,28" MaxWidth="820">
     <TextBlock Text="{ui:Tr nav_spline}" Style="{StaticResource PageTitle}" Margin="8,4,0,4"/>
     <TextBlock Text="{ui:Tr spl_intro}" Style="{StaticResource DevSub}" Margin="8,0,8,6"/>
+    <TextBlock Text="{ui:Tr spl_sec_view}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Style="{StaticResource DevRow}" Command="{Binding OpenSliCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_view_file}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding SliPathText}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DevCard}" Margin="0,14,0,0" Padding="10">
+      <Grid Height="380">
+        <ui:ModelView Parts="{Binding SliParts}" Scene="{Binding SliScene}" Overlay="{Binding SliOverlay}"/>
+        <TextBlock Text="{ui:Tr spl_view_empty}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   TextAlignment="Center" Margin="40,0" Visibility="{Binding SliEmpty, Converter={StaticResource Vis}}"/>
+      </Grid>
+    </Border>
+    <TextBlock Text="{Binding SliInfo}" Style="{StaticResource DevSub}" Margin="24,8,24,0" TextWrapping="Wrap"/>
+    <TextBlock Text="{ui:Tr spl_view_legend}" Style="{StaticResource DevSub}" Margin="24,2,24,0" TextWrapping="Wrap"/>
+    <TextBlock Text="{ui:Tr view_controls}" Style="{StaticResource DevSub}" Margin="24,2,24,0" TextWrapping="Wrap"/>
     <TextBlock Text="{ui:Tr spl_sec_preview}" Style="{StaticResource DevCaption}"/>
     <Border Style="{StaticResource DevCard}" Padding="0,18,0,16">
       <StackPanel>
