@@ -8,12 +8,11 @@
     <!-- 전체 스위치: 끄면 메뉴가 사라지고 정보 화면으로 돌아간다 -->
     <Border Style="{StaticResource DevCard}">
       <StackPanel>
-        <DockPanel Margin="24,14">
-          <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding DevMode}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding DevMode}">
           <StackPanel VerticalAlignment="Center">
             <TextBlock Text="{ui:Tr dev_master}" Style="{StaticResource DevTitle}"/>
           </StackPanel>
-        </DockPanel>
+        </CheckBox>
       </StackPanel>
     </Border>
     <StackPanel IsEnabled="{Binding DevMode}">
@@ -93,63 +92,55 @@
       <TextBlock Text="{ui:Tr dev_grp_draw}" Style="{StaticResource DevCaption}"/>
       <Border Style="{StaticResource DevCard}">
         <StackPanel>
-          <DockPanel Margin="24,14">
-            <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding DevFps}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+          <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding DevFps}">
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{ui:Tr dev_fps}" Style="{StaticResource DevTitle}"/>
               <TextBlock Text="{ui:Tr dev_fps_sub}" Style="{StaticResource DevSub}"/>
             </StackPanel>
-          </DockPanel>
-          <DockPanel Margin="24,14">
-            <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding DevBounds}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+          </CheckBox>
+          <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding DevBounds}">
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{ui:Tr dev_bounds}" Style="{StaticResource DevTitle}"/>
               <TextBlock Text="{ui:Tr dev_bounds_sub}" Style="{StaticResource DevSub}"/>
             </StackPanel>
-          </DockPanel>
-          <DockPanel Margin="24,14">
-            <ComboBox DockPanel.Dock="Right" Style="{StaticResource DevSelect}" ItemsSource="{Binding AnimChoices}" DisplayMemberPath="Name"
-                      SelectedValuePath="Code" SelectedValue="{Binding DevAnim}" VerticalAlignment="Center" Margin="16,0,0,0"/>
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="{ui:Tr dev_anim}" Style="{StaticResource DevTitle}"/>
-            </StackPanel>
-          </DockPanel>
+          </CheckBox>
+          <ComboBox Style="{StaticResource DevSelect}" Tag="{ui:Tr dev_anim}" ItemsSource="{Binding AnimChoices}" DisplayMemberPath="Name"
+                    SelectedValuePath="Code" SelectedValue="{Binding DevAnim}"/>
         </StackPanel>
       </Border>
       <TextBlock Text="{ui:Tr dev_grp_convert}" Style="{StaticResource DevCaption}"/>
       <Border Style="{StaticResource DevCard}">
         <StackPanel>
-          <DockPanel Margin="24,14">
-            <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding DevVerbose}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+          <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding DevVerbose}">
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{ui:Tr dev_verbose}" Style="{StaticResource DevTitle}"/>
               <TextBlock Text="{ui:Tr dev_verbose_sub}" Style="{StaticResource DevSub}"/>
             </StackPanel>
-          </DockPanel>
+          </CheckBox>
         </StackPanel>
       </Border>
       <TextBlock Text="{ui:Tr dev_grp_info}" Style="{StaticResource DevCaption}"/>
       <Border Style="{StaticResource DevCard}">
         <StackPanel>
-          <DockPanel Margin="24,15">
+          <DockPanel Margin="24,18">
             <TextBlock DockPanel.Dock="Right" Text="{Binding InfoRuntime}" Style="{StaticResource DevValue}" MaxWidth="380"/>
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{ui:Tr dev_runtime}" Style="{StaticResource DevTitle}"/>
             </StackPanel>
           </DockPanel>
-          <DockPanel Margin="24,15">
+          <DockPanel Margin="24,18">
             <TextBlock DockPanel.Dock="Right" Text="{Binding InfoRender}" Style="{StaticResource DevValue}" MaxWidth="380"/>
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{ui:Tr dev_render}" Style="{StaticResource DevTitle}"/>
             </StackPanel>
           </DockPanel>
-          <DockPanel Margin="24,15">
+          <DockPanel Margin="24,18">
             <TextBlock DockPanel.Dock="Right" Text="{Binding InfoScale}" Style="{StaticResource DevValue}" MaxWidth="380"/>
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{ui:Tr dev_scale}" Style="{StaticResource DevTitle}"/>
             </StackPanel>
           </DockPanel>
-          <DockPanel Margin="24,15">
+          <DockPanel Margin="24,18">
             <TextBlock DockPanel.Dock="Right" Text="{Binding InfoPath}" Style="{StaticResource DevValue}" MaxWidth="380"/>
             <StackPanel VerticalAlignment="Center">
               <TextBlock Text="{ui:Tr dev_path}" Style="{StaticResource DevTitle}"/>

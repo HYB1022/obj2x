@@ -139,7 +139,10 @@ public class Ripple : FrameworkElement {
         src.MouseLeave -= Up;
         src = null;
     }
-    void Down(object s, MouseButtonEventArgs e) { Press(e.GetPosition(this)); }
+    void Down(object s, MouseButtonEventArgs e) {
+        Point p = e.GetPosition(this);
+        if (p.X >= 0 && p.Y >= 0 && p.X <= ActualWidth && p.Y <= ActualHeight) Press(p);   // 펼친 목록(팝업)을 누른 것은 무시
+    }
     void Up(object s, MouseEventArgs e) { fx.Release(); }
     public void Press(Point p) { fx.Press(p, new Rect(0, 0, ActualWidth, ActualHeight), 0); }   // --shots에서도 부른다
     public void Release() { fx.Release(); }

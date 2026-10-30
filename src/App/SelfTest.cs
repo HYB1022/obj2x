@@ -256,6 +256,8 @@ public static class SelfTest {
             T("개발자: 배율 1x면 스위치가 0.18초 안에 끝까지", Motion.Scale == 1 && kt != null && Math.Abs(kt.X) < 0.5, kt == null ? "없음" : kt.X.ToString("0.0"));
             Motion.Off = off;
             Button devRow = FindAll<Button>(f.Host).Find(delegate(Button b) { return b.IsVisible && b.Command == f.VM.BugReportCmd; });
+            T("개발자: 스위치/값 선택은 줄 전체가 눌림 + 물결", fpsBox != null && fpsBox.ActualWidth > 400 && FindAll<Ripple>(fpsBox).Count == 1
+                && anim != null && anim.ActualWidth > 400 && FindAll<Ripple>(anim).Count == 1, fpsBox == null ? "없음" : fpsBox.ActualWidth + " / " + (anim == null ? 0 : anim.ActualWidth));
             T("누름 효과: 버튼 템플릿에 물결 층", devRow != null && FindAll<Ripple>(devRow).Count == 1 && FindAll<Ripple>(f.Host).Count > 3, "");
             f.VM.DevFps = true; f.VM.DevAnim = "0"; Pump.Run(30);
             T("개발자: FPS 표시 + 애니메이션 끄기", f.FpsVisible && Motion.Scale == 0 && Motion.Disabled, f.FpsVisible + " " + Motion.Scale);

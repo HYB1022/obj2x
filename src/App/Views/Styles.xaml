@@ -305,7 +305,6 @@
   <Style x:Key="DevCard" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Card}"/>
     <Setter Property="CornerRadius" Value="20"/>
-    <Setter Property="Padding" Value="0,6"/>
   </Style>
   <Style x:Key="DevCaption" TargetType="TextBlock">
     <Setter Property="FontSize" Value="12"/>
@@ -354,7 +353,7 @@
           <Grid Background="Transparent">
             <Border x:Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
             <ui:Ripple/>
-            <ContentPresenter Margin="24,14"/>
+            <ContentPresenter Margin="24,17"/>
           </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="ui:Anim.Opacity" Value="0.6"/></Trigger>
@@ -364,7 +363,40 @@
       </Setter.Value>
     </Setter>
   </Style>
-  <!-- 값 선택 (오른쪽에 값 + ⌃⌄, 누르면 목록) -->
+  <!-- 스위치 줄 (CheckBox): 줄 어디를 눌러도 켜고 끈다. 내용 = 왼쪽 제목/설명 -->
+  <Style x:Key="DevToggle" TargetType="CheckBox">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="CheckBox">
+          <Grid Background="Transparent">
+            <Border x:Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+            <ui:Ripple/>
+            <DockPanel Margin="24,17">
+              <Grid x:Name="sw" DockPanel.Dock="Right" Width="46" Height="24" VerticalAlignment="Center" Margin="16,0,0,0">
+                <Border CornerRadius="10" Margin="2" Background="{DynamicResource ToggleOff}"/>
+                <Border x:Name="on" CornerRadius="10" Margin="2" Background="{DynamicResource Accent}" Opacity="0"/>
+                <Ellipse x:Name="knob" Width="14" Height="14" Fill="White" HorizontalAlignment="Left" Margin="6,0,0,0"/>
+              </Grid>
+              <ContentPresenter VerticalAlignment="Center"/>
+            </DockPanel>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="ui:Anim.Opacity" Value="0.6"/></Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="knob" Property="ui:Anim.X" Value="20"/>
+              <Setter TargetName="on" Property="ui:Anim.Opacity" Value="1"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="sw" Property="Opacity" Value="0.5"/><Setter Property="Cursor" Value="Arrow"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <!-- 값 선택 줄 (ComboBox): 왼쪽 제목(Tag), 오른쪽 값 + ⌃⌄. 줄 어디를 눌러도 목록이 펼쳐진다 -->
   <Style x:Key="DevSelect" TargetType="ComboBox">
     <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -376,15 +408,27 @@
           <Grid>
             <ToggleButton Focusable="False" ClickMode="Press" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
               <ToggleButton.Template>
-                <ControlTemplate TargetType="ToggleButton"><Border Background="Transparent"/></ControlTemplate>
+                <ControlTemplate TargetType="ToggleButton">
+                  <Grid Background="Transparent">
+                    <Border x:Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+                  </Grid>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="ui:Anim.Opacity" Value="0.6"/></Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
               </ToggleButton.Template>
             </ToggleButton>
-            <StackPanel Orientation="Horizontal" IsHitTestVisible="False" VerticalAlignment="Center" HorizontalAlignment="Right">
-              <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" VerticalAlignment="Center" TextElement.Foreground="{DynamicResource Muted}" TextElement.FontSize="13"/>
-              <Path Data="M 0,4 L 4,0 L 8,4 M 0,9 L 4,13 L 8,9" Stroke="{DynamicResource Muted}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                    StrokeLineJoin="Round" VerticalAlignment="Center" Margin="10,0,0,0"/>
-            </StackPanel>
-            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Placement="Bottom" HorizontalOffset="-60" VerticalOffset="6" PopupAnimation="Fade" Focusable="False">
+            <ui:Ripple/>
+            <DockPanel Margin="24,17" IsHitTestVisible="False">
+              <StackPanel x:Name="val" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" VerticalAlignment="Center" TextElement.Foreground="{DynamicResource Muted}" TextElement.FontSize="13"/>
+                <Path Data="M 0,4 L 4,0 L 8,4 M 0,9 L 4,13 L 8,9" Stroke="{DynamicResource Muted}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      StrokeLineJoin="Round" VerticalAlignment="Center" Margin="10,0,0,0"/>
+              </StackPanel>
+              <TextBlock Text="{TemplateBinding Tag}" Style="{StaticResource DevTitle}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" PlacementTarget="{Binding ElementName=val}" AllowsTransparency="True" Placement="Bottom"
+                   HorizontalOffset="-60" VerticalOffset="10" PopupAnimation="Fade" Focusable="False">
               <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBdr}" BorderThickness="1" CornerRadius="14" Padding="4" Margin="0,0,10,12" MinWidth="200">
                 <Border.Effect><DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Opacity="0.18"/></Border.Effect>
                 <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer>
