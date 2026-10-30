@@ -131,6 +131,12 @@ public static class Shots {
         if (preset == "pose") {
             foreach (VarItem v in f.VM.Vars) v.Value = v.Min + (v.Max - v.Min) * 0.85;
             foreach (PartItem p in f.VM.Parts) if (p.Checked && p.Mesh.Animated) { f.VM.PickPartCmd.Execute(p); break; }
+        } else if (preset == "around") {
+            // 여러 각도에서 가까이 (_a1.._a4)
+            Pump.Run(300);
+            ModelView mv = null; foreach (ModelView x in UiTreeAll<ModelView>(f.Host)) if (x.IsVisible) { mv = x; break; }
+            double[] yaws = { -150, -35, 35, 150 };
+            if (mv != null) for (int k = 0; k < yaws.Length; k++) { mv.Orbit(yaws[k], 4, 0.55); Pump.Run(150); Save(f, Path.Combine(Path.GetDirectoryName(png), Path.GetFileNameWithoutExtension(png) + "_a" + (k + 1) + ".png")); }
         } else if (preset == "paths") {
             // 모델 숨기기 + 첫 좌석을 골라 축 손잡이까지
             f.VM.BusHideModel = true;
@@ -144,7 +150,9 @@ public static class Shots {
             if (sv != null) for (int k = 1; k <= 4; k++) { sv.ScrollToVerticalOffset(k * 640); Pump.Run(100); Save(f, Path.Combine(Path.GetDirectoryName(png), Path.GetFileNameWithoutExtension(png) + "_" + k + ".png")); }
         }
         List<string> pn = new List<string>(); if (f.VM.Paints != null) foreach (TrItem p in f.VM.Paints) pn.Add(p.Name);
-        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.ViewStatus + "\r\n" + string.Join(", ", pn.ToArray()), new UTF8Encoding(true));
+        StringBuilder parts = new StringBuilder();
+        foreach (PartItem p in f.VM.Parts) parts.Append(p.Checked ? "[on]  " : "[off] ").Append(p.Name).Append("  ").Append(p.Sub).Append("\r\n");
+        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.ViewStatus + "\r\n" + string.Join(", ", pn.ToArray()) + "\r\n" + parts, new UTF8Encoding(true));
         f.Close();
         return 0;
     }

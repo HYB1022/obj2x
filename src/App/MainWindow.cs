@@ -60,6 +60,10 @@ public class MainWindow : Window, IUi {
 
         VM = new MainViewModel(s, here, this);
         DataContext = VM;
+        // 버스 탭 되돌리기 / 다시 실행 (글자 칸에 있을 때는 칸 자체의 되돌리기가 먼저 먹는다)
+        InputBindings.Add(new KeyBinding(VM.UndoCmd, Key.Z, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(VM.RedoCmd, Key.Y, ModifierKeys.Control));
+        InputBindings.Add(new KeyBinding(VM.RedoCmd, Key.Z, ModifierKeys.Control | ModifierKeys.Shift));
         // 대시보드만 바로 만들고, 다른 페이지는 처음 열 때 만든다 (시작이 빨라진다)
         logBox = (TextBox)Page("dashboard").FindName("LogBox");
         pages["dashboard"].Visibility = Visibility.Visible;

@@ -127,8 +127,9 @@ public static class TexLoad {
 public class PartItem : Observable {
     bool chk;
     public CfgMesh Mesh;
-    public Model3D Model;          // 다른 스레드에서 만들어 굳힌(Freeze) 것
-    public Model3DGroup Visual;    // 화면에 넣는 껍데기 (애니메이션 변환을 여기에 건다, 화면 스레드에서 만든다)
+    public Model3D Model;          // 다른 스레드에서 만들어 굳힌(Freeze) 것 (불투명한 재질)
+    public Model3D ModelAlpha;     // 투명 재질([matl_alpha])만. 없으면 null
+    public Model3DGroup Visual, VisualAlpha;    // 화면에 넣는 껍데기 (애니메이션 변환을 여기에 건다, 화면 스레드에서 만든다)
     public Rect3D Bounds = Rect3D.Empty;
     public int Tris;
     public string Name { get; set; }
@@ -144,7 +145,8 @@ public static class ModelScene {
         O3dModel m;
         try { m = O3dModel.Load(cm.Path); }
         catch (Exception ex) { it.Sub = cm.Exists ? ex.Message : L.T("view_part_nofile"); return it; }
-        Model3DGroup g = new Model3DGroup();
+        // 투명 재질은 따로 모은다: WPF는 그린 순서대로 깊이를 쓰므로, 유리를 먼저 그리면 그 뒤의 실내가 가려진다 (화면에서는 불투명한 것을 모두 그린 뒤에 그린다)
+        Model3DGroup g = new Model3DGroup(), ga = new Model3DGroup();
         int nm = Math.Max(1, m.Mats.Count);
         for (int mi = 0; mi < nm; mi++) {
             Point3DCollection pos = new Point3DCollection(); Vector3DCollection nor = new Vector3DCollection();
@@ -170,13 +172,15 @@ public static class ModelScene {
             MeshGeometry3D geo = new MeshGeometry3D();
             geo.Positions = pos; geo.Normals = nor; geo.TextureCoordinates = uv; geo.TriangleIndices = idx;
             geo.Freeze();
-            Material mat = MaterialFor(cfg, cm, mi < m.Mats.Count ? m.Mats[mi] : new O3dMaterial(), cache, missing);
+            O3dMaterial omt = mi < m.Mats.Count ? m.Mats[mi] : new O3dMaterial();
+            Material mat = MaterialFor(cfg, cm, omt, cache, missing);
             GeometryModel3D gm = new GeometryModel3D(geo, mat); if (twoSided) gm.BackMaterial = mat;
             gm.Freeze();
-            g.Children.Add(gm);
+            (omt.Tex.Length > 0 && cm.UsesAlpha(omt.Tex) ? ga : g).Children.Add(gm);
         }
-        g.Freeze();
+        g.Freeze(); ga.Freeze();
         it.Model = g; it.Bounds = g.Bounds;
+        if (ga.Children.Count > 0) { it.ModelAlpha = ga; it.Bounds.Union(ga.Bounds); }
         // origin_from_mesh용: o3d 행렬의 기준점과 x축 (o3d (x, y위, z앞) → cfg (x, z, y))
         if (m.Matrix != null) {
             cm.MeshOrigin = new double[] { m.Matrix[12], m.Matrix[14], m.Matrix[13] };
@@ -279,14 +283,19 @@ public class ModelView : Border {
     }
 
     void Rebuild(bool refit) {
-        content.Children.Clear();
+        content.Children.Clear(); shownParts = 0;
         Rect3D box = Rect3D.Empty;
         List<PartItem> on = new List<PartItem>();
         int total = 0;
-        if (Parts != null && !HideParts) foreach (PartItem p in Parts) {
-            if (!p.Checked || p.Model == null) continue;
-            content.Children.Add(p.Visual != null ? (Model3D)p.Visual : p.Model);
-            on.Add(p); total += p.Tris;
+        if (Parts != null && !HideParts) {
+            foreach (PartItem p in Parts) {
+                if (!p.Checked || p.Model == null) continue;
+                content.Children.Add(p.Visual != null ? (Model3D)p.Visual : p.Model);
+                on.Add(p); total += p.Tris;
+            }
+            shownParts = on.Count;
+            // 투명 재질은 불투명한 것을 모두 그린 뒤에
+            foreach (PartItem p in on) if (p.ModelAlpha != null) content.Children.Add(p.VisualAlpha != null ? (Model3D)p.VisualAlpha : p.ModelAlpha);
         }
         if (!refit) return;
         // 화면 맞춤은 삼각형의 95%를 차지하는 큰 부품들로 (애니메이션으로 옮겨지는 작은 표지판 등이 멀리 있어도 버스가 가운데에 오게)
@@ -300,7 +309,8 @@ public class ModelView : Border {
         yaw = 35; pitch = 18;
         UpdateCam();
     }
-    public int Visible { get { return content.Children.Count; } }   // 셀프 테스트용
+    int shownParts;
+    public int Visible { get { return shownParts; } }   // 셀프 테스트용 (보이는 부품 수)
 
     void UpdateCam() {
         double y = yaw * Math.PI / 180, p = pitch * Math.PI / 180;
@@ -326,9 +336,13 @@ public class ModelView : Border {
                 GizmoAxis ga = h as GizmoAxis;
                 gOnAxis = ga != null;
                 if (gOnAxis) { h = ga.Target; gAxis = ga.Axis; gAxis.Normalize(); }
-                gHandle = h; gStart = at; CaptureMouse(); e.Handled = true;
+                // 시작을 먼저 VM에 알리고 나서 마우스를 잡는다. CaptureMouse가 바로 MouseMove를 일으키는데,
+                // 그때 VM이 아직 이전 드래그의 시작 값을 들고 있으면 이전 위치로 되돌아간다 (x로 옮긴 뒤 y로 옮기면 x가 초기화되던 문제)
+                gStart = at;
                 if (gOnAxis) gS0 = AxisS(e.GetPosition(vp));
                 Send(new GizmoDrag { Handle = h, Start = true });
+                gHandle = h; Cursor = Cursors.Arrow; e.Handled = true;
+                CaptureMouse();
                 return;
             }
         }
@@ -339,12 +353,25 @@ public class ModelView : Border {
         base.OnMouseUp(e);
         if (gHandle != null) {
             Send(new GizmoDrag { Handle = gHandle, Delta = DragDelta(e.GetPosition(vp)), Done = true, Snap = (Keyboard.Modifiers & ModifierKeys.Shift) != 0 });
-            gHandle = null; ReleaseMouseCapture(); e.Handled = true; return;
+            gHandle = null; ReleaseMouseCapture(); e.Handled = true; HoverCursor(e.GetPosition(vp)); return;
         }
         bool click = rot && (e.GetPosition(this) - downAt).Length < 4;
         rot = pan = false; ReleaseMouseCapture(); e.Handled = true;
         if (click && PickCommand != null) Pick(e.GetPosition(vp));
     }
+    // 손잡이 위에서는 일반 화살표 커서 (덧그림만 시선으로 검사: 부품 수십만 개를 매번 검사하지 않게)
+    void HoverCursor(Point pt) {
+        bool on = false;
+        if (MoveCommand != null && overlay.Content != null) {
+            VisualTreeHelper.HitTest(overlay, null, delegate(HitTestResult r) {
+                RayMeshGeometry3DHitTestResult m = r as RayMeshGeometry3DHitTestResult;
+                if (m != null && m.ModelHit.GetValue(HandleProperty) != null) { on = true; return HitTestResultBehavior.Stop; }
+                return HitTestResultBehavior.Continue;
+            }, new RayHitTestParameters(cam.Position, Ray(pt)));
+        }
+        Cursor = on ? Cursors.Arrow : Cursors.SizeAll;
+    }
+
     void Send(GizmoDrag g) { if (MoveCommand != null && MoveCommand.CanExecute(g)) MoveCommand.Execute(g); }
 
     // 가장 앞에 맞은 도형이 손잡이면 그것 (가려진 것은 잡지 않는다)
@@ -400,8 +427,8 @@ public class ModelView : Border {
             RayMeshGeometry3DHitTestResult m = r as RayMeshGeometry3DHitTestResult;
             if (m == null || Parts == null) return HitTestResultBehavior.Continue;
             foreach (PartItem p in Parts) {
-                Model3DGroup g = p.Model as Model3DGroup;
-                if (p.Checked && g != null && g.Children.Contains(m.ModelHit)) { hit = p; return HitTestResultBehavior.Stop; }
+                Model3DGroup g = p.Model as Model3DGroup, ga = p.ModelAlpha as Model3DGroup;
+                if (p.Checked && (g != null && g.Children.Contains(m.ModelHit) || ga != null && ga.Children.Contains(m.ModelHit))) { hit = p; return HitTestResultBehavior.Stop; }
             }
             return HitTestResultBehavior.Continue;
         }, new PointHitTestParameters(pt));
@@ -410,7 +437,7 @@ public class ModelView : Border {
     protected override void OnMouseMove(MouseEventArgs e) {
         base.OnMouseMove(e);
         if (gHandle != null) { Send(new GizmoDrag { Handle = gHandle, Delta = DragDelta(e.GetPosition(vp)), Snap = (Keyboard.Modifiers & ModifierKeys.Shift) != 0 }); return; }
-        if (!rot && !pan) return;
+        if (!rot && !pan) { HoverCursor(e.GetPosition(vp)); return; }
         Point p = e.GetPosition(this); Vector d = p - last; last = p;
         if (rot) { yaw += d.X * 0.4; pitch = Math.Max(-89, Math.Min(89, pitch + d.Y * 0.4)); }
         else {

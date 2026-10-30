@@ -29,10 +29,11 @@ public class NumEdit : Observable {
     public string Label { get; set; }
     public bool Enabled { get; set; }
     public NumEdit(string label, Func<double> get, Action<double> set, bool enabled) { Label = label; this.get = get; this.set = set; Enabled = enabled; }
+    public Action<NumEdit> Before;
     string text;
     public string Text {
         get { return text ?? CfgDoc.Fmt(get()); }
-        set { text = value; double v; if (Enabled && CfgDoc.Num(value, out v)) set(v); }
+        set { text = value; double v; if (Enabled && CfgDoc.Num(value, out v)) { if (Before != null) Before(this); set(v); } }
     }
 }
 
@@ -75,24 +76,26 @@ public partial class MainViewModel {
         PathRows = new ObservableCollection<RowEdit>(); LinkRows = new ObservableCollection<RowEdit>(); SeatRows = new ObservableCollection<RowEdit>();
         PickPartCmd = new Cmd(delegate(object p) { SelectPart(p as PartItem); });
         GizmoCmd = new Cmd(delegate(object p) { GizmoMove(p as GizmoDrag); });
+        UndoCmd = new Cmd(delegate { Undo(); }, delegate(object p) { return undoSteps.Count > 0 && page == "bus"; });
+        RedoCmd = new Cmd(delegate { Redo(); }, delegate(object p) { return redoSteps.Count > 0 && page == "bus"; });
         SaveCfgCmd = new Cmd(delegate { SaveDoc(viewCfg != null ? viewCfg.Doc : null); }, delegate(object p) { return viewCfg != null; });
         ResetVarsCmd = new Cmd(delegate { foreach (VarItem v in Vars) { v.Playing = false; v.Value = 0; } });
         AddPointCmd = new Cmd(delegate {
             if (busPaths == null) return;
             double[] l = busPaths.Points.Count > 0 ? busPaths.Points[busPaths.Points.Count - 1].P : new double[3];
-            busPaths.AddPoint(l[0], l[1] - 0.5, l[2]); PathsChanged();
+            UndoMark(busPaths.Doc, null); busPaths.AddPoint(l[0], l[1] - 0.5, l[2]); PathsChanged();
         }, delegate(object p) { return busPaths != null; });
         AddLinkCmd = new Cmd(delegate {
             if (busPaths == null) return;
             int a = NewLinkA, b = NewLinkB;
             if (a == b || a < 0 || b < 0 || a >= busPaths.Points.Count || b >= busPaths.Points.Count) { ui.Msg(L.T("bus_err_link", busPaths.Points.Count - 1)); return; }
-            busPaths.AddLink(a, b); PathsChanged();
+            UndoMark(busPaths.Doc, null); busPaths.AddLink(a, b); PathsChanged();
         }, delegate(object p) { return busPaths != null; });
         SavePathsCmd = new Cmd(delegate { SaveDoc(busPaths != null ? busPaths.Doc : null); }, delegate(object p) { return busPaths != null; });
         AddSeatCmd = new Cmd(delegate {
             if (busCabin == null) return;
             double[] l = busCabin.Seats.Count > 0 ? busCabin.Seats[busCabin.Seats.Count - 1].V : new double[5];
-            busCabin.AddSeat(l[0], l[1] - 0.8, l[2]); CabinChanged();
+            UndoMark(busCabin.Doc, null); busCabin.AddSeat(l[0], l[1] - 0.8, l[2]); CabinChanged();
         }, delegate(object p) { return busCabin != null; });
         SaveCabinCmd = new Cmd(delegate { SaveDoc(busCabin != null ? busCabin.Doc : null); }, delegate(object p) { return busCabin != null; });
     }
@@ -106,7 +109,7 @@ public partial class MainViewModel {
     // .bus면 거기에 적힌 model / paths / passengercabin을 읽는다 (같은 파일을 도색만 바꿔 다시 열 때는 편집 중인 길/좌석을 그대로 둔다)
     string BusModelPath(string path) {
         if (busFile != null && string.Equals(busFile.Path, path, StringComparison.OrdinalIgnoreCase)) return busFile.Model;
-        busFile = null; busPaths = null; busCabin = null;
+        busFile = null; busPaths = null; busCabin = null; UndoClear();
         string ext = Path.GetExtension(path).ToLowerInvariant();
         if (ext != ".bus" && ext != ".ovh") return path;
         try { busFile = BusFile.Load(path); } catch (Exception ex) { ui.Msg(ex.Message); return null; }
@@ -151,7 +154,10 @@ public partial class MainViewModel {
 
     // 모델을 다 읽은 뒤 (화면 스레드): 부품 껍데기, 변수, 길/좌석 목록
     void BusLoaded() {
-        foreach (PartItem p in Parts) if (p.Model != null && p.Visual == null) { p.Visual = new Model3DGroup(); p.Visual.Children.Add(p.Model); }
+        foreach (PartItem p in Parts) if (p.Model != null && p.Visual == null) {
+            p.Visual = new Model3DGroup(); p.Visual.Children.Add(p.Model);
+            if (p.ModelAlpha != null) { p.VisualAlpha = new Model3DGroup(); p.VisualAlpha.Children.Add(p.ModelAlpha); }
+        }
         BuildVars();
         selPart = null; Blocks.Clear();
         PathsChanged(); CabinChanged();
@@ -199,6 +205,7 @@ public partial class MainViewModel {
         foreach (PartItem p in Parts) {
             if (p.Visual == null || p.Mesh.Anims.Count == 0) continue;
             p.Visual.Transform = new MatrixTransform3D(AnimMath.ToWpf(AnimMath.Chain(p.Mesh, val, -1)));
+            if (p.VisualAlpha != null) p.VisualAlpha.Transform = p.Visual.Transform;
         }
         RebuildOverlay();
     }
@@ -232,12 +239,12 @@ public partial class MainViewModel {
                 string[] ax = { "x", "y", "z" };
                 for (int c = 0; c < 3; c++) {
                     int cc = c; AnimBlock bb = b;
-                    be.Pivot.Add(new NumEdit(ax[c], delegate { return bb.Trans[cc]; }, delegate(double v) { bb.Trans[cc] = v; doc.Set(bb.TransLine[cc], v); Edited(); }, b.TransLine[c] >= 0));
-                    be.Rot.Add(new NumEdit(ax[c], delegate { return bb.Rot[cc]; }, delegate(double v) { bb.Rot[cc] = v; doc.Set(bb.RotLine[cc], v); Edited(); }, b.RotLine[c] >= 0));
+                    be.Pivot.Add(Undoable(doc, new NumEdit(ax[c], delegate { return bb.Trans[cc]; }, delegate(double v) { bb.Trans[cc] = v; doc.Set(bb.TransLine[cc], v); Edited(); }, b.TransLine[c] >= 0)));
+                    be.Rot.Add(Undoable(doc, new NumEdit(ax[c], delegate { return bb.Rot[cc]; }, delegate(double v) { bb.Rot[cc] = v; doc.Set(bb.RotLine[cc], v); Edited(); }, b.RotLine[c] >= 0)));
                 }
                 foreach (AnimEntry e in b.Entries) {
                     AnimEntry ee = e;
-                    be.Factors.Add(new NumEdit(e.Kind + " " + e.Var, delegate { return ee.Factor; }, delegate(double v) { ee.Factor = v; doc.Set(ee.Line, v); Edited(); }, true));
+                    be.Factors.Add(Undoable(doc, new NumEdit(e.Kind + " " + e.Var, delegate { return ee.Factor; }, delegate(double v) { ee.Factor = v; doc.Set(ee.Line, v); Edited(); }, true)));
                 }
                 if (b.RotLine[0] < 0 && b.RotLine[1] < 0 && b.RotLine[2] < 0) be.Note = L.T("bus_block_norot");
                 Blocks.Add(be);
@@ -258,12 +265,12 @@ public partial class MainViewModel {
                 r.Title = p.Index + (en.Contains(p.Index) ? " · " + L.T("bus_entry") : "") + (ex.Contains(p.Index) ? " · " + L.T("bus_exit") : "");
                 r.Nums = new List<NumEdit>();
                 string[] ax = { "x", "y", "z" };
-                for (int c = 0; c < 3; c++) { int cc = c; r.Nums.Add(new NumEdit(ax[c], delegate { return p.P[cc]; }, delegate(double v) { busPaths.SetPoint(p, cc, v); RebuildOverlay(); }, true)); }
+                for (int c = 0; c < 3; c++) { int cc = c; r.Nums.Add(Undoable(busPaths.Doc, new NumEdit(ax[c], delegate { return p.P[cc]; }, delegate(double v) { busPaths.SetPoint(p, cc, v); RebuildOverlay(); }, true))); }
                 PathRows.Add(r);
             }
             foreach (PathLink lk in busPaths.Links) {
                 PathLink l = lk; RowEdit r = new RowEdit(); r.Title = l.A + " → " + l.B; r.Nums = new List<NumEdit>();
-                r.RemoveCmd = new Cmd(delegate { busPaths.RemoveLink(l); PathsChanged(); });
+                r.RemoveCmd = new Cmd(delegate { UndoMark(busPaths.Doc, null); busPaths.RemoveLink(l); PathsChanged(); });
                 LinkRows.Add(r);
             }
         }
@@ -278,8 +285,8 @@ public partial class MainViewModel {
                 r.Title = s.Driver ? L.T("bus_driver") : L.T("bus_seat", ++n);
                 r.Nums = new List<NumEdit>();
                 string[] lab = { "x", "y", "z", L.T("bus_seat_h"), L.T("bus_seat_rot") };
-                for (int c = 0; c < 5; c++) { int cc = c; r.Nums.Add(new NumEdit(lab[c], delegate { return s.V[cc]; }, delegate(double v) { busCabin.SetSeat(s, cc, v); RebuildOverlay(); }, true)); }
-                if (!s.Driver) r.RemoveCmd = new Cmd(delegate { busCabin.RemoveSeat(s); CabinChanged(); });
+                for (int c = 0; c < 5; c++) { int cc = c; r.Nums.Add(Undoable(busCabin.Doc, new NumEdit(lab[c], delegate { return s.V[cc]; }, delegate(double v) { busCabin.SetSeat(s, cc, v); RebuildOverlay(); }, true))); }
+                if (!s.Driver) r.RemoveCmd = new Cmd(delegate { UndoMark(busCabin.Doc, null); busCabin.RemoveSeat(s); CabinChanged(); });
                 SeatRows.Add(r);
             }
         }
@@ -341,6 +348,51 @@ public partial class MainViewModel {
         busOverlay = o.Group; Raise("BusOverlay");
     }
 
+    // ---- 되돌리기 / 다시 실행 (Ctrl+Z / Ctrl+Y, Ctrl+Shift+Z): 바꾸기 직전 파일 줄을 통째로 남겨 둔다.
+    // 숫자 칸은 같은 칸을 이어서 고치는 동안 한 번만 남긴다 (글자마다 남지 않게)
+    class UndoStep { public CfgDoc Doc; public List<string> Lines; public object Tag; }
+    readonly List<UndoStep> undoSteps = new List<UndoStep>(), redoSteps = new List<UndoStep>();
+    public ICommand UndoCmd { get; private set; }
+    public ICommand RedoCmd { get; private set; }
+
+    NumEdit Undoable(CfgDoc doc, NumEdit n) { n.Before = delegate(NumEdit x) { UndoMark(doc, x); }; return n; }
+    void UndoMark(CfgDoc doc, object tag) {
+        if (doc == null) return;
+        if (tag != null && undoSteps.Count > 0) { UndoStep last = undoSteps[undoSteps.Count - 1]; if (last.Doc == doc && last.Tag == tag) return; }
+        undoSteps.Add(new UndoStep { Doc = doc, Lines = new List<string>(doc.Lines), Tag = tag });
+        if (undoSteps.Count > 300) undoSteps.RemoveAt(0);
+        redoSteps.Clear();
+        CommandManager.InvalidateRequerySuggested();
+    }
+    void UndoClear() { undoSteps.Clear(); redoSteps.Clear(); CommandManager.InvalidateRequerySuggested(); }
+    public void Undo() { Swap(undoSteps, redoSteps); }
+    public void Redo() { Swap(redoSteps, undoSteps); }
+    void Swap(List<UndoStep> from, List<UndoStep> to) {
+        if (from.Count == 0) return;
+        UndoStep st = from[from.Count - 1]; from.RemoveAt(from.Count - 1);
+        to.Add(new UndoStep { Doc = st.Doc, Lines = new List<string>(st.Doc.Lines) });
+        st.Doc.Lines.Clear(); st.Doc.Lines.AddRange(st.Lines); st.Doc.Dirty = true;
+        DocRestored(st.Doc);
+        ui.Toast(L.T(from == undoSteps || to == redoSteps ? "bus_undone" : "bus_redone"));
+        CommandManager.InvalidateRequerySuggested();
+    }
+    // 줄을 되돌린 파일을 다시 읽어 화면에 반영
+    void DocRestored(CfgDoc doc) {
+        if (busPaths != null && doc == busPaths.Doc) { busPaths.Parse(); PathsChanged(); }
+        if (busCabin != null && doc == busCabin.Doc) { busCabin.Parse(); CabinChanged(); }
+        if (viewCfg != null && doc == viewCfg.Doc) {
+            // [newanim] 블록은 줄 번호가 그대로라서 값만 다시 읽는다 (편집 칸이 같은 블록 객체를 쓰므로)
+            foreach (CfgMesh m in viewCfg.Meshes) foreach (AnimBlock b in m.Anims) {
+                for (int c = 0; c < 3; c++) { if (b.TransLine[c] >= 0) b.Trans[c] = doc.NumAt(b.TransLine[c]); if (b.RotLine[c] >= 0) b.Rot[c] = doc.NumAt(b.RotLine[c]); }
+                foreach (AnimEntry e in b.Entries) e.Factor = doc.NumAt(e.Line);
+            }
+            SelectPart(selPart); Repose();
+        }
+        string n; if (GizmoTarget(gizmoSel, out n) == null) gizmoSel = null;
+        RebuildOverlay();
+        Raise("BusDirty");
+    }
+
     // 모델을 모두 숨기고 사람 길·좌석만 보기 (켜면 길·좌석 표시도 켠다)
     bool busHideModel;
     public bool BusHideModel {
@@ -355,6 +407,7 @@ public partial class MainViewModel {
     public ICommand GizmoCmd { get; private set; }
     static readonly Color CSel = Color.FromRgb(250, 204, 21);
     string gizmoSel, gizmoText = "";
+    bool gizmoMarked;
     double[] gizmoOrig;
     public string GizmoText { get { return gizmoText; } }
     public const double GizmoSnap = 1;
@@ -378,7 +431,7 @@ public partial class MainViewModel {
         string h = g.Handle as string, name;
         double[] cur = GizmoTarget(h, out name);
         if (cur == null) return;
-        if (g.Start) { gizmoSel = h; gizmoOrig = new double[] { cur[0], cur[1], cur[2] }; }
+        if (g.Start) { gizmoSel = h; gizmoOrig = new double[] { cur[0], cur[1], cur[2] }; gizmoMarked = false; }
         else if (gizmoOrig != null && h == gizmoSel) {
             // 화면 (x, y위, -앞) → cfg (x, 앞, 위)
             double[] d = { g.Delta.X, -g.Delta.Z, g.Delta.Y };
@@ -387,6 +440,8 @@ public partial class MainViewModel {
                 if (g.Snap) v = Math.Round(v / GizmoSnap) * GizmoSnap;
                 v = Math.Round(gizmoOrig[c] + v, 3);
                 if (v == cur[c]) continue;
+                // 실제로 움직였을 때만 되돌리기에 남긴다 (누르기만 한 것은 기록하지 않음)
+                if (!gizmoMarked) { UndoMark(h[0] == 'p' ? busPaths.Doc : busCabin.Doc, null); gizmoMarked = true; }
                 if (h[0] == 'p') busPaths.SetPoint(busPaths.Points[int.Parse(h.Substring(2))], c, v);
                 else busCabin.SetSeat(busCabin.Seats[int.Parse(h.Substring(2))], c, v);
             }

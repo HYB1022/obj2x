@@ -482,6 +482,14 @@ public static class SelfTest {
             f.VM.GizmoMove(new GizmoDrag { Handle = "s:1", Delta = new System.Windows.Media.Media3D.Vector3D(0.4, 0.2, -1.7), Snap = true, Done = true });
             string gz2 = f.VM.SeatRows.Count > 1 ? f.VM.SeatRows[1].Nums[0].Text + " " + f.VM.SeatRows[1].Nums[1].Text + " " + f.VM.SeatRows[1].Nums[2].Text : "";
             T("버스 탭: 점·좌석 끌어 옮기기 (자유 / Shift 1 m 단위)", gz1 == "0.4 1.2 0.8" && gz2 == "-0.7 5 1.2" && f.VM.GizmoText.Length > 0, gz1 + " | " + gz2);
+            // 이어서 다른 축으로 옮겨도 앞의 이동이 남는다 (x 다음 y)
+            f.VM.GizmoMove(new GizmoDrag { Handle = "s:1", Start = true });
+            f.VM.GizmoMove(new GizmoDrag { Handle = "s:1", Delta = new System.Windows.Media.Media3D.Vector3D(0, 0.5, 0), Done = true });
+            string gz3 = f.VM.SeatRows[1].Nums[0].Text + " " + f.VM.SeatRows[1].Nums[1].Text + " " + f.VM.SeatRows[1].Nums[2].Text;
+            f.VM.Page = "bus"; f.VM.Undo(); string un1 = f.VM.SeatRows[1].Nums[2].Text;
+            f.VM.Undo(); string un2 = f.VM.SeatRows[1].Nums[1].Text;
+            f.VM.Redo(); string re1 = f.VM.SeatRows[1].Nums[1].Text;
+            T("버스 탭: 연달아 옮기기 + 되돌리기/다시 실행", gz3 == "-0.7 5 1.7" && un1 == "1.2" && un2 == "3" && re1 == "5", gz3 + " | " + un1 + " " + un2 + " " + re1);
             // 모델 숨기기: 부품은 모두 빠지고 덧그림(길·좌석 + 고른 것의 축 화살표)만
             f.VM.Page = "bus"; Pump.Run(80);
             ModelView bmv = FindAll<ModelView>(f.Host).Find(delegate(ModelView q) { return q.IsVisible; });
