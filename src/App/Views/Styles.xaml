@@ -285,7 +285,7 @@
                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Right" VerticalAlignment="Center"
                   Margin="0,0,13,0" RenderTransformOrigin="0.5,0.5" x:Name="arrow"/>
             <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Placement="Bottom" VerticalOffset="4"
-                   PopupAnimation="Fade" Focusable="False">
+                   PopupAnimation="None" ui:Anim.PopIn="True" Focusable="False">
               <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBdr}" BorderThickness="1" CornerRadius="10" Padding="4"
                       Margin="0,0,10,12" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
                 <Border.Effect><DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Opacity="0.18"/></Border.Effect>
@@ -295,6 +295,33 @@
           </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="IsDropDownOpen" Value="True"><Setter TargetName="arrow" Property="ui:Anim.Angle" Value="180"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- 둥근 화살표 버튼 (환영 화면의 시작) -->
+  <Style x:Key="BtnRound" TargetType="Button">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="Width" Value="64"/><Setter Property="Height" Value="64"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Grid>
+            <Ellipse Fill="{DynamicResource Accent}">
+              <Ellipse.Effect><DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270" Opacity="0.22"/></Ellipse.Effect>
+            </Ellipse>
+            <Ellipse x:Name="hov" Fill="{DynamicResource AccentHov}" Opacity="0"/>
+            <ui:Ripple CornerRadius="32"/>
+            <Path Data="M 0,8 L 18,8 M 11,1 L 18,8 L 11,15" Stroke="White" StrokeThickness="2.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                  StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="ui:Anim.Opacity" Value="1"/></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.5"/></Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>
@@ -428,7 +455,7 @@
               <TextBlock Text="{TemplateBinding Tag}" Style="{StaticResource DevTitle}" VerticalAlignment="Center"/>
             </DockPanel>
             <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" PlacementTarget="{Binding ElementName=val}" AllowsTransparency="True" Placement="Bottom"
-                   HorizontalOffset="-60" VerticalOffset="10" PopupAnimation="Fade" Focusable="False">
+                   HorizontalOffset="-60" VerticalOffset="10" PopupAnimation="None" ui:Anim.PopIn="True" Focusable="False">
               <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBdr}" BorderThickness="1" CornerRadius="14" Padding="4" Margin="0,0,10,12" MinWidth="200">
                 <Border.Effect><DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Opacity="0.18"/></Border.Effect>
                 <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer>

@@ -73,6 +73,8 @@ public static class Art {
             case "settings": return Color.FromRgb(142, 142, 147);
             case "about": return Color.FromRgb(0, 122, 255);
             case "dev": return Color.FromRgb(96, 125, 139);
+            case "lang": return Color.FromRgb(52, 199, 89);
+            case "view": return Color.FromRgb(255, 45, 85);
             default: return Theme.Accent;
         }
     }
@@ -125,6 +127,26 @@ public static class Art {
                 dc.DrawGeometry(null, p, Poly(false, new Point(x + 15 * k, y + 8 * k), new Point(x + 18.5 * k, y + 12 * k), new Point(x + 15 * k, y + 16 * k)));
                 dc.DrawLine(p, new Point(x + 13.2 * k, y + 6.8 * k), new Point(x + 10.8 * k, y + 17.2 * k));
                 break;
+            case "lang": {      // 지구본
+                Pen thin = RoundPen(wc, Math.Max(1.0, 1.4 * k));
+                Point c = new Point(x + 12 * k, y + 12 * k);
+                dc.DrawEllipse(null, thin, c, 6.5 * k, 6.5 * k);
+                dc.DrawEllipse(null, thin, c, 2.8 * k, 6.5 * k);
+                dc.DrawLine(thin, new Point(x + 5.5 * k, y + 12 * k), new Point(x + 18.5 * k, y + 12 * k));
+                break;
+            }
+            case "view": {      // 반쯤 칠한 원 (밝게/어둡게)
+                Point c = new Point(x + 12 * k, y + 12 * k);
+                dc.DrawEllipse(null, p, c, 6 * k, 6 * k);
+                StreamGeometry g = new StreamGeometry();
+                using (StreamGeometryContext gc = g.Open()) {
+                    gc.BeginFigure(new Point(c.X, c.Y - 6 * k), true, true);
+                    gc.ArcTo(new Point(c.X, c.Y + 6 * k), new Size(6 * k, 6 * k), 0, false, SweepDirection.Clockwise, true, false);
+                }
+                g.Freeze();
+                dc.DrawGeometry(wb, null, g);
+                break;
+            }
             case "update":      // 아래 화살표 + 받침
                 dc.DrawLine(p, new Point(x + 12 * k, y + 6 * k), new Point(x + 12 * k, y + 14 * k));
                 dc.DrawGeometry(null, p, Poly(false, new Point(x + 8.5 * k, y + 10.8 * k), new Point(x + 12 * k, y + 14.3 * k), new Point(x + 15.5 * k, y + 10.8 * k)));
@@ -167,6 +189,14 @@ public static class Art {
     public static ImageSource AppIcon() {
         return Render(64, 64, delegate(DrawingContext dc) { Logo(dc, 4, 4, 56); });
     }
+}
+
+// 색 타일 아이콘 하나 (환영 화면의 언어/보기 줄)
+public class TileIcon : FrameworkElement {
+    public static readonly DependencyProperty NameKeyProperty = DependencyProperty.Register("NameKey", typeof(string), typeof(TileIcon),
+        new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.AffectsRender));
+    public string NameKey { get { return (string)GetValue(NameKeyProperty); } set { SetValue(NameKeyProperty, value); } }
+    protected override void OnRender(DrawingContext dc) { Art.Icon(dc, NameKey, 0, 0, Math.Min(ActualWidth, ActualHeight), IsEnabled ? 1 : 0.5); }
 }
 
 // 로고 컨트롤 (사이드바, 환영 화면)

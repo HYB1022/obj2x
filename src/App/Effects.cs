@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -26,6 +27,28 @@ public static class Anim {
     public static void SetX(DependencyObject d, double v) { d.SetValue(XProperty, v); }
     public static double GetAngle(DependencyObject d) { return (double)d.GetValue(AngleProperty); }
     public static void SetAngle(DependencyObject d, double v) { d.SetValue(AngleProperty, v); }
+
+    // 팝업(드롭다운 목록)이 열릴 때 살짝 내려오며 나타난다. Windows의 PopupAnimation은 시간이 고정이라 대신 쓴다.
+    public static readonly DependencyProperty PopInProperty = DependencyProperty.RegisterAttached("PopIn", typeof(bool), typeof(Anim),
+        new PropertyMetadata(false, delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            Popup p = d as Popup;
+            if (p == null) return;
+            if ((bool)e.NewValue) p.Opened += OnPopOpened; else p.Opened -= OnPopOpened;
+        }));
+    public static bool GetPopIn(DependencyObject d) { return (bool)d.GetValue(PopInProperty); }
+    public static void SetPopIn(DependencyObject d, bool v) { d.SetValue(PopInProperty, v); }
+    static void OnPopOpened(object sender, EventArgs e) {
+        UIElement c = ((Popup)sender).Child;
+        if (c == null) return;
+        TranslateTransform t = c.RenderTransform as TranslateTransform;
+        if (t == null || t.IsFrozen) { t = new TranslateTransform(); c.RenderTransform = t; }
+        if (Motion.Disabled) { c.BeginAnimation(UIElement.OpacityProperty, null); c.Opacity = 1; t.BeginAnimation(TranslateTransform.YProperty, null); t.Y = 0; return; }
+        DoubleAnimation fade = new DoubleAnimation(0, 1, Motion.D(0.16));
+        DoubleAnimation drop = new DoubleAnimation(-8, 0, Motion.D(0.22));
+        drop.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+        c.BeginAnimation(UIElement.OpacityProperty, fade);
+        t.BeginAnimation(TranslateTransform.YProperty, drop);
+    }
 
     // 값이 없으면(NaN) 0으로 돌아간다
     static DependencyProperty Reg(string name, DependencyProperty target, Type transform) {

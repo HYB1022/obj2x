@@ -83,6 +83,12 @@ public static class L {
         return key;
     }
 
+    // 그 언어 파일에 있는 문구만 (없으면 null, 다른 언어로 대신하지 않는다)
+    public static string TIn(string lang, string key) {
+        Dictionary<string, string> d; string v;
+        return tables.TryGetValue(lang, out d) && d.TryGetValue(key, out v) ? v : null;
+    }
+
     public static string T(string key, params object[] args) {
         string v = T(key);
         try { return string.Format(v, args); } catch (FormatException) { return v; }

@@ -154,6 +154,16 @@ public static class SelfTest {
             T("글꼴: " + fn[1] + " (보통/굵게)", reg && bold, reg + " " + bold);
         }
 
+        // 5-2. 환영 화면: 인사말이 모든 언어로
+        try {
+            Settings ws = new Settings(); ws.Path = Path.Combine(root, "wel.ini"); ws.Lang = "ko";
+            WelcomeWindow ww = new WelcomeWindow(ws);
+            string[] gs = ww.Greetings;
+            T("환영 화면: 모든 언어로 인사 (" + gs.Length + "개)", gs.Length >= 5 && gs[0] == "안녕하세요" && Array.IndexOf(gs, "こんにちは") > 0 && Array.IndexOf(gs, "你好") > 0 && Array.IndexOf(gs, "Hallo") > 0,
+                string.Join(", ", gs));
+            ww.Close();
+        } catch (Exception ex) { T("환영 화면", false, ex.Message); }
+
         // 6. XAML 화면
         List<string> bad = new List<string>();
         foreach (string n in Xaml.Names()) { try { Xaml.Load(n); } catch (Exception ex) { bad.Add(n + ": " + ex.Message); } }
@@ -251,6 +261,14 @@ public static class SelfTest {
             TranslateTransform kt = knob == null ? null : knob.RenderTransform as TranslateTransform;
             double midX = kt == null ? -1 : kt.X;      // 0.18초 × 10배 = 1.8초 중 0.3초 → 아직 가는 중
             T("개발자: 애니메이션 배율이 스위치에도 적용 (드롭다운 10x)", scaled && midX > 0.5 && midX < 19, scaled + " x=" + midX.ToString("0.0"));
+            double popOp = -1;
+            if (anim != null) {                     // 드롭다운 목록도 배율대로 천천히 나타난다
+                anim.IsDropDownOpen = true; Pump.Run(150);
+                System.Windows.Controls.Primitives.Popup pp = anim.Template.FindName("PART_Popup", anim) as System.Windows.Controls.Primitives.Popup;
+                if (pp != null && pp.Child != null) popOp = pp.Child.Opacity;
+                anim.IsDropDownOpen = false; Pump.Run(30);
+            }
+            T("개발자: 드롭다운 목록도 배율 적용 (10x에서 아직 나타나는 중)", popOp > 0 && popOp < 0.6, popOp.ToString("0.00"));
             if (anim != null) { anim.SelectedValue = "1"; Pump.Run(30); }
             f.VM.DevFps = false; Pump.Run(450);
             T("개발자: 배율 1x면 스위치가 0.18초 안에 끝까지", Motion.Scale == 1 && kt != null && Math.Abs(kt.X) < 0.5, kt == null ? "없음" : kt.X.ToString("0.0"));

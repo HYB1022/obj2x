@@ -1,110 +1,155 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
+using System.Windows.Shapes;
 
 namespace Obj2x.UI {
 
-// 첫 실행 환영 화면: 인사말이 번갈아 나오고, 언어/보기 설정은 팝업으로 고른 뒤 시작을 누르면 면책 조항이 뜬다.
+// 첫 실행 환영 화면 (HyperOS 첫 설정 화면 모양): 흐르는 그라데이션 위에 로고, 모든 언어로 번갈아 나오는 큰 인사말,
+// 언어/보기 설정 카드, 아래쪽 둥근 화살표 버튼. 화살표를 누르면 면책 조항이 뜬다.
 public class WelcomeWindow : Window {
     public event Action<bool> Done;          // 동의하면 true
     readonly Settings S;
     readonly Grid host = new Grid();
-    readonly Canvas cv = new Canvas();
     readonly Grid overlay = new Grid();
-    readonly LogoArt tile = new LogoArt();
-    readonly TextBlock title = new TextBlock(), gLang = new TextBlock(), gView = new TextBlock(), lblLang = new TextBlock(), lblView = new TextBlock();
-    readonly StackPanel rowLang = new StackPanel(), rowView = new StackPanel();
-    readonly Button start = new Button();
+    readonly TextBlock title = new TextBlock(), sub = new TextBlock(), lblLang = new TextBlock(), lblView = new TextBlock(), valLang = new TextBlock(), valView = new TextBlock();
+    readonly TranslateTransform titleMove = new TranslateTransform();
+    readonly Button start = new Button(), rowLang = new Button(), rowView = new Button();
     readonly System.Diagnostics.Stopwatch clock = new System.Diagnostics.Stopwatch();
     bool ticking;
-    const double Cycle = 2.4, Fade = 0.32;     // 인사말 하나가 머무는 시간 / 나타나고 사라지는 시간(초)
+    const double Cycle = 2.6, Fade = 0.45;     // 인사말 하나가 머무는 시간 / 올라오며 나타나고 올라가며 사라지는 시간(초)
     bool finished;
-    static readonly string[] Greetings = new string[] { "안녕하세요", "Hello", "Hallo" };
+    readonly List<string> greetings = new List<string>();
     public DialogHost LastDialog;
 
     public WelcomeWindow(Settings s) {
         S = s;
-        Width = 1000; Height = 700; MinWidth = 760; MinHeight = 560;
+        Width = 1000; Height = 700; MinWidth = 760; MinHeight = 600;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         WindowState = WindowState.Maximized;
         Icon = Art.AppIcon();
         host.SetResourceReference(Panel.BackgroundProperty, "Bg");
         host.SetResourceReference(TextElement.FontFamilyProperty, "UiFont");
+        host.SetResourceReference(TextElement.ForegroundProperty, "Text");
         TextOptions.SetTextFormattingMode(host, TextFormattingMode.Ideal);   // Display는 나눔스퀘어 네오를 너무 가늘게 그린다
-        host.Children.Add(cv); host.Children.Add(overlay);
         Content = host;
 
-        tile.Width = tile.Height = 150;
-        title.FontSize = Art.Pt(30); title.FontWeight = FontWeights.Bold;
-        title.Width = 420; title.TextAlignment = TextAlignment.Center;   // 로고 가운데 아래에 맞춘다
-        title.SetResourceReference(TextBlock.ForegroundProperty, "Text");
-        FontFamily glyph = new FontFamily("Segoe MDL2 Assets");
-        gLang.Text = ""; gView.Text = "";
-        foreach (TextBlock g in new TextBlock[] { gLang, gView }) { g.FontFamily = glyph; g.FontSize = Art.Pt(20); g.Width = 44; g.TextAlignment = TextAlignment.Center; g.VerticalAlignment = VerticalAlignment.Center; }
-        foreach (TextBlock l in new TextBlock[] { lblLang, lblView }) { l.FontSize = Art.Pt(17); l.FontWeight = FontWeights.Bold; l.VerticalAlignment = VerticalAlignment.Center; l.Margin = new Thickness(8, 0, 0, 0); }
-        rowLang.Orientation = rowView.Orientation = Orientation.Horizontal;
-        rowLang.Height = rowView.Height = 44;
-        rowLang.Children.Add(gLang); rowLang.Children.Add(lblLang);
-        rowView.Children.Add(gView); rowView.Children.Add(lblView);
-        foreach (TextBlock t in new TextBlock[] { gLang, gView, lblLang, lblView }) { t.Cursor = Cursors.Hand; t.SetResourceReference(TextBlock.ForegroundProperty, "Accent"); }
-        start.SetResourceReference(StyleProperty, "BtnPrimary");
-        start.Height = 42; start.MinWidth = 110; start.FontWeight = FontWeights.Bold; start.Padding = new Thickness(24, 0, 24, 0);
-        foreach (UIElement e in new UIElement[] { tile, title, rowLang, rowView, start }) cv.Children.Add(e);
+        // 가운데 줄: 로고 → 인사말 → 설명 → 설정 카드
+        StackPanel mid = new StackPanel();
+        mid.HorizontalAlignment = HorizontalAlignment.Center; mid.VerticalAlignment = VerticalAlignment.Center;
+        mid.Width = 640; mid.Margin = new Thickness(0, 0, 0, 110);
+        LogoArt logo = new LogoArt();
+        logo.Width = logo.Height = 84; logo.HorizontalAlignment = HorizontalAlignment.Center;
+        mid.Children.Add(logo);
 
-        MouseButtonEventHandler pickLang = delegate { PickLang(); };
-        MouseButtonEventHandler pickView = delegate { PickView(); };
-        gLang.MouseLeftButtonUp += pickLang; lblLang.MouseLeftButtonUp += pickLang;
-        gView.MouseLeftButtonUp += pickView; lblView.MouseLeftButtonUp += pickView;
+        Grid tbox = new Grid();                   // 인사말이 지나가는 창 (위아래로 잘린다)
+        tbox.Height = 96; tbox.Margin = new Thickness(0, 26, 0, 0); tbox.ClipToBounds = true;
+        title.FontSize = 58; title.FontWeight = FontWeights.Bold;
+        title.HorizontalAlignment = HorizontalAlignment.Center; title.VerticalAlignment = VerticalAlignment.Center;
+        title.RenderTransform = titleMove;
+        tbox.Children.Add(title);
+        mid.Children.Add(tbox);
+
+        sub.FontSize = 14; sub.TextWrapping = TextWrapping.Wrap; sub.TextAlignment = TextAlignment.Center;
+        sub.Margin = new Thickness(10, 6, 10, 0); sub.LineHeight = 22;
+        sub.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+        mid.Children.Add(sub);
+
+        Border card = new Border();
+        card.SetResourceReference(StyleProperty, "DevCard");
+        card.Margin = new Thickness(0, 36, 0, 0); card.Width = 460;
+        StackPanel rows = new StackPanel();
+        rows.Children.Add(MakeRow(rowLang, "lang", lblLang, valLang));
+        rows.Children.Add(MakeRow(rowView, "view", lblView, valView));
+        card.Child = rows;
+        mid.Children.Add(card);
+
+        // 아래쪽 가운데: 둥근 화살표 버튼
+        start.SetResourceReference(StyleProperty, "BtnRound");
+        start.HorizontalAlignment = HorizontalAlignment.Center; start.VerticalAlignment = VerticalAlignment.Bottom;
+        start.Margin = new Thickness(0, 0, 0, 64);
+
+        host.Children.Add(new HeroBackdrop());
+        host.Children.Add(mid);
+        host.Children.Add(start);
+        host.Children.Add(overlay);
+
+        rowLang.Click += delegate { PickLang(); };
+        rowView.Click += delegate { PickView(); };
         start.Click += delegate { OnStart(); };
-        SizeChanged += delegate { DoLayout(); };
-        Loaded += delegate { StartTicking(); DoLayout(); };
+        Loaded += delegate { StartTicking(); };
         SourceInitialized += delegate { Theme.TitleBar(this); };
         Closed += delegate { StopTicking(); if (!finished) { finished = true; if (Done != null) Done(false); } };
+
+        // 인사말: 언어 파일마다 그 언어로 쓴 인사(wel_title). 지금 언어부터 시작한다
+        Loc.SetLang(S.Lang);
+        AddGreeting(L.TIn(S.Lang, "wel_title"));
+        foreach (string[] l in L.Languages) AddGreeting(L.TIn(l[0], "wel_title"));
+        if (greetings.Count == 0) greetings.Add("Hello");
         ApplyAll();
+    }
+
+    void AddGreeting(string g) { if (!string.IsNullOrEmpty(g) && !greetings.Contains(g)) greetings.Add(g); }
+    public string[] Greetings { get { return greetings.ToArray(); } }   // 셀프 테스트용
+
+    // HyperOS 설정 줄: [색 타일] 제목 ........ 값 >
+    static Button MakeRow(Button b, string icon, TextBlock label, TextBlock value) {
+        b.SetResourceReference(StyleProperty, "DevRow");
+        DockPanel d = new DockPanel();
+        StackPanel right = new StackPanel(); right.Orientation = Orientation.Horizontal;
+        DockPanel.SetDock(right, Dock.Right);
+        value.SetResourceReference(StyleProperty, "DevValue");
+        Path chev = new Path(); chev.SetResourceReference(StyleProperty, "DevChevron");
+        right.Children.Add(value); right.Children.Add(chev);
+        d.Children.Add(right);
+        TileIcon ti = new TileIcon(); ti.NameKey = icon; ti.Width = ti.Height = 30; ti.VerticalAlignment = VerticalAlignment.Center;
+        d.Children.Add(ti);
+        label.SetResourceReference(StyleProperty, "DevTitle");
+        label.VerticalAlignment = VerticalAlignment.Center; label.Margin = new Thickness(14, 0, 0, 0);
+        d.Children.Add(label);
+        b.Content = d;
+        return b;
     }
 
     void ApplyAll() {
         Loc.SetLang(S.Lang);
         Theme.Apply(S.Theme, S.Accent, S.Font);
         Title = L.T("app_title");
-        foreach (string[] l in L.Languages) if (l[0] == L.Lang) lblLang.Text = l[1];
+        foreach (string[] l in L.Languages) if (l[0] == L.Lang) valLang.Text = l[1];
+        lblLang.Text = L.T("wel_lang");
         lblView.Text = L.T("wel_view");
-        start.Content = L.T("wel_start");
+        valView.Text = L.T("theme_" + S.Theme);
+        sub.Text = L.T("wel_sub");
+        start.ToolTip = L.T("wel_start");
         Theme.TitleBar(this);
         TickTitle();
     }
 
-    // 화면이 새로 그려질 때마다(보통 60fps) 지난 시간으로 투명도를 계산한다
+    // 화면이 새로 그려질 때마다(보통 60fps) 지난 시간으로 위치/투명도를 계산한다
     void StartTicking() { if (ticking) return; ticking = true; clock.Start(); CompositionTarget.Rendering += OnFrame; }
     void StopTicking() { if (!ticking) return; ticking = false; clock.Stop(); CompositionTarget.Rendering -= OnFrame; }
     void OnFrame(object s, EventArgs e) { TickTitle(); }
 
     void TickTitle() {
-        double t = clock.Elapsed.TotalSeconds / Math.Max(0.05, Motion.Scale);   // 개발자 옵션 애니메이션 배율
-        int idx = (int)(t / Cycle) % Greetings.Length;
+        if (Motion.Disabled) {                     // 애니메이션 꺼짐: 지금 언어의 인사만
+            title.Text = greetings[0]; title.Opacity = 1; titleMove.Y = 0; return;
+        }
+        double t = clock.Elapsed.TotalSeconds / Motion.Scale;   // 개발자 옵션 애니메이션 배율
+        int idx = (int)(t / Cycle) % greetings.Count;
         double c = t % Cycle;
-        double a = Math.Max(0, Math.Min(1.0, Math.Min(c / Fade, (Cycle - c) / Fade)));
-        a = a * a * (3 - 2 * a);                   // 부드러운 가감속
-        if (title.Text != Greetings[idx]) title.Text = Greetings[idx];
-        title.Opacity = a;
+        double rise = 22;
+        if (title.Text != greetings[idx]) title.Text = greetings[idx];
+        if (c < Fade) {                            // 아래에서 올라오며 나타난다
+            double e = Motion.EaseOut(c / Fade);
+            title.Opacity = e; titleMove.Y = (1 - e) * rise;
+        } else if (c > Cycle - Fade) {             // 위로 올라가며 사라진다
+            double u = (c - (Cycle - Fade)) / Fade, e = u * u * u;
+            title.Opacity = 1 - e; titleMove.Y = -e * rise;
+        } else { title.Opacity = 1; titleMove.Y = 0; }
     }
-
-    void DoLayout() {
-        double fw = ActualWidth > 0 ? ((FrameworkElement)Content).ActualWidth : Width, fh = ActualHeight > 0 ? ((FrameworkElement)Content).ActualHeight : Height;
-        double lx = fw * 0.14, ty = fh * 0.24;
-        Place(tile, lx + 14, ty + 14);
-        Place(title, lx + 14 + 75 - title.Width / 2, ty + 224);   // 로고(150px) 가운데 기준
-        double rx = fw * 0.56, ry = fh * 0.56;
-        Place(rowLang, rx, ry);
-        Place(rowView, rx, ry + 72);
-        start.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        Place(start, fw - start.DesiredSize.Width - fw * 0.06, fh * 0.80);
-    }
-    static void Place(UIElement e, double x, double y) { Canvas.SetLeft(e, x); Canvas.SetTop(e, y); }
 
     void PickLang() {
         LastDialog = Dialogs.Choose(overlay, L.T("wel_lang"), L.Languages, S.Lang,
