@@ -220,7 +220,7 @@ v2.2 이하 버전의 실행 파일은 더 이상 배포하지 않습니다. 자
 
 ## 라이선스
 
-Copyright (C) 2026 Hyunwoo Bang
+Copyright (C) 2026 Hyunwoo Bang, Junyoung
 
 [GNU General Public License v3.0 이상](LICENSE) (GPL-3.0-or-later). 자유롭게 사용·수정·재배포할 수 있지만, 수정한 버전을 배포할 때는 같은 GPL 라이선스로 소스 코드를 함께 공개해야 합니다.
 
