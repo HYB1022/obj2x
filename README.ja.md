@@ -29,8 +29,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.webp">
-    <img src="docs/images/welcome-light.webp" width="860" alt="初回起動時のようこそ画面：流れるグラデーションの上に各国語のあいさつが入れ替わって表示される">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/ja/welcome-dark.webp">
+    <img src="docs/images/ja/welcome-light.webp" width="860" alt="初回起動時のようこそ画面：流れるグラデーションの上に各国語のあいさつが入れ替わって表示される">
   </picture>
 </p>
 
@@ -53,16 +53,16 @@
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/dashboard-light.png" alt="ダッシュボード：高速変換で 9 ファイルを変換した結果表"></td>
-    <td width="50%"><img src="docs/images/wizard-light.png" alt="変換ウィザード：変換方式の選択"></td>
+    <td width="50%"><img src="docs/images/ja/dashboard-light.png" alt="ダッシュボード：高速変換で 9 ファイルを変換した結果表"></td>
+    <td width="50%"><img src="docs/images/ja/wizard-light.png" alt="変換ウィザード：変換方式の選択"></td>
   </tr>
   <tr>
     <td align="center"><b>ダッシュボード</b><br><sub>ファイルごとの頂点・三角形・マテリアル数と状態を結果表で表示</sub></td>
     <td align="center"><b>変換ウィザード</b><br><sub>種類 → パス → オプション → 完了の 4 ステップで変換を開始</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/about-light.png" alt="情報タブ：新バージョンのお知らせ"></td>
-    <td width="50%"><img src="docs/images/about-dark.png" alt="ダークテーマの情報タブ"></td>
+    <td width="50%"><img src="docs/images/ja/about-light.png" alt="情報タブ：新バージョンのお知らせ"></td>
+    <td width="50%"><img src="docs/images/ja/about-dark.png" alt="ダークテーマの情報タブ"></td>
   </tr>
   <tr>
     <td align="center"><b>アップデートのお知らせ</b><br><sub>新しいバージョンがあると <code>情報</code> メニューに表示され、ボタン一つでインストール</sub></td>
@@ -134,7 +134,7 @@ OMSI 2 フォルダーは Steam のインストール情報から自動で探し
 - **バス**：`.bus`（または `model.cfg`、オブジェクトの `.sco`）を選ぶかウィンドウにドロップすると、テクスチャ付きで 3D 表示します。ドラッグで回転、右ドラッグで移動、ホイールで拡大します。
   - **アニメーション**：cfg の `anim_rot` / `anim_trans` で使われる変数ごとにスライダーと `再生` ボタンが付き、ドア・ワイパー・計器の針などが OMSI のように動きます（ピボット `origin_trans`、回転軸 `origin_rot`、`origin_from_mesh`、複数ブロックの重ね合わせ）。ゲームと違う場合はブロックの適用順と回転方向を切り替えられます。
   - **パーツ編集**：3D でパーツをクリックするか一覧の `編集` を押すと、ブロックごとにピボット・回転・factor の欄が出て、直したとおりにすぐ動きます。ピボットと回転軸も 3D に表示されます。`cfg を保存` は値が書かれた行だけを書き換えるので、コメントや他の内容はそのまま残り、初回保存時に元のファイルを `.bak` として残します。
-  - **乗客の経路 / 座席**：`.bus` に書かれた `paths.cfg` の点（入口はオレンジ、出口は赤）とつながり、`passengercabin.cfg` の座席（運転席はピンク、棒は座る向き）をモデルに重ねて表示し、座標を直したり点・つながり・座席を追加・削除して保存できます。
+  - **乗客の経路 / 座席**：`.bus` に書かれた `paths.cfg` の点（入口はオレンジ、出口は赤）とつながり、`passengercabin.cfg` の座席（運転席はピンク、棒は座る向き）をモデルに重ねて表示し、座標を直したり点・つながり・座席を追加・削除して保存できます。3D で点や座席をドラッグするとそのまま移動します（Blender のように画面と平行に自由移動、`Shift` を押すと 1 m 単位）。選んだ点・座席に出る赤/緑/青の矢印をドラッグすると x/y/z 軸方向だけに動きます。`モデルを隠す` をオンにするとモデルをすべて消し、経路と座席だけを表示します。
   - 最初は最も詳細な LOD の外から見えるパーツだけがオンになります。条件付きパーツ（`[visible]`）はパーツ一覧で一つずつ、または `外` / `内` / `すべて` でまとめて切り替えられます。
   - **塗装**：`[CTC]` 塗装フォルダーの `.cti` を選ぶとその塗装のテクスチャを貼り、`.cti` の `[setvar]` オプションどおりに条件付きパーツをオン/オフします。1 つの `.cti` に塗装が複数あれば別々に選べます。車両スクリプト（`.osc`）が塗装の値から決めるオプション（年式によるドアの形など）も、スクリプトを簡易的に実行して合わせます。指定のない変数は OMSI と同じく 0 とみなします。最初は 1 番目の塗装が選ばれます。透明は `[matl_alpha]` のあるマテリアルにだけ適用します（OMSI と同じ）。
   - OMSI と同じく表面だけを描きます。法線が反転した面はゲームと同じく見えず、`裏面も表示` をオンにすると両面で描きます。

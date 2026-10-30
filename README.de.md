@@ -29,8 +29,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.webp">
-    <img src="docs/images/welcome-light.webp" width="860" alt="Willkommensbildschirm beim ersten Start: Begrüßungen in mehreren Sprachen über einem fließenden Farbverlauf">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/de/welcome-dark.webp">
+    <img src="docs/images/de/welcome-light.webp" width="860" alt="Willkommensbildschirm beim ersten Start: Begrüßungen in mehreren Sprachen über einem fließenden Farbverlauf">
   </picture>
 </p>
 
@@ -53,16 +53,16 @@ Die `.o3d` entsteht im selben Ordner wie die `.x` und heißt wie die obj (`face.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/dashboard-light.png" alt="Übersicht: Ergebnistabelle nach der Schnellkonvertierung von 9 Dateien"></td>
-    <td width="50%"><img src="docs/images/wizard-light.png" alt="Konvertierungsassistent: Auswahl der Art"></td>
+    <td width="50%"><img src="docs/images/de/dashboard-light.png" alt="Übersicht: Ergebnistabelle nach der Schnellkonvertierung von 9 Dateien"></td>
+    <td width="50%"><img src="docs/images/de/wizard-light.png" alt="Konvertierungsassistent: Auswahl der Art"></td>
   </tr>
   <tr>
     <td align="center"><b>Übersicht</b><br><sub>Vertices, Dreiecke, Materialien und Status je Datei in einer Ergebnistabelle</sub></td>
     <td align="center"><b>Konvertierungsassistent</b><br><sub>Art → Pfade → Optionen → fertig, in vier Schritten zur Konvertierung</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/about-light.png" alt="Info-Tab: neue Version verfügbar"></td>
-    <td width="50%"><img src="docs/images/about-dark.png" alt="Info-Tab im dunklen Design"></td>
+    <td width="50%"><img src="docs/images/de/about-light.png" alt="Info-Tab: neue Version verfügbar"></td>
+    <td width="50%"><img src="docs/images/de/about-dark.png" alt="Info-Tab im dunklen Design"></td>
   </tr>
   <tr>
     <td align="center"><b>Update-Hinweis</b><br><sub>Eine neue Version erscheint im Menü <code>Info</code> und wird mit einem Klick installiert</sub></td>
@@ -134,7 +134,7 @@ Der OMSI-2-Ordner wird automatisch über die Steam-Installation gefunden. Falls 
 - **Bus**: Wähle eine `.bus` (oder eine `model.cfg` bzw. ein Objekt-`.sco`) oder ziehe sie auf das Fenster, um sie mit Texturen in 3D zu sehen. Ziehen zum Drehen, rechte Taste zum Verschieben, Rad zum Zoomen.
   - **Animation**: Jede Variable aus `anim_rot` / `anim_trans` der cfg bekommt einen Schieberegler und `Abspielen`; Türen, Scheibenwischer, Zeiger usw. bewegen sich wie in OMSI (Drehpunkt `origin_trans`, Achse `origin_rot`, `origin_from_mesh`, gestapelte Blöcke). Weicht es vom Spiel ab, probiere die andere Blockreihenfolge oder kehre die Drehrichtung um.
   - **Teile bearbeiten**: Klicke ein Teil in 3D oder `Bearbeiten` in der Teileliste an, um Felder für Drehpunkt, Drehung und Faktor je Block zu bekommen; Änderungen wirken sofort, Drehpunkte und Achsen werden in 3D gezeigt. `cfg speichern` ersetzt nur die Zeilen mit diesen Werten, Kommentare und alles andere bleiben erhalten, und beim ersten Speichern wird das Original als `.bak` gesichert.
-  - **Fahrgastwege / Sitze**: Punkte (Eingang orange, Ausgang rot) und Verbindungen der in der `.bus` genannten `paths.cfg` sowie die Sitze der `passengercabin.cfg` (Fahrer rosa, der Strich zeigt die Blickrichtung) werden über das Modell gezeichnet. Koordinaten lassen sich bearbeiten, Punkte, Verbindungen und Sitze hinzufügen oder entfernen und speichern.
+  - **Fahrgastwege / Sitze**: Punkte (Eingang orange, Ausgang rot) und Verbindungen der in der `.bus` genannten `paths.cfg` sowie die Sitze der `passengercabin.cfg` (Fahrer rosa, der Strich zeigt die Blickrichtung) werden über das Modell gezeichnet. Koordinaten lassen sich bearbeiten, Punkte, Verbindungen und Sitze hinzufügen oder entfernen und speichern. Punkte und Sitze lassen sich in 3D direkt ziehen (freie Bewegung parallel zum Bildschirm wie in Blender, mit `Shift` in 1-m-Schritten). Die roten/grünen/blauen Pfeile am gewählten Punkt oder Sitz verschieben nur entlang x/y/z. `Modell ausblenden` blendet das ganze Modell aus, sodass nur Wege und Sitze zu sehen sind.
   - Anfangs sind nur die Außenteile des detailliertesten LOD eingeschaltet. Bedingte Teile (`[visible]`) lassen sich einzeln in der Teileliste oder gesammelt mit `Außen` / `Innen` / `Alle` schalten.
   - **Lackierung**: Wähle eine `.cti` aus dem `[CTC]`-Lackierungsordner, um ihre Texturen zu verwenden; ihre `[setvar]`-Optionen schalten bedingte Teile. Eine `.cti` mit mehreren Lackierungen zeigt jede einzeln. Optionen, die ein Fahrzeugskript (`.osc`) aus Lackierungswerten ableitet (z. B. Türform nach Baujahr), werden durch vereinfachtes Ausführen des Skripts nachgebildet. Nicht gesetzte Variablen sind wie in OMSI 0. Am Anfang ist die erste Lackierung gewählt. Transparenz gilt nur für Materialien mit `[matl_alpha]`, wie in OMSI.
   - Wie in OMSI werden nur Vorderseiten gezeichnet; Flächen mit umgedrehten Normalen sind wie im Spiel unsichtbar. `Rückseiten anzeigen` zeichnet beide Seiten.

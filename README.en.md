@@ -29,8 +29,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.webp">
-    <img src="docs/images/welcome-light.webp" width="860" alt="First-run welcome screen: greetings in several languages over a flowing gradient">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/en/welcome-dark.webp">
+    <img src="docs/images/en/welcome-light.webp" width="860" alt="First-run welcome screen: greetings in several languages over a flowing gradient">
   </picture>
 </p>
 
@@ -53,16 +53,16 @@ The `.o3d` is created in the same folder as the `.x`, with the same name as the 
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/dashboard-light.png" alt="Dashboard: results table after converting 9 files with fast conversion"></td>
-    <td width="50%"><img src="docs/images/wizard-light.png" alt="Conversion wizard: choosing the conversion type"></td>
+    <td width="50%"><img src="docs/images/en/dashboard-light.png" alt="Dashboard: results table after converting 9 files with fast conversion"></td>
+    <td width="50%"><img src="docs/images/en/wizard-light.png" alt="Conversion wizard: choosing the conversion type"></td>
   </tr>
   <tr>
     <td align="center"><b>Dashboard</b><br><sub>Vertices, triangles, materials and status per file in a results table</sub></td>
     <td align="center"><b>Conversion wizard</b><br><sub>Type → paths → options → done, four steps to start a conversion</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/about-light.png" alt="About tab: new version available"></td>
-    <td width="50%"><img src="docs/images/about-dark.png" alt="About tab in the dark theme"></td>
+    <td width="50%"><img src="docs/images/en/about-light.png" alt="About tab: new version available"></td>
+    <td width="50%"><img src="docs/images/en/about-dark.png" alt="About tab in the dark theme"></td>
   </tr>
   <tr>
     <td align="center"><b>Update notice</b><br><sub>A new version shows up in the <code>About</code> menu and installs with one button</sub></td>
@@ -134,7 +134,7 @@ The OMSI 2 folder is found automatically from your Steam installation. If it isn
 - **Bus**: choose a `.bus` (or a `model.cfg`, or an object `.sco`) or drop it onto the window to see it in 3D with textures. Drag to rotate, right-drag to pan, wheel to zoom.
   - **Animation**: every variable used by `anim_rot` / `anim_trans` in the cfg gets a slider and a `Play` button, and doors, wipers, gauge needles etc. move as in OMSI (pivot `origin_trans`, axis `origin_rot`, `origin_from_mesh`, stacked blocks). If it differs from the game, try the other block order or flip the rotation direction.
   - **Part editing**: click a part in 3D or `Edit` in the part list to get pivot, rotation and factor fields for each block; changes move the part right away, and pivots and axes are drawn in 3D. `Save cfg` only rewrites the lines holding those values, so comments and everything else stay as they were, and the original is kept as `.bak` on the first save.
-  - **Passenger paths / seats**: the points (entry orange, exit red) and links of the `paths.cfg` named in the `.bus` and the seats of `passengercabin.cfg` (driver pink, the bar shows the facing direction) are drawn over the model. Coordinates can be edited, points, links and seats added or removed, and saved.
+  - **Passenger paths / seats**: the points (entry orange, exit red) and links of the `paths.cfg` named in the `.bus` and the seats of `passengercabin.cfg` (driver pink, the bar shows the facing direction) are drawn over the model. Coordinates can be edited, points, links and seats added or removed, and saved. Drag a point or seat in 3D to move it (free move parallel to the screen like Blender, hold `Shift` for 1 m steps). Drag the red/green/blue arrows of the selected point or seat to move along x/y/z only. `Hide model` turns the whole model off so only paths and seats are shown.
   - At first only the most detailed LOD's exterior parts are on. Conditional parts (`[visible]`) can be switched one by one in the part list, or all at once with `Outside` / `Inside` / `All`.
   - **Repaint**: pick a `.cti` from the `[CTC]` repaint folder to apply its textures; its `[setvar]` options switch conditional parts on and off. A `.cti` with several repaints lists each of them. Options that a vehicle script (`.osc`) derives from repaint values (e.g. door style by model year) are matched by running the script in a simple way. Unset variables are 0, as in OMSI. The first repaint is chosen at the start. Transparency is used only for materials with `[matl_alpha]`, as in OMSI.
   - Like OMSI, only front faces are drawn, so faces with flipped normals are invisible as in the game. `Show back faces` draws both sides.

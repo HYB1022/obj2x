@@ -74,6 +74,7 @@ public partial class MainViewModel {
         Vars = new ObservableCollection<VarItem>(); Blocks = new ObservableCollection<BlockEdit>();
         PathRows = new ObservableCollection<RowEdit>(); LinkRows = new ObservableCollection<RowEdit>(); SeatRows = new ObservableCollection<RowEdit>();
         PickPartCmd = new Cmd(delegate(object p) { SelectPart(p as PartItem); });
+        GizmoCmd = new Cmd(delegate(object p) { GizmoMove(p as GizmoDrag); });
         SaveCfgCmd = new Cmd(delegate { SaveDoc(viewCfg != null ? viewCfg.Doc : null); }, delegate(object p) { return viewCfg != null; });
         ResetVarsCmd = new Cmd(delegate { foreach (VarItem v in Vars) { v.Playing = false; v.Value = 0; } });
         AddPointCmd = new Cmd(delegate {
@@ -295,14 +296,20 @@ public partial class MainViewModel {
             HashSet<int> en = new HashSet<int>(busCabin != null ? busCabin.Entries : new List<int>()), ex = new HashSet<int>(busCabin != null ? busCabin.Exits : new List<int>());
             foreach (PathLink l in busPaths.Links)
                 if (l.A >= 0 && l.B >= 0 && l.A < busPaths.Points.Count && l.B < busPaths.Points.Count) o.Rod(AnimMath.P(busPaths.Points[l.A].P), AnimMath.P(busPaths.Points[l.B].P), 0.02, CPath);
-            foreach (PathPoint p in busPaths.Points) { double s = en.Contains(p.Index) || ex.Contains(p.Index) ? 0.1 : 0.06; o.Box(AnimMath.P(p.P), s, s, s, en.Contains(p.Index) ? CEntry : ex.Contains(p.Index) ? CExit : CPath); }
+            for (int i = 0; i < busPaths.Points.Count; i++) {
+                PathPoint p = busPaths.Points[i]; string h = "p:" + i; bool sel = h == gizmoSel;
+                double s = (en.Contains(p.Index) || ex.Contains(p.Index) ? 0.1 : 0.06) * (sel ? 1.6 : 1);
+                o.Box(AnimMath.P(p.P), s, s, s, sel ? CSel : en.Contains(p.Index) ? CEntry : ex.Contains(p.Index) ? CExit : CPath, h);
+            }
         }
         if (showSeats && busCabin != null) {
-            foreach (Seat s in busCabin.Seats) {
+            for (int i = 0; i < busCabin.Seats.Count; i++) {
+                Seat s = busCabin.Seats[i]; string h = "s:" + i;
+                Color col = h == gizmoSel ? CSel : s.Driver ? CDriver : CSeat;
                 Point3D c = AnimMath.P(s.V);
-                o.Box(c, 0.36, 0.05, 0.36, s.Driver ? CDriver : CSeat);
+                o.Box(c, 0.36, h == gizmoSel ? 0.09 : 0.05, 0.36, col, h);
                 double r = s.V[4] * Math.PI / 180;   // 0 = 진행 방향(+y)
-                o.Rod(c, AnimMath.P(new double[] { s.V[0] - Math.Sin(r) * 0.3, s.V[1] + Math.Cos(r) * 0.3, s.V[2] }), 0.03, s.Driver ? CDriver : CSeat);
+                o.Rod(c, AnimMath.P(new double[] { s.V[0] - Math.Sin(r) * 0.3, s.V[1] + Math.Cos(r) * 0.3, s.V[2] }), 0.03, col, h);
             }
         }
         if (showPivots && selPart != null && viewCfg != null) {
@@ -318,7 +325,77 @@ public partial class MainViewModel {
                 o.Rod(pv - av, pv + av, 0.012, col);
             }
         }
+        // 고른 점/좌석에 축 화살표 (Blender처럼 x 빨강, y 초록, z 파랑). 화살표를 끌면 그 축으로만 움직인다
+        string selName; double[] sp = GizmoTarget(gizmoSel, out selName);
+        if (sp != null && (gizmoSel[0] == 'p' ? showPaths : showSeats)) {
+            Point3D c = AnimMath.P(sp);
+            // cfg x, y(앞), z(위) → 화면 (1,0,0), (0,0,-1), (0,1,0)
+            Vector3D[] ax = { new Vector3D(1, 0, 0), new Vector3D(0, 0, -1), new Vector3D(0, 1, 0) };
+            Color[] col = { Color.FromRgb(232, 64, 64), Color.FromRgb(90, 190, 60), Color.FromRgb(60, 120, 240) };
+            for (int i = 0; i < 3; i++) {
+                GizmoAxis h = new GizmoAxis { Target = gizmoSel, Axis = ax[i] };
+                o.Rod(c + ax[i] * 0.06, c + ax[i] * 0.5, 0.025, col[i], h);
+                o.Box(c + ax[i] * 0.53, 0.07, 0.07, 0.07, col[i], h);
+            }
+        }
         busOverlay = o.Group; Raise("BusOverlay");
+    }
+
+    // 모델을 모두 숨기고 사람 길·좌석만 보기 (켜면 길·좌석 표시도 켠다)
+    bool busHideModel;
+    public bool BusHideModel {
+        get { return busHideModel; }
+        set {
+            busHideModel = value; Raise("BusHideModel");
+            if (value) { showPaths = true; showSeats = true; Raise("ShowPaths", "ShowSeats"); RebuildOverlay(); }
+        }
+    }
+
+    // ---- 3D에서 사람 길 점 / 좌석을 끌어서 옮기기. 그냥 끌면 자유 이동, Shift를 누르면 움직인 양을 1 m 단위로
+    public ICommand GizmoCmd { get; private set; }
+    static readonly Color CSel = Color.FromRgb(250, 204, 21);
+    string gizmoSel, gizmoText = "";
+    double[] gizmoOrig;
+    public string GizmoText { get { return gizmoText; } }
+    public const double GizmoSnap = 1;
+
+    double[] GizmoTarget(string h, out string name) {
+        name = null;
+        if (h == null || h.Length < 3) return null;
+        int i; if (!int.TryParse(h.Substring(2), out i)) return null;
+        if (h[0] == 'p' && busPaths != null && i < busPaths.Points.Count) { name = L.T("bus_point", busPaths.Points[i].Index); return busPaths.Points[i].P; }
+        if (h[0] == 's' && busCabin != null && i < busCabin.Seats.Count) {
+            Seat s = busCabin.Seats[i];
+            int n = 0; for (int k = 0; k <= i; k++) if (!busCabin.Seats[k].Driver) n++;
+            name = s.Driver ? L.T("bus_driver") : L.T("bus_seat", n);
+            return s.V;
+        }
+        return null;
+    }
+
+    public void GizmoMove(GizmoDrag g) {
+        if (g == null) return;
+        string h = g.Handle as string, name;
+        double[] cur = GizmoTarget(h, out name);
+        if (cur == null) return;
+        if (g.Start) { gizmoSel = h; gizmoOrig = new double[] { cur[0], cur[1], cur[2] }; }
+        else if (gizmoOrig != null && h == gizmoSel) {
+            // 화면 (x, y위, -앞) → cfg (x, 앞, 위)
+            double[] d = { g.Delta.X, -g.Delta.Z, g.Delta.Y };
+            for (int c = 0; c < 3; c++) {
+                double v = d[c];
+                if (g.Snap) v = Math.Round(v / GizmoSnap) * GizmoSnap;
+                v = Math.Round(gizmoOrig[c] + v, 3);
+                if (v == cur[c]) continue;
+                if (h[0] == 'p') busPaths.SetPoint(busPaths.Points[int.Parse(h.Substring(2))], c, v);
+                else busCabin.SetSeat(busCabin.Seats[int.Parse(h.Substring(2))], c, v);
+            }
+        }
+        gizmoText = L.T("bus_gizmo", name, CfgDoc.Fmt(cur[0]), CfgDoc.Fmt(cur[1]), CfgDoc.Fmt(cur[2]));
+        Raise("GizmoText");
+        RebuildOverlay();
+        // 놓으면 목록의 숫자도 새로 (끄는 동안은 3D만)
+        if (g.Done) { if (h[0] == 'p') PathsChanged(); else CabinChanged(); Raise("BusDirty"); }
     }
 }
 }

@@ -131,6 +131,10 @@ public static class Shots {
         if (preset == "pose") {
             foreach (VarItem v in f.VM.Vars) v.Value = v.Min + (v.Max - v.Min) * 0.85;
             foreach (PartItem p in f.VM.Parts) if (p.Checked && p.Mesh.Animated) { f.VM.PickPartCmd.Execute(p); break; }
+        } else if (preset == "paths") {
+            // 모델 숨기기 + 첫 좌석을 골라 축 손잡이까지
+            f.VM.BusHideModel = true;
+            f.VM.GizmoMove(new GizmoDrag { Handle = "s:0", Start = true });
         } else if (preset != "ext") f.VM.ViewPreset = preset;
         Pump.Run(300);
         Save(f, png);
@@ -263,10 +267,10 @@ public static class Shots {
     // 개발용: README 맨 위 움직이는 그림용 환영 화면 프레임 (BusDepot.exe --welcome-frames 폴더 [light|dark])
     // 인사말 한 바퀴(Period초)를 초당 Fps장으로, 앞에 Blend초를 더 찍는다. 이음매 없이 반복되게 섞는 것은 바깥 스크립트가 한다.
     // 파일 이름: f_0000.png ... (0번 = -Blend초), 첫 줄에 times.txt로 장 수/초당 장 수/한 바퀴 시간을 남긴다.
-    public static int WelcomeFrames(string dir, string theme) {
+    public static int WelcomeFrames(string dir, string theme, string lang) {
         const int Fps = 25; const double Blend = 1.6;   // Blend × Fps가 정수여야 한다
         Directory.CreateDirectory(dir);
-        Settings s = new Settings(); s.Path = Path.Combine(dir, "wf.ini"); s.Lang = "ko"; s.Theme = theme == "dark" ? "dark" : "light"; s.Accent = "indigo";
+        Settings s = new Settings(); s.Path = Path.Combine(dir, "wf.ini"); s.Lang = lang; s.Theme = theme == "dark" ? "dark" : "light"; s.Accent = "indigo";
         Loc.SetLang(s.Lang); Theme.Apply(s.Theme, s.Accent, s.Font);
         WelcomeWindow w = new WelcomeWindow(s);
         w.WindowState = WindowState.Normal; w.Width = 1000; w.Height = 640; w.Left = -6000; w.Top = 0; w.ShowInTaskbar = false; w.ShowActivated = false;
@@ -286,7 +290,7 @@ public static class Shots {
     // 개발용: README에 넣을 화면 (BusDepot.exe --readme-shots 폴더)
     // 가짜 blender.exe/OmsiXConv.exe로 경로 경고를 없애고, 샘플 obj를 빠른 변환으로 실제 변환해 결과 표를 채운다.
     // 사용자 경로가 보이는 화면(마법사 경로 단계, 고급의 프로그램 경로, 설정의 백업 폴더)은 찍지 않는다.
-    public static int Readme(string dir) {
+    public static int Readme(string dir, string lang) {
         Directory.CreateDirectory(dir);
         Motion.Off = true;
         string work = Path.Combine(Path.GetTempPath(), "BusDepot_readme");
@@ -299,7 +303,7 @@ public static class Shots {
 
         foreach (string th in new string[] { "light", "dark" }) {
             Settings s = new Settings(); s.Path = Path.Combine(work, "shot.ini");
-            s.Theme = th; s.Lang = "ko"; s.Accent = "indigo"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
+            s.Theme = th; s.Lang = lang; s.Accent = "indigo"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
             s.Inp = models; s.Blender = bl; s.Conv = cv; s.SameDir = true;
             MainWindow f = Open(s, work);
             if (th == "light") {

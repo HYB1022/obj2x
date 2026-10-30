@@ -99,28 +99,31 @@ public class Overlay3D {
     }
 
     // 화면 좌표의 점 a→b를 잇는 굵기 w의 막대 (네모 기둥)
-    public void Rod(Point3D a, Point3D b, double w, Color c) {
+    // handle: 누르고 끌 수 있는 손잡이 표시 (ModelView.Handle)
+    public void Rod(Point3D a, Point3D b, double w, Color c, object handle = null) {
         Vector3D d = b - a; if (d.Length < 1e-6) return;
         d.Normalize();
         Vector3D u = Vector3D.CrossProduct(d, Math.Abs(d.Y) < 0.9 ? new Vector3D(0, 1, 0) : new Vector3D(1, 0, 0)); u.Normalize();
         Vector3D v = Vector3D.CrossProduct(d, u); u *= w / 2; v *= w / 2;
         Point3D[] p = { a - u - v, a + u - v, a + u + v, a - u + v, b - u - v, b + u - v, b + u + v, b - u + v };
-        Prism(p, c);
+        Prism(p, c, handle);
     }
-    public void Box(Point3D c0, double sx, double sy, double sz, Color c) {
+    public void Box(Point3D c0, double sx, double sy, double sz, Color c, object handle = null) {
         double x = sx / 2, y = sy / 2, z = sz / 2;
         Point3D[] p = { new Point3D(c0.X - x, c0.Y - y, c0.Z - z), new Point3D(c0.X + x, c0.Y - y, c0.Z - z), new Point3D(c0.X + x, c0.Y + y, c0.Z - z), new Point3D(c0.X - x, c0.Y + y, c0.Z - z),
                         new Point3D(c0.X - x, c0.Y - y, c0.Z + z), new Point3D(c0.X + x, c0.Y - y, c0.Z + z), new Point3D(c0.X + x, c0.Y + y, c0.Z + z), new Point3D(c0.X - x, c0.Y + y, c0.Z + z) };
-        Prism(p, c);
+        Prism(p, c, handle);
     }
-    void Prism(Point3D[] p, Color c) {
+    void Prism(Point3D[] p, Color c, object handle) {
         MeshGeometry3D g = new MeshGeometry3D();
         foreach (Point3D q in p) g.Positions.Add(q);
         int[] f = { 0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2, 2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0 };
         foreach (int i in f) g.TriangleIndices.Add(i);
         g.Freeze();
         Material m = Mat(c);
-        GeometryModel3D gm = new GeometryModel3D(g, m); gm.BackMaterial = m; gm.Freeze();
+        GeometryModel3D gm = new GeometryModel3D(g, m); gm.BackMaterial = m;
+        if (handle != null) gm.SetValue(ModelView.HandleProperty, handle);
+        gm.Freeze();
         Group.Children.Add(gm);
     }
 }

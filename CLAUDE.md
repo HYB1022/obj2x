@@ -14,10 +14,10 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 - 스크린샷: `BusDepot.exe --shots <폴더>` (개발용, 모든 화면을 PNG로 저장). 창 내용을 직접 그려 저장하므로 가려져도 된다. 애니메이션은 꺼진 상태로 찍힌다.
 - 시작 페이지 지정: `BusDepot.exe --page about` (개발용, 성능 측정 등).
 - 프레임 측정: `BusDepot.exe --fps [--page about]` 또는 `--fps nav`(0.4초마다 페이지 전환)로 3초간 프레임 간격을 `BusDepot_fps.txt`에 남긴다. 창이 활성이어야 정보 화면 배경이 움직인다.
-- README 화면: `BusDepot.exe --readme-shots <폴더>`로 찍어서 `docs/images/`에 넣는다. 사용자 경로가 보이는 화면은 찍지 않는다.
+- README 화면: `BusDepot.exe --readme-shots <폴더> [ko|en|de|ja|zh]`로 찍어서 `docs/images/`(한국어)나 `docs/images/<언어>/`(README.<언어>.md)에 넣는다. 사용자 경로가 보이는 화면은 찍지 않는다.
 - 버스/맵 확인: `BusDepot.exe --view-shot <model.cfg|.bus> <png> [light|dark] [ext|int|all|pose]`(버스 탭 캡처. `pose`는 변수를 85%로 두고 첫 애니메이션 부품을 골라 아래로 넘기며 `_1`~`_4`도 찍는다), `--map-shot <맵 폴더> <png> [hof]`(맵 탭 캡처 + 통계 txt), `--save-model <model.cfg> <out.blend|.obj> [blender.exe]`(저장하기를 대화 상자 없이).
 - 소개 영상: `python tools/video/make_video.py --exe <BusDepot.exe> --out <폴더> [--model <cfg>] [--split]`. 대본은 `tools/video/narration.json`(장면 id = `--video-frames` 장면 이름). 음성은 edge-tts(Microsoft 온라인 음성), 언어마다 오디오/자막 트랙이 따로 들어간 MP4 하나를 만든다. 화면은 영어 UI, 작업 폴더는 사용자 경로가 안 보이게 드라이브 바로 아래 `obj2x_demo`.
-- README 맨 위 움직이는 그림: `BusDepot.exe --welcome-frames <폴더> [light|dark]`(2배 해상도)로 환영 화면을 한 바퀴(13초) 초당 25장 찍고, `tools/mkwebp.py`(Pillow)로 처음과 끝을 섞어 이음매 없이 반복되는 WebP(`docs/images/welcome-light.webp`/`welcome-dark.webp`)로 만든다.
+- README 맨 위 움직이는 그림: `BusDepot.exe --welcome-frames <폴더> [light|dark] [언어]`(2배 해상도)로 환영 화면을 한 바퀴(13초) 초당 25장 찍고, `tools/mkwebp.py`(Pillow)로 처음과 끝을 섞어 이음매 없이 반복되는 WebP(`docs/images/welcome-light.webp`/`welcome-dark.webp`)로 만든다.
 
 ## 제약
 

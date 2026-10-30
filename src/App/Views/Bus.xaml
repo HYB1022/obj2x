@@ -30,7 +30,7 @@
     </Border>
     <Border Style="{StaticResource DevCard}" Margin="0,14,0,0" Padding="10">
       <Grid Height="480">
-        <ui:ModelView x:Name="View3D" Parts="{Binding Parts}" Scene="{Binding ViewScene}" Show="{Binding ViewShow}" Overlay="{Binding BusOverlay}" PickCommand="{Binding PickPartCmd}"/>
+        <ui:ModelView x:Name="View3D" Parts="{Binding Parts}" Scene="{Binding ViewScene}" Show="{Binding ViewShow}" Overlay="{Binding BusOverlay}" PickCommand="{Binding PickPartCmd}" MoveCommand="{Binding GizmoCmd}" HideParts="{Binding BusHideModel}"/>
         <TextBlock Text="{ui:Tr bus_empty}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
                    TextAlignment="Center" Margin="40,0" Visibility="{Binding ViewEmpty, Converter={StaticResource Vis}}"/>
         <TextBlock Text="{Binding ViewStatus}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
@@ -38,7 +38,8 @@
       </Grid>
     </Border>
     <TextBlock Text="{Binding ViewStatus}" Style="{StaticResource DevSub}" Margin="24,8,24,0"/>
-    <TextBlock Text="{ui:Tr bus_controls}" Style="{StaticResource DevSub}" Margin="24,2,24,0"/>
+    <TextBlock Text="{ui:Tr bus_controls}" Style="{StaticResource DevSub}" Margin="24,2,24,0" TextWrapping="Wrap"/>
+    <TextBlock Text="{Binding GizmoText}" Style="{StaticResource DevSub}" Margin="24,2,24,0" Foreground="{DynamicResource Accent}"/>
     <TextBlock Text="{ui:Tr bus_sec_show}" Style="{StaticResource DevCaption}"/>
     <Border Style="{StaticResource DevCard}">
       <StackPanel>
@@ -65,6 +66,12 @@
           <StackPanel VerticalAlignment="Center">
             <TextBlock Text="{ui:Tr view_both}" Style="{StaticResource DevTitle}"/>
             <TextBlock Text="{ui:Tr view_both_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding BusHideModel}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr bus_hide_model}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr bus_hide_model_sub}" Style="{StaticResource DevSub}"/>
           </StackPanel>
         </CheckBox>
         <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding ShowPaths}">

@@ -472,6 +472,26 @@ public static class SelfTest {
             T("오브젝트 탭: .sco 열어 3D로 보기", f.VM.Page == "object" && f.VM.ScoParts.Count > 0 && f.VM.ScoParts[0].Model != null && !f.VM.ScoEmpty && f.VM.ScoStatus.Length > 0,
                 f.VM.Page + " " + f.VM.ScoParts.Count + " " + f.VM.ScoStatus);
             f.VM.DropPath(sf); Pump.Run(60);
+            // 버스 탭: 사람 길 점 / 좌석을 3D에서 끌어 옮기기 (자유 이동, Shift = 1 m 단위)
+            f.VM.LoadModel(Path.Combine(vb, "a.bus")); for (int w = 0; w < 200 && f.VM.ViewBusy; w++) Pump.Run(30);
+            f.VM.GizmoMove(new GizmoDrag { Handle = "p:0", Start = true });
+            f.VM.GizmoMove(new GizmoDrag { Handle = "p:0", Delta = new System.Windows.Media.Media3D.Vector3D(0.4, 0.3, -1.2) });
+            f.VM.GizmoMove(new GizmoDrag { Handle = "p:0", Delta = new System.Windows.Media.Media3D.Vector3D(0.4, 0.3, -1.2), Done = true });
+            string gz1 = f.VM.PathRows.Count > 0 ? f.VM.PathRows[0].Nums[0].Text + " " + f.VM.PathRows[0].Nums[1].Text + " " + f.VM.PathRows[0].Nums[2].Text : "";
+            f.VM.GizmoMove(new GizmoDrag { Handle = "s:1", Start = true });
+            f.VM.GizmoMove(new GizmoDrag { Handle = "s:1", Delta = new System.Windows.Media.Media3D.Vector3D(0.4, 0.2, -1.7), Snap = true, Done = true });
+            string gz2 = f.VM.SeatRows.Count > 1 ? f.VM.SeatRows[1].Nums[0].Text + " " + f.VM.SeatRows[1].Nums[1].Text + " " + f.VM.SeatRows[1].Nums[2].Text : "";
+            T("버스 탭: 점·좌석 끌어 옮기기 (자유 / Shift 1 m 단위)", gz1 == "0.4 1.2 0.8" && gz2 == "-0.7 5 1.2" && f.VM.GizmoText.Length > 0, gz1 + " | " + gz2);
+            // 모델 숨기기: 부품은 모두 빠지고 덧그림(길·좌석 + 고른 것의 축 화살표)만
+            f.VM.Page = "bus"; Pump.Run(80);
+            ModelView bmv = FindAll<ModelView>(f.Host).Find(delegate(ModelView q) { return q.IsVisible; });
+            int vis0 = bmv == null ? -1 : bmv.Visible;
+            f.VM.ShowPaths = false; f.VM.BusHideModel = true; Pump.Run(60);
+            int axes = 0; System.Windows.Media.Media3D.Model3DGroup og = f.VM.BusOverlay as System.Windows.Media.Media3D.Model3DGroup;
+            if (og != null) foreach (System.Windows.Media.Media3D.Model3D m3 in og.Children) if (m3.GetValue(ModelView.HandleProperty) is GizmoAxis) axes++;
+            T("버스 탭: 모델 숨기기(길·좌석만) + 고른 좌석에 x/y/z 축 손잡이", bmv != null && vis0 > 0 && bmv.Visible == 0 && f.VM.ShowPaths && f.VM.ShowSeats && axes == 6,
+                vis0 + " -> " + (bmv == null ? -1 : bmv.Visible) + " axes " + axes);
+            f.VM.BusHideModel = false; Pump.Run(30); f.VM.Page = "spline"; Pump.Run(30);
             T("스플라인 탭: .sli 열어 3D로 보기", f.VM.Page == "spline" && f.VM.SliParts.Count == 1 && f.VM.SliParts[0].Tris > 0 && f.VM.SliOverlay != null && !f.VM.SliEmpty && f.VM.SliInfo.Length > 0,
                 f.VM.Page + " " + f.VM.SliParts.Count + " " + f.VM.SliInfo);
             // 스플라인 화면: 값을 바꾸면 미리보기가 다시 그려진다

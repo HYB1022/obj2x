@@ -215,6 +215,11 @@ public static class ModelScene {
     static byte Clamp(float v) { return (byte)Math.Max(0, Math.Min(255, v * 255 * 1.25)); }
 }
 
+// 덧그림의 손잡이(사람 길 점, 좌석)를 끌 때 VM에 넘기는 값. Delta는 처음 누른 곳에서 움직인 양(화면 좌표계), Snap은 Shift를 누른 채
+public class GizmoDrag { public object Handle; public Vector3D Delta; public bool Start, Done, Snap; }
+// 축 화살표 손잡이: 끌면 Target을 Axis(화면 좌표계 단위 벡터) 방향으로만 옮긴다
+public class GizmoAxis { public object Target; public Vector3D Axis; }
+
 // ---------------------------------------------------------------- 3D 화면: 끌어서 돌리기, 오른쪽 버튼(또는 가운데)으로 옮기기, 휠로 확대, 두 번 눌러 처음 위치
 public class ModelView : Border {
     public static readonly DependencyProperty PartsProperty = DependencyProperty.Register("Parts", typeof(IEnumerable<PartItem>), typeof(ModelView),
@@ -228,6 +233,16 @@ public class ModelView : Border {
         new FrameworkPropertyMetadata(null, delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) { ((ModelView)d).overlay.Content = e.NewValue as Model3D; }));
     // 부품을 누르면 그 PartItem으로 실행 (끌어서 돌린 것은 제외)
     public static readonly DependencyProperty PickCommandProperty = DependencyProperty.Register("PickCommand", typeof(ICommand), typeof(ModelView));
+    // 덧그림 도형에 붙이는 손잡이 표시. 붙은 도형을 누르고 끌면 MoveCommand로 GizmoDrag를 보낸다 (Blender의 G처럼 화면과 평행한 면 위에서 자유 이동)
+    public static readonly DependencyProperty HandleProperty = DependencyProperty.RegisterAttached("Handle", typeof(object), typeof(ModelView));
+    public static readonly DependencyProperty MoveCommandProperty = DependencyProperty.Register("MoveCommand", typeof(ICommand), typeof(ModelView));
+    public ICommand MoveCommand { get { return (ICommand)GetValue(MoveCommandProperty); } set { SetValue(MoveCommandProperty, value); } }
+    object gHandle; Point3D gStart;
+    Vector3D gAxis; bool gOnAxis; double gS0;
+    // 켜면 부품을 모두 숨긴다 (덧그림만 보기)
+    public static readonly DependencyProperty HidePartsProperty = DependencyProperty.Register("HideParts", typeof(bool), typeof(ModelView),
+        new FrameworkPropertyMetadata(false, delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) { ((ModelView)d).Rebuild(false); }));
+    public bool HideParts { get { return (bool)GetValue(HidePartsProperty); } set { SetValue(HidePartsProperty, value); } }
     public Model3D Overlay { get { return (Model3D)GetValue(OverlayProperty); } set { SetValue(OverlayProperty, value); } }
     public ICommand PickCommand { get { return (ICommand)GetValue(PickCommandProperty); } set { SetValue(PickCommandProperty, value); } }
     readonly ModelVisual3D overlay = new ModelVisual3D();
@@ -268,7 +283,7 @@ public class ModelView : Border {
         Rect3D box = Rect3D.Empty;
         List<PartItem> on = new List<PartItem>();
         int total = 0;
-        if (Parts != null) foreach (PartItem p in Parts) {
+        if (Parts != null && !HideParts) foreach (PartItem p in Parts) {
             if (!p.Checked || p.Model == null) continue;
             content.Children.Add(p.Visual != null ? (Model3D)p.Visual : p.Model);
             on.Add(p); total += p.Tris;
@@ -305,15 +320,80 @@ public class ModelView : Border {
         base.OnMouseDown(e);
         if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2) { Rebuild(true); return; }
         last = e.GetPosition(this); downAt = last;
+        if (e.ChangedButton == MouseButton.Left && MoveCommand != null) {
+            Point3D at; object h = HitHandle(e.GetPosition(vp), out at);
+            if (h != null) {
+                GizmoAxis ga = h as GizmoAxis;
+                gOnAxis = ga != null;
+                if (gOnAxis) { h = ga.Target; gAxis = ga.Axis; gAxis.Normalize(); }
+                gHandle = h; gStart = at; CaptureMouse(); e.Handled = true;
+                if (gOnAxis) gS0 = AxisS(e.GetPosition(vp));
+                Send(new GizmoDrag { Handle = h, Start = true });
+                return;
+            }
+        }
         rot = e.ChangedButton == MouseButton.Left; pan = e.ChangedButton == MouseButton.Right || e.ChangedButton == MouseButton.Middle;
         CaptureMouse(); e.Handled = true;
     }
     protected override void OnMouseUp(MouseButtonEventArgs e) {
         base.OnMouseUp(e);
+        if (gHandle != null) {
+            Send(new GizmoDrag { Handle = gHandle, Delta = DragDelta(e.GetPosition(vp)), Done = true, Snap = (Keyboard.Modifiers & ModifierKeys.Shift) != 0 });
+            gHandle = null; ReleaseMouseCapture(); e.Handled = true; return;
+        }
         bool click = rot && (e.GetPosition(this) - downAt).Length < 4;
         rot = pan = false; ReleaseMouseCapture(); e.Handled = true;
         if (click && PickCommand != null) Pick(e.GetPosition(vp));
     }
+    void Send(GizmoDrag g) { if (MoveCommand != null && MoveCommand.CanExecute(g)) MoveCommand.Execute(g); }
+
+    // 가장 앞에 맞은 도형이 손잡이면 그것 (가려진 것은 잡지 않는다)
+    object HitHandle(Point pt, out Point3D at) {
+        object found = null; Point3D p = new Point3D();
+        VisualTreeHelper.HitTest(vp, null, delegate(HitTestResult r) {
+            RayMeshGeometry3DHitTestResult m = r as RayMeshGeometry3DHitTestResult;
+            if (m == null) return HitTestResultBehavior.Continue;
+            found = m.ModelHit.GetValue(HandleProperty); p = m.PointHit;
+            return HitTestResultBehavior.Stop;
+        }, new PointHitTestParameters(pt));
+        at = p;
+        return found;
+    }
+
+    // 마우스 아래를 지나는 시선 (카메라 위치에서 나가는 방향)
+    Vector3D Ray(Point pt) {
+        double w = Math.Max(1, vp.ActualWidth), h = Math.Max(1, vp.ActualHeight);
+        Vector3D look = cam.LookDirection; look.Normalize();
+        Vector3D right = Vector3D.CrossProduct(look, cam.UpDirection); right.Normalize();
+        Vector3D up = Vector3D.CrossProduct(right, look);
+        double t = Math.Tan(cam.FieldOfView / 2 * Math.PI / 180);
+        return look + right * ((2 * pt.X / w - 1) * t) + up * ((1 - 2 * pt.Y / h) * t * h / w);
+    }
+    // 축 직선(처음 잡은 점 + gAxis·s)에서 시선과 가장 가까운 곳의 s
+    double AxisS(Point pt) {
+        Vector3D d = Ray(pt), w0 = gStart - cam.Position;
+        double b = Vector3D.DotProduct(gAxis, d), c = Vector3D.DotProduct(d, d), dd = Vector3D.DotProduct(gAxis, w0), e = Vector3D.DotProduct(d, w0);
+        double den = c - b * b;   // gAxis는 단위 벡터
+        if (Math.Abs(den) < 1e-9) return gS0;
+        return (b * e - c * dd) / den;
+    }
+
+    // 마우스 아래를 지나는 시선이 처음 잡은 점을 지나고 화면과 평행한 면과 만나는 곳 - 처음 잡은 점 (축 손잡이면 그 축 위로만)
+    Vector3D DragDelta(Point pt) {
+        double w = vp.ActualWidth, h = vp.ActualHeight;
+        if (w < 1 || h < 1) return new Vector3D();
+        if (gOnAxis) return gAxis * (AxisS(pt) - gS0);
+        Vector3D look = cam.LookDirection; look.Normalize();
+        Vector3D right = Vector3D.CrossProduct(look, cam.UpDirection); right.Normalize();
+        Vector3D up = Vector3D.CrossProduct(right, look);
+        double t = Math.Tan(cam.FieldOfView / 2 * Math.PI / 180);
+        Vector3D dir = look + right * ((2 * pt.X / w - 1) * t) + up * ((1 - 2 * pt.Y / h) * t * h / w);
+        double den = Vector3D.DotProduct(dir, look);
+        if (Math.Abs(den) < 1e-9) return new Vector3D();
+        double k = Vector3D.DotProduct(gStart - cam.Position, look) / den;
+        return (cam.Position + dir * k) - gStart;
+    }
+
     void Pick(Point pt) {
         PartItem hit = null;
         VisualTreeHelper.HitTest(vp, null, delegate(HitTestResult r) {
@@ -329,6 +409,7 @@ public class ModelView : Border {
     }
     protected override void OnMouseMove(MouseEventArgs e) {
         base.OnMouseMove(e);
+        if (gHandle != null) { Send(new GizmoDrag { Handle = gHandle, Delta = DragDelta(e.GetPosition(vp)), Snap = (Keyboard.Modifiers & ModifierKeys.Shift) != 0 }); return; }
         if (!rot && !pan) return;
         Point p = e.GetPosition(this); Vector d = p - last; last = p;
         if (rot) { yaw += d.X * 0.4; pitch = Math.Max(-89, Math.Min(89, pitch + d.Y * 0.4)); }

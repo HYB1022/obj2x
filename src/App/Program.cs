@@ -27,14 +27,14 @@ public static class Program {
             if (args[i] == "--selftest" || args[i] == "/selftest")
                 return SelfTest.Run(here, i + 1 < args.Length && !args[i + 1].StartsWith("-") ? args[i + 1] : Path.Combine(here, "BusDepot_selftest.txt"));
             if (i + 1 < args.Length && args[i] == "--shots") return Shots.Run(args[i + 1]);
-            if (i + 1 < args.Length && args[i] == "--readme-shots") return Shots.Readme(args[i + 1]);
+            if (i + 1 < args.Length && args[i] == "--readme-shots") return Shots.Readme(args[i + 1], i + 2 < args.Length ? args[i + 2] : "ko");
             if (i + 1 < args.Length && args[i] == "--make-icon") { Theme.Apply("light", "indigo", "nanum"); Art.WriteIco(args[i + 1]); return 0; }
             if (i + 2 < args.Length && args[i] == "--video-frames") return Video.Run(args[i + 1], args[i + 2], i + 3 < args.Length ? args[i + 3] : null);
             if (i + 2 < args.Length && args[i] == "--map-shot") return Shots.MapShot(args[i + 1], args[i + 2], i + 3 < args.Length ? args[i + 3] : null);
             if (i + 2 < args.Length && args[i] == "--save-model") return Shots.SaveModel(args[i + 1], args[i + 2], i + 3 < args.Length ? args[i + 3] : null);
             if (i + 2 < args.Length && args[i] == "--view-shot")
                 return Shots.ViewShot(args[i + 1], args[i + 2], i + 3 < args.Length ? args[i + 3] : "light", i + 4 < args.Length ? args[i + 4] : "ext");
-            if (i + 1 < args.Length && args[i] == "--welcome-frames") return Shots.WelcomeFrames(args[i + 1], i + 2 < args.Length ? args[i + 2] : "light");
+            if (i + 1 < args.Length && args[i] == "--welcome-frames") return Shots.WelcomeFrames(args[i + 1], i + 2 < args.Length ? args[i + 2] : "light", i + 3 < args.Length ? args[i + 3] : "ko");
         }
 
         Updater.CleanupOld(System.Reflection.Assembly.GetExecutingAssembly().Location);

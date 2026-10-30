@@ -29,8 +29,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.webp">
-    <img src="docs/images/welcome-light.webp" width="860" alt="首次启动的欢迎界面：流动的渐变背景上轮流出现多种语言的问候语">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/zh/welcome-dark.webp">
+    <img src="docs/images/zh/welcome-light.webp" width="860" alt="首次启动的欢迎界面：流动的渐变背景上轮流出现多种语言的问候语">
   </picture>
 </p>
 
@@ -53,16 +53,16 @@
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/dashboard-light.png" alt="仪表板：用快速转换转换 9 个文件后的结果表"></td>
-    <td width="50%"><img src="docs/images/wizard-light.png" alt="转换向导：选择转换方式"></td>
+    <td width="50%"><img src="docs/images/zh/dashboard-light.png" alt="仪表板：用快速转换转换 9 个文件后的结果表"></td>
+    <td width="50%"><img src="docs/images/zh/wizard-light.png" alt="转换向导：选择转换方式"></td>
   </tr>
   <tr>
     <td align="center"><b>仪表板</b><br><sub>用结果表显示每个文件的顶点、三角形、材质数和状态</sub></td>
     <td align="center"><b>转换向导</b><br><sub>方式 → 路径 → 选项 → 完成，四步开始转换</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/about-light.png" alt="关于页：新版本更新提示"></td>
-    <td width="50%"><img src="docs/images/about-dark.png" alt="深色主题的关于页"></td>
+    <td width="50%"><img src="docs/images/zh/about-light.png" alt="关于页：新版本更新提示"></td>
+    <td width="50%"><img src="docs/images/zh/about-dark.png" alt="深色主题的关于页"></td>
   </tr>
   <tr>
     <td align="center"><b>更新提示</b><br><sub>有新版本时会显示在 <code>关于</code> 菜单中，一键安装</sub></td>
@@ -134,7 +134,7 @@ OMSI 2 文件夹会根据 Steam 安装信息自动查找。找不到时，请点
 - **巴士**：选择 `.bus`（或 `model.cfg`、物件 `.sco`）或拖到窗口上，即以带贴图的 3D 显示。拖动旋转，右键拖动平移，滚轮缩放。
   - **动画**：cfg 中 `anim_rot` / `anim_trans` 用到的每个变量都有滑块和 `播放` 按钮，车门、雨刷、仪表指针等会像在 OMSI 中一样运动（枢轴 `origin_trans`、旋转轴 `origin_rot`、`origin_from_mesh`、多个块叠加）。如果与游戏不同，可以切换块的应用顺序和旋转方向。
   - **部件编辑**：在 3D 中点击部件或点击列表中的 `编辑`，每个块都会出现枢轴、旋转和 factor 输入框，修改后立即生效，枢轴和旋转轴也会显示在 3D 中。`保存 cfg` 只改写写有这些值的行，注释和其他内容保持不变，首次保存时会把原文件保留为 `.bak`。
-  - **乘客路径 / 座位**：把 `.bus` 中指定的 `paths.cfg` 的点（入口橙色、出口红色）和连线，以及 `passengercabin.cfg` 的座位（司机座粉色，短棒表示朝向）叠加显示在模型上，可以修改坐标、增删点、连线和座位并保存。
+  - **乘客路径 / 座位**：把 `.bus` 中指定的 `paths.cfg` 的点（入口橙色、出口红色）和连线，以及 `passengercabin.cfg` 的座位（司机座粉色，短棒表示朝向）叠加显示在模型上，可以修改坐标、增删点、连线和座位并保存。在 3D 中拖动点或座位即可直接移动（像 Blender 一样平行于屏幕自由移动，按住 `Shift` 以 1 m 为单位）。拖动所选点或座位上的红/绿/蓝箭头只沿 x/y/z 轴移动。打开 `隐藏模型` 可关闭整个模型，只看路径和座位。
   - 起初只打开最精细 LOD 中从外面能看到的部件。条件部件（`[visible]`）可以在部件列表中逐个开关，也可以用 `外部` / `内部` / `全部` 一次切换。
   - **涂装**：从 `[CTC]` 涂装文件夹中选择 `.cti`，即贴上该涂装的贴图，并按 `.cti` 的 `[setvar]` 选项开关条件部件。一个 `.cti` 中有多个涂装时可以分别选择。车辆脚本（`.osc`）根据涂装值决定的选项（如按年款区分的车门样式）也会通过简单地运行脚本来匹配。未设置的变量与 OMSI 一样视为 0。起初选中第一个涂装。透明只用于带 `[matl_alpha]` 的材质（与 OMSI 相同）。
   - 与 OMSI 一样只绘制正面。法线反转的面与游戏中一样不可见，打开 `显示背面` 则双面绘制。
