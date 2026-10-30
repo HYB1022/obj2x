@@ -50,6 +50,7 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 | `Strings.cs` | 문구표 `L.T("키")`와 작은 JSON 읽기/쓰기. 문구는 저장소의 `lang/<코드>.json`(ko/en/de/ja/zh)에 있고 빌드 때 exe에 들어간다. exe 옆 `lang` 폴더의 `<코드>.json`이 그 위에 덮어쓴다(새 언어 추가/일부 수정). 새 문구는 `lang/*.json` 모두에 넣는다(`--selftest`가 빠진 키와 `{0}` 불일치를 잡는다) |
 | `Win32.cs` | OmsiXConv 창 찾기/조작 P/Invoke |
 | `O3d.cs` | o3d 읽기(버전 1/3/5/7, 32비트 번호. 키가 `0xFFFFFFFF`가 아니면 암호화로 보고 거부 — 공식 차량은 암호화돼 있고 풀지 않는다), `ModelCfg`(model.cfg/.sco의 `[mesh]`·`[LOD]`·`[visible]`·`[viewpoint]`·`[matl_alpha]`·`[CTC]`·`[CTCTexture]`), `Repaint`(.cti: `[item]` 도색/자리/파일, `[setvar]` 변수/값 → `VisOn`), `ObjExport`(FastO3D의 반대: z 뒤집기, 면 방향 반대, v 뒤집기 → Blender에서 원래 방향) |
+| `OmsiScript.cs` | 모델 보기용 차량 스크립트 실행기: .bus의 [script]/[constfile]을 읽어 도색 [setvar] 값으로 {init}과 {frame}(매크로 포함)을 돌려 [visible] 변수를 구한다. 계산·비교·{if}·L.L/S.L/C.L/M.L·레지스터만, 시스템 값은 0 |
 | `Omsi.cs` | OMSI 2: 설치 폴더 찾기(Steam), o3d(버전 1)/mtl에서 텍스처 이름 읽기, 알파 판별, 변환 전 텍스처 검사, `ScoMaker`(.sco + model/texture 복사), `SplineSpec`(.sli 프로필/경로/기본 텍스처 BMP). 형식은 OMSI 설치 폴더의 실제 파일들을 보고 맞췄다 |
 
 ### `src/App` (네임스페이스 `Obj2x.UI`) — WPF 화면

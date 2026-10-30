@@ -86,7 +86,8 @@ public static class Shots {
         if (preset != "ext") f.VM.ViewPreset = preset;
         Pump.Run(300);
         Save(f, png);
-        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.ViewStatus, new UTF8Encoding(true));
+        List<string> pn = new List<string>(); if (f.VM.Paints != null) foreach (TrItem p in f.VM.Paints) pn.Add(p.Name);
+        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.ViewStatus + "\r\n" + string.Join(", ", pn.ToArray()), new UTF8Encoding(true));
         f.Close();
         return 0;
     }

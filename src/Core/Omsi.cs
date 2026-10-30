@@ -82,6 +82,15 @@ public static class Omsi {
         return null;
     }
 
+    // OMSI처럼 ANSI(시스템 코드 페이지)로 읽는다. 맨 앞의 UTF-8 BOM은 버린다 (File.ReadAllLines는 BOM을 보면 UTF-8로 바꿔 읽는다)
+    public static string[] AnsiLines(string path) { return Lines(path, Encoding.Default); }
+    public static string[] Utf8Lines(string path) { return Lines(path, new UTF8Encoding(false)); }
+    static string[] Lines(string path, Encoding enc) {
+        byte[] b = File.ReadAllBytes(path);
+        int o = b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF ? 3 : 0;
+        return enc.GetString(b, o, b.Length - o).Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+    }
+
     public static bool IsInstall(string dir) {
         try { return dir.Length > 0 && File.Exists(Path.Combine(dir, "Omsi.exe")); } catch (Exception) { return false; }
     }

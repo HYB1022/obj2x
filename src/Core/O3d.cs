@@ -99,6 +99,7 @@ public class ModelCfg {
     public List<CfgMesh> Meshes = new List<CfgMesh>();
     public int BestLod;                // 가장 자세한 LOD 묶음 (값이 가장 큰 것)
     public Dictionary<string, string> FirstVis = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // [visible] 변수마다 처음 나온 값
+    public Dictionary<string, List<string>> VisValues = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);   // [visible] 변수마다 나온 값들
 
     public static ModelCfg Load(string path) {
         ModelCfg c = new ModelCfg();
@@ -120,7 +121,7 @@ public class ModelCfg {
             if (Directory.Exists(vm) && !c.Bases.Exists(delegate(string b) { return string.Equals(b.TrimEnd('\\'), vm, StringComparison.OrdinalIgnoreCase); })) c.Bases.Insert(1, vm);
         }
         c.TexDir = sco ? System.IO.Path.Combine(dir, "texture") : System.IO.Path.Combine(c.VehicleDir, "Texture");
-        string[] lines = File.ReadAllLines(path, Encoding.Default);
+        string[] lines = Omsi.AnsiLines(path);
         CfgMesh cur = null; string curTex = null;
         int lod = 0; double lodVal = 0, bestVal = double.MinValue;
         for (int i = 0; i < lines.Length; i++) {
@@ -137,7 +138,12 @@ public class ModelCfg {
                     if (cur != null) { int v; if (int.TryParse(arg(1), out v)) cur.ViewPoint = v; }
                     break;
                 case "[visible]":
-                    if (cur != null) { cur.VisVar = arg(1); cur.VisVal = arg(2); if (!c.FirstVis.ContainsKey(cur.VisVar)) c.FirstVis[cur.VisVar] = cur.VisVal; }
+                    if (cur != null) {
+                        cur.VisVar = arg(1); cur.VisVal = arg(2);
+                        if (!c.FirstVis.ContainsKey(cur.VisVar)) c.FirstVis[cur.VisVar] = cur.VisVal;
+                        List<string> vs; if (!c.VisValues.TryGetValue(cur.VisVar, out vs)) c.VisValues[cur.VisVar] = vs = new List<string>();
+                        if (!vs.Contains(cur.VisVal)) vs.Add(cur.VisVal);
+                    }
                     break;
                 case "[lod]": {
                     double v; double.TryParse(arg(1).Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out v);
@@ -175,7 +181,7 @@ public class ModelCfg {
         string[] files;
         try { files = Directory.GetFiles(CtcDir, "*.cti"); } catch (Exception) { return r; }
         Array.Sort(files, StringComparer.OrdinalIgnoreCase);
-        foreach (string f in files) { Repaint p = Repaint.Load(f); if (p != null) r.Add(p); }
+        foreach (string f in files) r.AddRange(Repaint.LoadAll(f));
         return r;
     }
     public string VehicleDir;          // 차량 폴더 (.bus/.ovh가 있는 곳, 못 찾으면 cfg 폴더의 위)
@@ -226,12 +232,38 @@ public class ModelCfg {
     public bool DefaultOn(CfgMesh m) {
         return (m.Lod == 0 || m.Lod == BestLod) && m.Exterior && VisOn(m);
     }
-    // 조건부 부품: 고른 도색의 [setvar] 값이 있으면 그것, 없으면 변수마다 처음 나온 값 하나만
+    // 조건부 부품의 변수 값: 고른 도색의 [setvar]가 있으면 그것.
+    // 없으면 OMSI처럼 0으로 본다 (정하지 않은 변수는 0). 다만 값이 여러 개인데 0이 없으면(바퀴 종류처럼 스크립트가 고르는 것) 처음 나온 값
+    public string VarValue(string var) {
+        string v;
+        // 1) 차량 스크립트가 (도색 값을 넣고 돌렸을 때) 정한 값 — 예: 도색의 연식(sely)으로 앞문 모양(6es89/6es01)을 고름
+        OmsiScript sc = Script();
+        if (sc != null && sc.Assigned.Contains(var)) return sc.Vars[var].ToString(CultureInfo.InvariantCulture);
+        // 2) 도색의 [setvar]
+        if (Paint != null && Paint.Vars.TryGetValue(var, out v)) return v;
+        List<string> vs;
+        if (!VisValues.TryGetValue(var, out vs) || vs.Count == 0) return "0";
+        if (vs.Contains("0") || vs.Count == 1) return "0";
+        return vs[0];
+    }
     public bool VisOn(CfgMesh m) {
         if (m.VisVar == null) return true;
-        string v;
-        if (Paint != null && Paint.Vars.TryGetValue(m.VisVar, out v)) return v == m.VisVal;
-        return FirstVis.TryGetValue(m.VisVar, out v) && v == m.VisVal;
+        string v = VarValue(m.VisVar);
+        double a, b;
+        if (double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out a) && double.TryParse(m.VisVal, NumberStyles.Float, CultureInfo.InvariantCulture, out b)) return a == b;
+        return v == m.VisVal;
+    }
+
+    // 차량 스크립트 (버스만, 처음 쓸 때 읽음). 도색이 바뀌면 다시 돌린다
+    OmsiScript script; bool scriptLoaded, scriptRan; Repaint scriptPaint;
+    public bool HasScript { get { return Script() != null; } }
+    OmsiScript Script() {
+        if (!scriptLoaded) {
+            scriptLoaded = true;
+            if (!CfgPath.EndsWith(".sco", StringComparison.OrdinalIgnoreCase) && VehicleDir != null) script = OmsiScript.ForModel(VehicleDir, CfgPath);
+        }
+        if (script != null && (!scriptRan || scriptPaint != Paint)) { script.Run(Paint != null ? Paint.Vars : null); scriptRan = true; scriptPaint = Paint; }
+        return script;
     }
     bool CtcHasCti { get { if (ctcHasCti == null) ctcHasCti = Repaints().Count > 0; return ctcHasCti.Value; } }
     bool? ctcHasCti;
@@ -239,22 +271,41 @@ public class ModelCfg {
 
 // ---------------------------------------------------------------- 도색 파일(.cti): [item] 도색 이름/텍스처 자리/파일, [setvar] 변수/값
 public class Repaint {
-    public string File, Name;
+    public string File, Name, Id, Label;   // Id = 파일|이름 (한 파일에 도색이 여러 개일 수 있다), Label = 목록에 보일 이름
     public Dictionary<string, string> Items = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // 자리 이름 → 파일 전체 경로
     public Dictionary<string, string> Vars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-    public static Repaint Load(string path) {
-        string[] lines;
-        try { lines = System.IO.File.ReadAllLines(path, Encoding.Default); } catch (Exception) { return null; }
-        Repaint r = new Repaint(); r.File = path; r.Name = System.IO.Path.GetFileNameWithoutExtension(path);
-        string dir = System.IO.Path.GetDirectoryName(path);
+    // 한 .cti에 도색이 여러 개 들어 있을 수 있다: [item]의 첫 줄(도색 이름)이 바뀌면 새 도색.
+    // [setvar]는 바로 앞 도색의 것, 첫 [item]보다 앞에 있으면 파일 안 모든 도색에 쓴다.
+    // OMSI는 cti를 ANSI로 읽는다 (UTF-8 BOM이 붙어 있어도). 그래서 파일 이름은 ANSI로 읽고, 그 파일이 없으면 UTF-8로도 찾아본다
+    public static List<Repaint> LoadAll(string path) {
+        List<Repaint> list = new List<Repaint>();
+        string[] lines, utf;
+        try { lines = Omsi.AnsiLines(path); utf = Omsi.Utf8Lines(path); } catch (Exception) { return list; }
+        string dir = System.IO.Path.GetDirectoryName(path), stem = System.IO.Path.GetFileNameWithoutExtension(path);
+        Dictionary<string, string> fileVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        Repaint cur = null;
         for (int i = 0; i < lines.Length; i++) {
             string k = lines[i].Trim().ToLowerInvariant();
             string a1 = i + 1 < lines.Length ? lines[i + 1].Trim() : "", a2 = i + 2 < lines.Length ? lines[i + 2].Trim() : "", a3 = i + 3 < lines.Length ? lines[i + 3].Trim() : "";
-            if (k == "[item]" && a2.Length > 0 && a3.Length > 0) r.Items[a2] = System.IO.Path.Combine(dir, a3);
-            else if (k == "[setvar]" && a1.Length > 0) r.Vars[a1] = a2;
+            if (k == "[item]" && a2.Length > 0 && a3.Length > 0) {
+                string name = a1.Length > 0 ? a1 : stem;
+                cur = list.Find(delegate(Repaint x) { return x.Name == name; });
+                if (cur == null) { cur = new Repaint(); cur.File = path; cur.Name = name; cur.Id = path + "|" + name; list.Add(cur); }
+                string f = System.IO.Path.Combine(dir, a3);
+                if (!System.IO.File.Exists(f) && i + 3 < utf.Length) { string g = System.IO.Path.Combine(dir, utf[i + 3].Trim()); if (System.IO.File.Exists(g)) f = g; }
+                cur.Items[a2] = f;
+            } else if (k == "[setvar]" && a1.Length > 0) {
+                if (cur != null) cur.Vars[a1] = a2; else fileVars[a1] = a2;
+            }
         }
-        return r;
+        // [item] 없이 [setvar]만 있는 파일도 도색 하나 (파일 이름)
+        if (list.Count == 0 && fileVars.Count > 0) { Repaint only = new Repaint(); only.File = path; only.Name = stem; only.Id = path + "|" + stem; list.Add(only); }
+        foreach (Repaint r in list) {
+            foreach (KeyValuePair<string, string> kv in fileVars) if (!r.Vars.ContainsKey(kv.Key)) r.Vars[kv.Key] = kv.Value;
+            r.Label = list.Count > 1 ? stem + " · " + r.Name : r.Name;
+        }
+        return list;
     }
 
     // 텍스처 이름이 [CTCTexture]의 원래 텍스처이고 이 도색에 그 자리가 있으면 도색 파일
@@ -267,7 +318,7 @@ public class Repaint {
         }
         return null;
     }
-    public override string ToString() { return Name; }
+    public override string ToString() { return Label ?? Name; }
 }
 
 // ---------------------------------------------------------------- obj + mtl로 내보내기 (Blender에서 원래 방향 그대로 열리게: FastO3D의 반대)

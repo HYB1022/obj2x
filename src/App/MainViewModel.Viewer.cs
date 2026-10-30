@@ -97,14 +97,14 @@ public partial class MainViewModel {
         try { cfg = ModelCfg.Load(path); } catch (Exception ex) { ui.Msg(ex.Message); return; }
         if (cfg.Meshes.Count == 0) { ui.Msg(L.T("view_err_nomesh")); return; }
         List<Repaint> paints = cfg.Repaints();
-        if (paint == null || !string.Equals(path, viewPath, StringComparison.OrdinalIgnoreCase) && paint.Length > 0 && !paints.Exists(delegate(Repaint p) { return p.Name == paint; }))
-            paint = paints.Count > 0 ? paints[0].Name : "";
-        cfg.Paint = paints.Find(delegate(Repaint p) { return p.Name == paint; });
+        if (paint == null || !string.Equals(path, viewPath, StringComparison.OrdinalIgnoreCase) && paint.Length > 0 && !paints.Exists(delegate(Repaint p) { return p.Id == paint; }))
+            paint = paints.Count > 0 ? paints[0].Id : "";
+        cfg.Paint = paints.Find(delegate(Repaint p) { return p.Id == paint; });
         if (Paints == null) Paints = new System.Collections.ObjectModel.ObservableCollection<TrItem>();
         Paints.Clear();
         Paints.Add(new TrItem("", delegate { return L.T("view_paint_none"); }));
-        foreach (Repaint p in paints) { string n = p.Name; Paints.Add(new TrItem(n, delegate { return n; })); }
-        viewPaint = cfg.Paint != null ? cfg.Paint.Name : "";
+        foreach (Repaint p in paints) { string label = p.Label; Paints.Add(new TrItem(p.Id, delegate { return label; })); }
+        viewPaint = cfg.Paint != null ? cfg.Paint.Id : "";
         Raise("Paints", "ViewPaint", "PaintsVisible");
         bool both = viewBoth;
         int gen = ++loadGen;

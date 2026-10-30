@@ -254,7 +254,7 @@ public static class SelfTest {
         ModelCfg mc = ModelCfg.Load(Path.Combine(bm2, "model.cfg"));
         T("cfg 읽기: 부품, LOD, [visible], [viewpoint], [matl_alpha]", mc.Meshes.Count == 5 && mc.BestLod == 1 && mc.Meshes[1].VisVar == "wheel_type" && mc.Meshes[3].ViewPoint == 2
             && mc.Meshes[0].UsesAlpha("glass.tga") && !mc.Meshes[0].UsesAlpha("wall.bmp") && mc.Meshes[4].Lod == 2, mc.Meshes.Count + " best=" + mc.BestLod);
-        T("cfg 읽기: 처음 보이는 부품 (자세한 LOD, 밖, 조건부는 첫 값만)", mc.DefaultOn(mc.Meshes[0]) && mc.DefaultOn(mc.Meshes[1]) && !mc.DefaultOn(mc.Meshes[2]) && !mc.DefaultOn(mc.Meshes[3]) && !mc.DefaultOn(mc.Meshes[4]), "");
+        T("cfg 읽기: 처음 보이는 부품 (자세한 LOD, 밖, 0 없는 여러 값은 첫 값만)", mc.DefaultOn(mc.Meshes[0]) && mc.DefaultOn(mc.Meshes[1]) && !mc.DefaultOn(mc.Meshes[2]) && !mc.DefaultOn(mc.Meshes[3]) && !mc.DefaultOn(mc.Meshes[4]), "");
         string ft = mc.FindTex("wall.bmp", mc.Meshes[0]), fg = mc.FindTex("glass.tga", mc.Meshes[0]);
         T("cfg 읽기: 도색 폴더의 텍스처를 먼저, 없으면 Texture", ft != null && ft.EndsWith("wall_Red.bmp") && fg != null && fg.EndsWith(Path.Combine("Texture", "glass.tga")), ft + " | " + fg);
         // cfg가 Model\cfg\ 안에 있고 [mesh]는 Model 기준인 차량 (실제 차량에서 흔한 모양)
@@ -277,6 +277,41 @@ public static class SelfTest {
         string pt = mp.FindTex("wall.bmp", mp.Meshes[0]);
         T("도색: cti의 텍스처로 바꾸고 [setvar]로 조건부 부품을 고름", rps.Count == 1 && rps[0].Name == "Blue" && pt != null && pt.EndsWith("body_blue.bmp")
             && noPaintFirst && !mp.DefaultOn(mp.Meshes[1]) && mp.DefaultOn(mp.Meshes[2]), rps.Count + " " + pt);
+        // 값이 하나뿐인 조건부 부품(추가 옵션)은 OMSI처럼 변수 0 → 꺼짐
+        File.WriteAllText(Path.Combine(bm2, "opt.cfg"), "[mesh]\r\nparts\\body.o3d\r\n[mesh]\r\nparts\\wheel.o3d\r\n[visible]\r\nextra_door\r\n1\r\n", Encoding.ASCII);
+        ModelCfg mo = ModelCfg.Load(Path.Combine(bm2, "opt.cfg"));
+        T("조건부: 값이 하나뿐인 옵션 부품은 변수 0으로 보고 끔 (앞문 겹침)", mo.DefaultOn(mo.Meshes[0]) && !mo.DefaultOn(mo.Meshes[1]), "");
+        // 한 cti에 도색 여러 개 + UTF-8 BOM + ANSI 파일 이름
+        string kn = "\uC0AC\uBCF8";   // '사본'
+        File.WriteAllBytes(Path.Combine(bw2, "body " + kn + ".bmp"), new byte[] { 0x42, 0x4D });
+        List<byte> cti = new List<byte>(new byte[] { 0xEF, 0xBB, 0xBF });
+        cti.AddRange(Encoding.ASCII.GetBytes("***\r\n01\r\n***\r\n[item]\r\n01\r\nBody\r\nblue\\body_blue.bmp\r\n[setvar]\r\nwheel_type\r\n1\r\n***\r\n02\r\n***\r\n[item]\r\n02\r\nBody\r\nbody "));
+        cti.AddRange(Encoding.Default.GetBytes(kn)); cti.AddRange(Encoding.ASCII.GetBytes(".bmp\r\n[setvar]\r\nwheel_type\r\n2\r\n"));
+        File.WriteAllBytes(Path.Combine(bw2, "multi.cti"), cti.ToArray());
+        List<Repaint> mr = Repaint.LoadAll(Path.Combine(bw2, "multi.cti"));
+        T("도색: 한 cti 안의 여러 도색 + BOM 붙은 ANSI 파일 이름", mr.Count == 2 && mr[0].Label == "multi · 01" && mr[1].Vars["wheel_type"] == "2" && File.Exists(mr[1].Items["Body"]) && mr[0].Vars["wheel_type"] == "1",
+            mr.Count + " " + (mr.Count > 1 ? mr[1].Items["Body"] : ""));
+        File.Delete(Path.Combine(bw2, "multi.cti"));
+        // 차량 스크립트: 도색의 연식(sely)으로 스크립트가 앞문 모양 변수를 정한다
+        string sbus = Path.Combine(root, "ScriptBus"), sbm = Path.Combine(sbus, "model"), sbs = Path.Combine(sbus, "script"), sbt = Path.Combine(sbus, "Texture", "pl");
+        Directory.CreateDirectory(sbm); Directory.CreateDirectory(sbs); Directory.CreateDirectory(sbt);
+        File.Copy(Path.Combine(md, "house.o3d"), Path.Combine(sbm, "door_old.o3d"), true); File.Copy(Path.Combine(md, "house.o3d"), Path.Combine(sbm, "door_new.o3d"), true);
+        File.WriteAllText(Path.Combine(sbus, "sb.bus"), "[model]\r\nmodel\\sb.cfg\r\n[script]\r\n2\r\nscript\\main.osc\r\nscript\\visual.osc\r\n[constfile]\r\n1\r\nscript\\c.txt\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(sbs, "main.osc"), "{init}\r\n (M.L.vis)\r\n{end}\r\n{frame}\r\n (M.L.vis)\r\n{end}\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(sbs, "visual.osc"), "' 연식에 따라 앞문\r\n{macro:vis}\r\n (L.L.sely) 2010 <\r\n {if}\r\n  1 (S.L.d89) 0 (S.L.d01)\r\n {else}\r\n  0 (S.L.d89)\r\n  (C.L.one) (S.L.d01)\r\n {endif}\r\n{end}\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(sbs, "c.txt"), "[const]\r\none\r\n1\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(sbm, "sb.cfg"), "[CTC]\r\nColorscheme\r\nTexture\\pl\r\n0\r\n[mesh]\r\ndoor_old.o3d\r\n[visible]\r\nd89\r\n1\r\n[mesh]\r\ndoor_new.o3d\r\n[visible]\r\nd01\r\n1\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(sbt, "a_2008.cti"), "[setvar]\r\nsely\r\n2008\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(sbt, "b_2012.cti"), "[setvar]\r\nsely\r\n2012\r\n", Encoding.ASCII);
+        ModelCfg ms2 = ModelCfg.Load(Path.Combine(sbm, "sb.cfg"));
+        List<Repaint> sp2s = ms2.Repaints();
+        bool noPaint = !ms2.DefaultOn(ms2.Meshes[0]) && ms2.DefaultOn(ms2.Meshes[1]);   // 연식 0 → 2010 미만 → 옛 문... 하지만 cti가 없으니 변수만 비교
+        ms2.Paint = sp2s.Find(delegate(Repaint r) { return r.Name == "a_2008"; });
+        bool old = ms2.DefaultOn(ms2.Meshes[0]) && !ms2.DefaultOn(ms2.Meshes[1]);
+        ms2.Paint = sp2s.Find(delegate(Repaint r) { return r.Name == "b_2012"; });
+        bool nw = !ms2.DefaultOn(ms2.Meshes[0]) && ms2.DefaultOn(ms2.Meshes[1]);
+        T("차량 스크립트: 도색 값으로 스크립트를 돌려 [visible] 변수를 정함 (연식별 앞문)", ms2.HasScript && sp2s.Count == 2 && old && nw, ms2.HasScript + " " + sp2s.Count + " old=" + old + " new=" + nw + " none=" + noPaint);
+
         mp.Paint = null;
         T("도색: 기본 텍스처로 돌리면 원래 텍스처 (cti가 있으면 이름 규칙으로 찾지 않음)", mp.FindTex("wall.bmp", mp.Meshes[0]).EndsWith(Path.Combine("Texture", "wall.bmp")), mp.FindTex("wall.bmp", mp.Meshes[0]));
 
