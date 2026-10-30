@@ -91,7 +91,9 @@ public partial class MainViewModel {
             UpdateInfo u = Updater.Latest();
             ui.Post(delegate {
                 if (u == null) { ui.Toast(L.T("toast_upd_fail")); return; }
-                Install(u);
+                // 바로 설치하지 않고 새 버전이 나온 것처럼 '업데이트' 표시만 띄운다. 설치는 정보 탭에서 직접 누른다.
+                upd = u; updText = "upd_link_new"; RaiseUpdate();
+                ui.Toast(L.T("toast_reinstall_ready", u.Version));
             });
         });
         th.IsBackground = true; th.Start();

@@ -26,6 +26,16 @@ public static class SelfTest {
         return r;
     }
 
+    static string InlineText(System.Windows.Documents.InlineCollection ic) {
+        StringBuilder r = new StringBuilder();
+        foreach (System.Windows.Documents.Inline i in ic) {
+            System.Windows.Documents.Run run = i as System.Windows.Documents.Run;
+            System.Windows.Documents.Span span = i as System.Windows.Documents.Span;
+            if (run != null) r.Append(run.Text); else if (span != null) r.Append(InlineText(span.Inlines));
+        }
+        return r.ToString();
+    }
+
     static void T(string name, bool ok, string detail) {
         string line = ok ? "PASS " + name : "FAIL " + name + ": " + detail;
         if (!ok) fail++;
@@ -221,6 +231,12 @@ public static class SelfTest {
             DialogHost dh = f.LastDialog;
             T("면책: 같은 창 안 오버레이로 표시", f.OverlayCount == 1 && dh != null, f.OverlayCount.ToString());
             if (dh != null) {
+                string credits = null;
+                foreach (TextBlock tb in FindAll<TextBlock>(dh)) {
+                    string tx = InlineText(tb.Inlines);   // 링크(Hyperlink) 안의 글자까지
+                    if (tx.Contains("qbasys08")) credits = tx;
+                }
+                T("면책: 맨 아래 크레딧 (HYB1022 · qbasys08 · Claude)", credits != null && credits.Contains("HYB1022") && credits.Contains("Claude"), credits ?? "없음");
                 Button okb = dh.Btn[dh.Btn.Length - 1];
                 T("면책: 체크 전에는 계속 버튼 비활성", !okb.IsEnabled, "");
                 dh.Check.IsChecked = true; Pump.Run(20);

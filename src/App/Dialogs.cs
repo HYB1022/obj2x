@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
@@ -100,7 +101,10 @@ public static class Dialogs {
         CheckBox ck = null;
         if (!review) { ck = new CheckBox(); ck.Content = L.T("disclaimer_agree_chk"); ck.SetResourceReference(FrameworkElement.StyleProperty, "Chk"); }
         string[] btns = review ? new string[] { L.T("btn_close") } : new string[] { L.T("btn_exit"), L.T("btn_continue") };
-        DialogHost d = DialogHost.Show(layer, L.T("disclaimer_title"), L.T("disclaimer_text"), ck, btns, btns.Length - 1, 520,
+        StackPanel extra = new StackPanel();
+        if (ck != null) extra.Children.Add(ck);
+        extra.Children.Add(Credits());
+        DialogHost d = DialogHost.Show(layer, L.T("disclaimer_title"), L.T("disclaimer_text"), extra, btns, btns.Length - 1, 520,
             delegate(int i) { if (done != null) done(review || i == 1); });
         if (!review) {
             d.Check = ck; Button ok = d.Btn[1]; ok.IsEnabled = false;
@@ -108,6 +112,32 @@ public static class Dialogs {
         }
         return d;
     }
+    // 면책 조항 맨 아래 크레딧: 이름을 누르면 GitHub(또는 소개 페이지)가 열린다
+    static readonly string[][] People = new string[][] {
+        new string[] { "HYB1022", "https://github.com/HYB1022" },
+        new string[] { "qbasys08", "https://github.com/qbasys08" },
+        new string[] { "Claude (Anthropic)", "https://www.anthropic.com/claude" } };
+    static UIElement Credits() {
+        StackPanel sp = new StackPanel(); sp.Margin = new Thickness(0, 16, 0, 0);
+        Rectangle line = new Rectangle(); line.SetResourceReference(FrameworkElement.StyleProperty, "Div");
+        sp.Children.Add(line);
+        TextBlock cap = new TextBlock(); cap.Text = L.T("disc_credits"); cap.Margin = new Thickness(0, 12, 0, 4);
+        cap.SetResourceReference(FrameworkElement.StyleProperty, "TTiny");
+        sp.Children.Add(cap);
+        TextBlock names = new TextBlock(); names.TextWrapping = TextWrapping.Wrap;
+        for (int i = 0; i < People.Length; i++) {
+            if (i > 0) { Run dot = new Run("  ·  "); dot.SetResourceReference(TextElement.ForegroundProperty, "Muted"); names.Inlines.Add(dot); }
+            string url = People[i][1];
+            Hyperlink h = new Hyperlink(new Run(People[i][0])); h.TextDecorations = null; h.Cursor = System.Windows.Input.Cursors.Hand;
+            h.SetResourceReference(TextElement.ForegroundProperty, "Accent");
+            h.ToolTip = url;
+            h.Click += delegate { Updater.OpenUrl(url); };
+            names.Inlines.Add(h);
+        }
+        sp.Children.Add(names);
+        return sp;
+    }
+
     // 라디오 선택. 확인하면 고른 값, 취소하면 null
     public static DialogHost Choose(Panel layer, string title, string[][] items, string cur, Action<string> done) {
         StackPanel list = new StackPanel();
