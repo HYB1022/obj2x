@@ -74,13 +74,13 @@ public partial class MainViewModel {
             ui.Post(delegate {
                 if (gen != scoGen) return;
                 scoBusy = false;
-                int on = 0, tris = 0, loaded = 0;
-                foreach (PartItem it in items) { ScoParts.Add(it); if (it.Model != null) loaded++; if (it.Checked) { on++; tris += it.Tris; } }
+                int on = 0, tris = 0, loaded = 0, encrypted = 0;
+                foreach (PartItem it in items) { ScoParts.Add(it); if (it.Model != null) loaded++; else if (it.Sub == L.T("o3d_err_encrypted")) encrypted++; if (it.Checked) { on++; tris += it.Tris; } }
                 scoStatus = L.T("view_stat", on, items.Count, tris.ToString("N0")) + (missing.Count > 0 ? L.T("view_stat_miss", missing.Count) : "");
                 scoScene++;
                 Raise("ScoScene", "ScoEmpty", "ScoBusy", "ScoStatus");
                 CommandManager.InvalidateRequerySuggested();
-                if (loaded == 0) ui.Msg(L.T("view_err_noparts", items.Count, cfg.VehicleDir));
+                if (loaded == 0) ui.Msg(encrypted > 0 ? L.T("view_err_encrypted_all") : L.T("view_err_noparts", items.Count, cfg.VehicleDir));
             });
         });
         th.IsBackground = true; th.Start();

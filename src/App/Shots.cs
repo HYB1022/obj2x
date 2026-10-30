@@ -75,6 +75,114 @@ public static class Shots {
         cb.IsDropDownOpen = false; Pump.Run(100);
     }
     // 개발용: --map-shot <맵 폴더> <png> [hof] — 맵 탭을 열어 맵을 읽고(hof를 주면 그것도) 위에서부터 몇 장 찍는다
+    // 개발용: --cafe-shots <폴더> <OMSI 폴더> — 배포글(네이버 카페 등)에 넣을 화면.
+    // 남의 모드 대신 데모 버스, OMSI 기본 맵(Grundorf)과 그 맵에 쓰인 기본 오브젝트/스플라인을 쓴다. 작업 폴더는 드라이브 바로 아래(사용자 이름이 안 보이게)
+    public static int Cafe(string dir, string omsi) {
+        Motion.Off = true;
+        Directory.CreateDirectory(dir);
+        string work = Path.Combine(Path.GetPathRoot(Path.GetFullPath(dir)), "BusDepot_demo");
+        for (int k = 2; Directory.Exists(work) && !File.Exists(Path.Combine(work, ".busdepot_video")); k++) work = Path.Combine(Path.GetPathRoot(work), "BusDepot_demo" + k);
+        try { if (Directory.Exists(work)) Directory.Delete(work, true); } catch (Exception) { }
+        Directory.CreateDirectory(work);
+        File.WriteAllText(Path.Combine(work, ".busdepot_video"), "");
+        string models = Path.Combine(work, "ELE19"); Directory.CreateDirectory(models);
+        SampleModels(models);
+        string bl = Path.Combine(work, "blender.exe"), cv = Path.Combine(work, "OmsiXConv.exe");
+        File.WriteAllText(bl, ""); File.WriteAllText(cv, "");
+        string bus = Video.CafeBus(Path.Combine(work, "Demo Bus"));
+
+        Settings s = new Settings(); s.Path = Path.Combine(work, "shot.ini");
+        s.Theme = "light"; s.Lang = "ko"; s.Accent = "indigo"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
+        s.Inp = models; s.Blender = bl; s.Conv = cv; s.SameDir = true; s.OmsiDir = omsi;
+        MainWindow f = Open(s, work);
+        Func<string, string> P = delegate(string n) { return Path.Combine(dir, n + ".png"); };
+
+        f.VM.Page = "wizard"; Save(f, P("02_wizard"));
+        f.VM.ShotRun("fast");
+        DateTime t0 = DateTime.Now;
+        while (f.VM.Running && (DateTime.Now - t0).TotalSeconds < 30) Pump.Run(50);
+        f.VM.Page = "dashboard"; Save(f, P("01_dashboard"));
+
+        // 버스: 앞문을 연 모습, 애니메이션 칸, 길·좌석 편집
+        f.VM.Page = "bus"; Pump.Run(100);
+        f.VM.LoadModel(bus);
+        for (int i = 0; i < 400 && f.VM.ViewBusy; i++) Pump.Run(50);
+        foreach (VarItem v in f.VM.Vars) v.Value = v.Max;
+        Pump.Run(200);
+        ModelView mv = Visible<ModelView>(f);
+        ScrollTo(f, mv, 12);
+        if (mv != null) mv.Orbit(140, 12, 0.8);
+        Pump.Run(150); Save(f, P("03_bus"));
+        ScrollBy(f, 560); Save(f, P("04_bus_anim"));
+        f.VM.BusHideModel = true;
+        f.VM.GizmoMove(new GizmoDrag { Handle = "s:3", Start = true });
+        Pump.Run(200);
+        if (mv != null) mv.Orbit(-140, 40, 0.8);
+        ScrollTo(f, mv, 12); Save(f, P("05_bus_paths"));
+        ScrollBy(f, 1500); Save(f, P("06_bus_cabin"));
+        f.VM.BusHideModel = false;
+
+        // 맵: 기본 맵 Grundorf
+        string map = Path.Combine(Path.Combine(omsi, "maps"), "Grundorf");
+        if (Directory.Exists(map)) {
+            f.VM.Page = "map"; Pump.Run(100);
+            f.VM.LoadMap(map);
+            for (int i = 0; i < 2400 && f.VM.MapBusy; i++) Pump.Run(50);
+            Pump.Run(300);
+            Save(f, P("07_map"));
+            ScrollTo(f, Visible<MapCanvas>(f), 12); Save(f, P("08_map_view"));
+            ScrollBy(f, 560); Save(f, P("09_map_missing"));
+        }
+        // 오브젝트 / 스플라인 열어 보기 (Grundorf에 쓰인 기본 파일)
+        string sco = Video.CafeShelter(Path.Combine(work, "Shelter"));
+        if (File.Exists(sco)) {
+            f.VM.DropPath(sco);
+            for (int i = 0; i < 400 && f.VM.ScoBusy; i++) Pump.Run(50);
+            Pump.Run(300);
+            Save(f, P("10_object"));
+        }
+        string sli = Path.Combine(omsi, @"Splines\Marcel\str_2spur_11m_SeeburgerStr1.sli");
+        if (File.Exists(sli)) {
+            f.VM.DropPath(sli); Pump.Run(400);
+            Save(f, P("11_spline"));
+            ScrollBy(f, 560); Save(f, P("12_spline_make"));
+        }
+        f.VM.FakeUpdate(NextVersion());
+        f.VM.Page = "about"; Pump.Run(200); Save(f, P("13_about"));
+        f.Close();
+        // 다크 테마 한 장 (버스)
+        s.Theme = "dark";
+        MainWindow g = Open(s, work);
+        g.VM.Page = "bus"; Pump.Run(100);
+        g.VM.LoadModel(bus);
+        for (int i = 0; i < 400 && g.VM.ViewBusy; i++) Pump.Run(50);
+        foreach (VarItem v in g.VM.Vars) v.Value = v.Max * 0.6;
+        Pump.Run(200);
+        ModelView gm = Visible<ModelView>(g); if (gm != null) gm.Orbit(125, 10, 0.75);
+        ScrollTo(g, gm, 12); Save(g, P("14_bus_dark"));
+        g.Close();
+        try { Directory.Delete(work, true); } catch (Exception) { }
+        return 0;
+    }
+    static T Visible<T>(MainWindow f) where T : FrameworkElement {
+        foreach (T x in UiTreeAll<T>(f.Host)) if (x.IsVisible) return x;
+        return null;
+    }
+    static ScrollViewer PageScroll(MainWindow f) {
+        foreach (ScrollViewer x in UiTreeAll<ScrollViewer>(f.Host)) if (x.IsVisible && x.ActualWidth > 500) return x;
+        return null;
+    }
+    // el이 페이지 위쪽에서 pad만큼 떨어지게 스크롤
+    static void ScrollTo(MainWindow f, FrameworkElement el, double pad) {
+        ScrollViewer sv = PageScroll(f); if (sv == null || el == null) return;
+        double y = el.TransformToAncestor(sv).Transform(new Point(0, 0)).Y + sv.VerticalOffset;
+        sv.ScrollToVerticalOffset(Math.Max(0, y - pad - 10)); Pump.Run(200);
+    }
+    static void ScrollBy(MainWindow f, double dy) {
+        ScrollViewer sv = PageScroll(f); if (sv == null) return;
+        sv.ScrollToVerticalOffset(sv.VerticalOffset + dy); Pump.Run(200);
+    }
+
     public static int MapShot(string map, string png, string hofPath) {
         Motion.Off = true;
         string dir = Path.GetDirectoryName(Path.GetFullPath(png));

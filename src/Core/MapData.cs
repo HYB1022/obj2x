@@ -99,6 +99,19 @@ public class MapInfo {
             for (int i = 0; i < A.Length; i++) {
                 string k = A[i].Trim().ToLowerInvariant();
                 if (!k.StartsWith("[aigroup")) continue;
+                // 차고지 차종: 첫 줄이 차량, 그 뒤 '번호<탭>번호판' 줄마다 한 대. 바로 앞 [aigroup_depot]에 붙인다
+                if (k.StartsWith("[aigroup_depot_typgroup")) {
+                    string vp = i + 1 < A.Length ? A[i + 1].Trim() : "";
+                    if (vp.Length == 0) continue;
+                    int n = 0;
+                    for (int j = i + 2; j < A.Length; j++) { string l = A[j].Trim(); if (l.StartsWith("[")) break; if (l.Length > 0) n++; }
+                    AiGroup dg = m.Ai.Count > 0 && m.Ai[m.Ai.Count - 1].Kind.StartsWith("aigroup_depot") ? m.Ai[m.Ai.Count - 1] : null;
+                    if (dg == null) { dg = new AiGroup(); dg.Kind = "aigroup_depot"; dg.Name = ""; m.Ai.Add(dg); }
+                    UseItem dv = new UseItem(); dv.Path = vp; dv.Count = Math.Max(1, n);
+                    dg.Vehicles.Add(dv);
+                    if (!has(vp)) { int c; miss.TryGetValue(vp, out c); miss[vp] = c + dv.Count; }
+                    continue;
+                }
                 AiGroup g = new AiGroup(); g.Kind = k.Trim('[', ']'); g.Name = i + 1 < A.Length ? A[i + 1].Trim() : "";
                 for (int j = i + 2; j < A.Length; j++) {
                     string l = A[j].Trim();

@@ -12,6 +12,7 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 - 실행: `BusDepot.bat` (exe가 없으면 먼저 빌드).
 - 자체 점검: `BusDepot.exe --selftest`. 문구표, 설정, FastO3D, 엔진(중지 포함), 변환 준비, 모든 XAML 읽기, 메인 창 + ViewModel(페이지/테마/언어/마법사/면책/업데이트 표시)을 점검하고 결과를 `obj2x_selftest.txt`에 `PASS`/`FAIL` 줄로 남긴다. 코드를 바꾼 뒤 빌드하고 이것부터 돌린다.
 - 스크린샷: `BusDepot.exe --shots <폴더>` (개발용, 모든 화면을 PNG로 저장). 창 내용을 직접 그려 저장하므로 가려져도 된다. 애니메이션은 꺼진 상태로 찍힌다.
+- 배포글 화면: `BusDepot.exe --cafe-shots <폴더> <OMSI 폴더>`. 데모 버스(앞문 애니메이션·사람 길·좌석, `Video.CafeBus`), 직접 만든 정류장 오브젝트(`Video.CafeShelter`), OMSI 기본 맵 Grundorf와 거기 쓰인 기본 스플라인으로 화면별 PNG를 찍는다. 남의 모드는 쓰지 않고, OMSI 기본 오브젝트는 o3d가 암호화돼 있어 열 수 없다.
 - 시작 페이지 지정: `BusDepot.exe --page about` (개발용, 성능 측정 등).
 - 프레임 측정: `BusDepot.exe --fps [--page about]` 또는 `--fps nav`(0.4초마다 페이지 전환)로 3초간 프레임 간격을 `BusDepot_fps.txt`에 남긴다. 창이 활성이어야 정보 화면 배경이 움직인다.
 - README 화면: `BusDepot.exe --readme-shots <폴더> [ko|en|de|ja|zh]`로 찍어서 `docs/images/`(한국어)나 `docs/images/<언어>/`(README.<언어>.md)에 넣는다. 사용자 경로가 보이는 화면은 찍지 않는다.

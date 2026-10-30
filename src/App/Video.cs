@@ -281,6 +281,95 @@ public static class Video {
         return Path.Combine(dir, "Demo Bus.sco");
     }
 
+    // 개발용(--cafe-shots): 앞문 애니메이션, 사람 길, 좌석까지 있는 데모 버스 (.bus). 남의 모드 대신 소개 화면에 쓴다
+    public static string CafeBus(string dir) {
+        string md = Path.Combine(dir, "model"); Directory.CreateDirectory(md);
+        File.WriteAllText(Path.Combine(md, "demo.mtl"),
+            "newmtl body\nKd 1 1 1\nnewmtl stripe\nKd 0.3 0.38 1\nnewmtl glass\nKd 0.12 0.15 0.2\nnewmtl tyre\nKd 0.1 0.1 0.1\nnewmtl rim\nKd 0.75 0.75 0.78\n" +
+            "newmtl light\nKd 1 0.95 0.7\nnewmtl roof\nKd 0.8 0.82 0.86\nnewmtl door\nKd 0.95 0.75 0.2\nnewmtl floor\nKd 0.35 0.36 0.4\n");
+        const float hw = 1.25f, len = 6f, d0 = 4.4f, d1 = 5.5f;   // 앞문: obj z d0..d1, 오른쪽(x+)
+        // 차체
+        vnCount = 0; int[] vi = new int[] { 1 };
+        StringBuilder sb = new StringBuilder("mtllib demo.mtl\no body\n");
+        BoxObj(sb, vi, "body", -hw, hw, 0.35f, 1.35f, -len, len);
+        BoxObj(sb, vi, "body", -hw, hw, 2.75f, 3.05f, -len, len);
+        BoxObj(sb, vi, "glass", -hw + 0.03f, hw - 0.03f, 1.35f, 2.75f, -len + 0.05f, len - 0.05f);
+        for (float z = -len + 0.6f; z < len - 0.4f; z += 1.55f) BoxObj(sb, vi, "body", -hw, hw, 1.35f, 2.75f, z, z + 0.14f);
+        BoxObj(sb, vi, "stripe", -hw - 0.01f, hw + 0.01f, 1.0f, 1.22f, -len - 0.01f, len + 0.01f);
+        BoxObj(sb, vi, "roof", -0.7f, 0.7f, 3.05f, 3.32f, -1.5f, 2.5f);
+        BoxObj(sb, vi, "light", -1.05f, -0.7f, 0.62f, 0.82f, len, len + 0.03f);
+        BoxObj(sb, vi, "light", 0.7f, 1.05f, 0.62f, 0.82f, len, len + 0.03f);
+        foreach (float z in new float[] { -3.6f, 3.9f }) foreach (float x in new float[] { -1.12f, 1.12f }) {
+            CylObj(sb, vi, "tyre", x, 0.5f, z, 0.5f, 0.32f);
+            CylObj(sb, vi, "rim", x + (x > 0 ? 0.17f : -0.17f), 0.5f, z, 0.3f, 0.02f);
+        }
+        File.WriteAllText(Path.Combine(md, "body.obj"), sb.ToString());
+        // 앞문 (차체 바깥에 붙은 판)
+        vnCount = 0; vi = new int[] { 1 };
+        sb = new StringBuilder("mtllib demo.mtl\no door\n");
+        BoxObj(sb, vi, "door", hw + 0.01f, hw + 0.06f, 0.4f, 2.7f, d0, d1);
+        BoxObj(sb, vi, "glass", hw + 0.06f, hw + 0.07f, 1.45f, 2.55f, d0 + 0.12f, d1 - 0.12f);
+        File.WriteAllText(Path.Combine(md, "door.obj"), sb.ToString());
+        int nv, nt, nm; string wn;
+        FastO3D.ConvertEx(Path.Combine(md, "body.obj"), Path.Combine(md, "body.o3d"), out nv, out nt, out nm, out wn);
+        FastO3D.ConvertEx(Path.Combine(md, "door.obj"), Path.Combine(md, "door.o3d"), out nv, out nt, out nm, out wn);
+        // 문 경첩: 문 판의 바깥 x, 앞쪽 끝. o3d (x, y위, z앞) → cfg (x, z, y). 앞쪽 = 절댓값이 큰 쪽
+        O3dModel dm = O3dModel.Load(Path.Combine(md, "door.o3d"));
+        double xmax = double.MinValue, ylo = double.MaxValue, yhi = double.MinValue;
+        for (int i = 0; i < dm.V.Length / 8; i++) { xmax = Math.Max(xmax, dm.V[i * 8]); ylo = Math.Min(ylo, dm.V[i * 8 + 2]); yhi = Math.Max(yhi, dm.V[i * 8 + 2]); }
+        double front = Math.Abs(yhi) > Math.Abs(ylo) ? yhi : ylo, back = front == yhi ? ylo : yhi, s = Math.Sign(front);
+        CultureInfo ic = CultureInfo.InvariantCulture;
+        Func<double, string> N = delegate(double v) { return v.ToString("0.###", ic); };
+        File.WriteAllText(Path.Combine(md, "model.cfg"),
+            "[friendlyname]\r\nDemo Bus\r\n\r\n[mesh]\r\nbody.o3d\r\n\r\n[mesh]\r\ndoor.o3d\r\n[newanim]\r\norigin_trans\r\n" + N(xmax) + "\r\n" + N(front) + "\r\n0\r\n" +
+            "origin_rot_x\r\n0\r\norigin_rot_y\r\n-90\r\norigin_rot_z\r\n0\r\nanim_rot\r\ndoor_0\r\n" + (s > 0 ? "95" : "-95") + "\r\n", Encoding.ASCII);
+        // 사람 길: 앞문 → 통로 → 뒤, 좌석: 통로 양쪽 + 기사석
+        double dc = (front + back) / 2, fl = 0.4;
+        StringBuilder p = new StringBuilder();
+        List<double[]> pts = new List<double[]> { new double[] { 1.6, dc, 0 }, new double[] { 0.8, dc, fl }, new double[] { 0, dc, fl } };
+        for (int k = 1; k <= 6; k++) pts.Add(new double[] { 0, dc - s * 1.6 * k, fl });
+        foreach (double[] q in pts) p.Append("[pathpnt]\r\n").Append(N(q[0])).Append("\r\n").Append(N(q[1])).Append("\r\n").Append(N(q[2])).Append("\r\n\r\n");
+        for (int i = 0; i + 1 < pts.Count; i++) p.Append("[pathlink]\r\n").Append(i).Append("\r\n").Append(i + 1).Append("\r\n\r\n");
+        File.WriteAllText(Path.Combine(md, "paths.cfg"), p.ToString(), Encoding.ASCII);
+        StringBuilder c = new StringBuilder();
+        c.Append("[drivpos]\r\n-0.65\r\n").Append(N(front - s * 1.1)).Append("\r\n0.9\r\n0.45\r\n0\r\n\r\n");
+        for (int r = 0; r < 6; r++) foreach (double x in new double[] { -0.75, 0.75 }) {
+            double y = dc - s * (1.4 + r * 1.3);
+            if (x > 0 && r == 0) continue;
+            c.Append("[passpos]\r\n").Append(N(x)).Append("\r\n").Append(N(y)).Append("\r\n0.85\r\n0.45\r\n").Append(s > 0 ? "0" : "180").Append("\r\n\r\n");
+        }
+        c.Append("[entry]\r\n0\r\n\r\n[exit]\r\n0\r\n");
+        File.WriteAllText(Path.Combine(md, "passengercabin.cfg"), c.ToString(), Encoding.ASCII);
+        string bus = Path.Combine(dir, "Demo Bus.bus");
+        File.WriteAllText(bus, "[friendlyname]\r\nBus Depot\r\nDemo Bus\r\n\r\n[model]\r\nmodel\\model.cfg\r\n\r\n[paths]\r\nmodel\\paths.cfg\r\n\r\n[passengercabin]\r\nmodel\\passengercabin.cfg\r\n", Encoding.ASCII);
+        return bus;
+    }
+
+    // 개발용(--cafe-shots): 오브젝트 만들기로 만든 정류장 (.sco). OMSI 기본 오브젝트는 o3d가 암호화돼 있어 열 수 없으므로 직접 만든다
+    public static string CafeShelter(string dir) {
+        string src = Path.Combine(dir, "src"); Directory.CreateDirectory(src);
+        File.WriteAllText(Path.Combine(src, "shelter.mtl"),
+            "newmtl frame\nKd 0.25 0.27 0.3\nnewmtl glass\nKd 0.55 0.7 0.78\nnewmtl roof\nKd 0.92 0.93 0.95\nnewmtl bench\nKd 0.62 0.42 0.25\nnewmtl sign\nKd 0.98 0.8 0.1\nnewmtl signb\nKd 0.1 0.45 0.25\nnewmtl ground\nKd 0.7 0.7 0.68\n");
+        vnCount = 0; int[] vi = new int[] { 1 };
+        StringBuilder sb = new StringBuilder("mtllib shelter.mtl\no shelter\n");
+        BoxObj(sb, vi, "ground", -2.6f, 2.6f, 0f, 0.12f, -1.2f, 1.6f);
+        foreach (float x in new float[] { -2f, 2f }) foreach (float z in new float[] { -0.75f, 0.65f }) BoxObj(sb, vi, "frame", x - 0.05f, x + 0.05f, 0.12f, 2.5f, z - 0.05f, z + 0.05f);
+        BoxObj(sb, vi, "roof", -2.25f, 2.25f, 2.5f, 2.62f, -1f, 0.95f);
+        BoxObj(sb, vi, "glass", -1.95f, 1.95f, 0.35f, 2.35f, -0.78f, -0.74f);
+        foreach (float x in new float[] { -2f, 2f }) BoxObj(sb, vi, "glass", x - 0.02f, x + 0.02f, 0.35f, 2.35f, -0.7f, 0.4f);
+        BoxObj(sb, vi, "bench", -1.4f, 1.4f, 0.55f, 0.62f, -0.68f, -0.28f);
+        foreach (float x in new float[] { -1.2f, 1.2f }) BoxObj(sb, vi, "frame", x - 0.04f, x + 0.04f, 0.12f, 0.55f, -0.6f, -0.36f);
+        BoxObj(sb, vi, "frame", 2.4f, 2.48f, 0.12f, 3.2f, 1.2f, 1.28f);
+        BoxObj(sb, vi, "signb", 2.2f, 2.68f, 2.6f, 3.1f, 1.18f, 1.2f);
+        BoxObj(sb, vi, "sign", 2.25f, 2.63f, 2.65f, 3.05f, 1.15f, 1.18f);
+        File.WriteAllText(Path.Combine(src, "shelter.obj"), sb.ToString());
+        int nv, nt, nm; string wn;
+        FastO3D.ConvertEx(Path.Combine(src, "shelter.obj"), Path.Combine(src, "shelter.o3d"), out nv, out nt, out nm, out wn);
+        ScoOptions o = new ScoOptions(); o.Combine = true; o.Name = "Bus Shelter";
+        ScoMaker.Make(new List<string> { Path.Combine(src, "shelter.o3d") }, dir, o);
+        return Path.Combine(dir, "Bus Shelter.sco");
+    }
+
     static void BoxObj(StringBuilder sb, int[] vi, string mat, float x0, float x1, float y0, float y1, float z0, float z1) {
         CultureInfo ic = CultureInfo.InvariantCulture;
         sb.Append("usemtl ").Append(mat).Append("\n");

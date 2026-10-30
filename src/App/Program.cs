@@ -30,6 +30,7 @@ public static class Program {
             if (i + 1 < args.Length && args[i] == "--readme-shots") return Shots.Readme(args[i + 1], i + 2 < args.Length ? args[i + 2] : "ko");
             if (i + 1 < args.Length && args[i] == "--make-icon") { Theme.Apply("light", "indigo", "nanum"); Art.WriteIco(args[i + 1]); return 0; }
             if (i + 2 < args.Length && args[i] == "--video-frames") return Video.Run(args[i + 1], args[i + 2], i + 3 < args.Length ? args[i + 3] : null);
+            if (i + 2 < args.Length && args[i] == "--cafe-shots") return Shots.Cafe(args[i + 1], args[i + 2]);
             if (i + 2 < args.Length && args[i] == "--map-shot") return Shots.MapShot(args[i + 1], args[i + 2], i + 3 < args.Length ? args[i + 3] : null);
             if (i + 2 < args.Length && args[i] == "--save-model") return Shots.SaveModel(args[i + 1], args[i + 2], i + 3 < args.Length ? args[i + 3] : null);
             if (i + 2 < args.Length && args[i] == "--view-shot")
