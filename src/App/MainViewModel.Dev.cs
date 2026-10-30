@@ -66,11 +66,17 @@ public partial class MainViewModel {
     public bool DevVerbose { get { return S.DevVerbose; } set { S.DevVerbose = value; S.Save(); Raise("DevVerbose"); } }
 
     // 애니메이션 배율 (HyperOS의 '창 애니메이션 배율'처럼 고르는 목록)
-    public List<LangItem> AnimChoices {
+    List<TrItem> animChoices;
+    public List<TrItem> AnimChoices {
         get {
-            List<LangItem> r = new List<LangItem>();
-            foreach (double a in AnimSteps) r.Add(new LangItem(a.ToString(CultureInfo.InvariantCulture), a == 0 ? L.T("anim_off") : L.T("anim_x", a.ToString(CultureInfo.InvariantCulture))));
-            return r;
+            if (animChoices == null) {
+                animChoices = new List<TrItem>();
+                foreach (double a in AnimSteps) {
+                    string code = a.ToString(CultureInfo.InvariantCulture);
+                    animChoices.Add(new TrItem(code, a == 0 ? (Func<string>)delegate { return L.T("anim_off"); } : delegate { return L.T("anim_x", code); }));
+                }
+            }
+            return animChoices;
         }
     }
     public string DevAnim {

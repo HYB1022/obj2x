@@ -24,6 +24,7 @@ public static class Program {
             if (args[i] == "--selftest" || args[i] == "/selftest") return SelfTest.Run(here);
             if (i + 1 < args.Length && args[i] == "--shots") return Shots.Run(args[i + 1]);
             if (i + 1 < args.Length && args[i] == "--readme-shots") return Shots.Readme(args[i + 1]);
+            if (i + 1 < args.Length && args[i] == "--welcome-frames") return Shots.WelcomeFrames(args[i + 1], i + 2 < args.Length ? args[i + 2] : "light");
         }
 
         Updater.CleanupOld(System.Reflection.Assembly.GetExecutingAssembly().Location);

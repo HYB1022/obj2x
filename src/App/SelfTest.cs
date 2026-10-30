@@ -262,6 +262,13 @@ public static class SelfTest {
             bool sys = us.Font == "system" && !Theme.Font.Source.Contains("./#");
             f.VM.FontName = "bogus"; f.VM.FontName = "nanum"; Pump.Run(30);
             T("설정: 글꼴 드롭다운 (나눔/Noto/시스템)", noto && sys && us.Font == "nanum" && f.VM.Fonts.Count == 4, noto + " " + sys + " " + us.Font);
+            ComboBox fc = FindAll<ComboBox>(f.Host).Find(delegate(ComboBox c) { return c.IsVisible && c.ItemsSource == f.VM.Fonts; });
+            f.VM.Lang = "en"; Pump.Run(60);
+            string fcEn = fc == null ? null : fc.SelectedItem as TrItem == null ? null : ((TrItem)fc.SelectedItem).Name;
+            f.VM.Lang = "ko"; Pump.Run(60);
+            string fcKo = fc == null ? null : fc.SelectedItem as TrItem == null ? null : ((TrItem)fc.SelectedItem).Name;
+            T("설정: 언어를 바꿔도 글꼴 드롭다운이 비지 않음", fc != null && (string)fc.SelectedValue == "nanum" && fcEn == "NanumSquare Neo" && fcKo == "나눔스퀘어 네오",
+                (fc == null ? "없음" : fc.SelectedValue + "") + " / " + fcEn + " / " + fcKo);
 
             // 개발자 옵션: 정보 화면의 버전을 7번 누르면 메뉴에 생긴다
             FrameworkElement navDev = LogicalTreeHelper.FindLogicalNode(f, "Nav_dev") as FrameworkElement;

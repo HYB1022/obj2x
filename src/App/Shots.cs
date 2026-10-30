@@ -52,8 +52,8 @@ public static class FrameMeter {
 // 화면을 복사하지 않고 창 내용을 직접 그려서 저장하므로, 다른 창에 가려져도 같은 결과가 나온다.
 public static class Shots {
     static void Save(MainWindow f, string path) { Save(f, f.Host, path); }
-    static void Save(Window f, FrameworkElement c, string path) {
-        Pump.Run(300);
+    static void Save(Window f, FrameworkElement c, string path, int pump = 300) {
+        Pump.Run(pump);
         double sc = 1;
         PresentationSource ps = PresentationSource.FromVisual(f);
         if (ps != null && ps.CompositionTarget != null) sc = ps.CompositionTarget.TransformToDevice.M11;
@@ -143,6 +143,27 @@ public static class Shots {
             Save(w, (FrameworkElement)w.Content, Path.Combine(dir, tag + "_welcome.png"));
             w.Close();
         }
+        return 0;
+    }
+
+    // 개발용: README 맨 위 움직이는 그림용 환영 화면 프레임 (obj2x.exe --welcome-frames 폴더 [light|dark])
+    // 인사말 한 바퀴(Period초)를 초당 Fps장으로, 앞에 Blend초를 더 찍는다. 이음매 없이 반복되게 섞는 것은 바깥 스크립트가 한다.
+    // 파일 이름: f_0000.png ... (0번 = -Blend초), 첫 줄에 times.txt로 장 수/초당 장 수/한 바퀴 시간을 남긴다.
+    public static int WelcomeFrames(string dir, string theme) {
+        const int Fps = 25; const double Blend = 1.6;   // Blend × Fps가 정수여야 한다
+        Directory.CreateDirectory(dir);
+        Settings s = new Settings(); s.Path = Path.Combine(dir, "wf.ini"); s.Lang = "ko"; s.Theme = theme == "dark" ? "dark" : "light"; s.Accent = "indigo";
+        Loc.SetLang(s.Lang); Theme.Apply(s.Theme, s.Accent, s.Font);
+        WelcomeWindow w = new WelcomeWindow(s);
+        w.WindowState = WindowState.Normal; w.Width = 1000; w.Height = 640; w.Left = 0; w.Top = 0;
+        w.Show(); Pump.Run(800);
+        int n = (int)Math.Round((w.Period + Blend) * Fps);
+        for (int i = 0; i < n; i++) {
+            w.Seek(-Blend + i / (double)Fps);
+            Save(w, (FrameworkElement)w.Content, Path.Combine(dir, "f_" + i.ToString("0000") + ".png"), 15);
+        }
+        File.WriteAllText(Path.Combine(dir, "times.txt"), n + " " + Fps + " " + w.Period.ToString(CultureInfo.InvariantCulture) + " " + Blend.ToString(CultureInfo.InvariantCulture));
+        w.Close();
         return 0;
     }
 

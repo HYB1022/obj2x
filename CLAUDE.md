@@ -14,6 +14,7 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 - 시작 페이지 지정: `obj2x.exe --page about` (개발용, 성능 측정 등).
 - 프레임 측정: `obj2x.exe --fps [--page about]` 또는 `--fps nav`(0.4초마다 페이지 전환)로 3초간 프레임 간격을 `obj2x_fps.txt`에 남긴다. 창이 활성이어야 정보 화면 배경이 움직인다.
 - README 화면: `obj2x.exe --readme-shots <폴더>`로 찍어서 `docs/images/`에 넣는다. 사용자 경로가 보이는 화면은 찍지 않는다.
+- README 맨 위 움직이는 그림: `obj2x.exe --welcome-frames <폴더> [light|dark]`로 환영 화면을 한 바퀴(13초) 초당 25장 찍고, `tools/mkwebp.py`(Pillow)로 처음과 끝을 섞어 이음매 없이 반복되는 WebP(`docs/images/welcome-light.webp`/`welcome-dark.webp`)로 만든다.
 
 ## 제약
 

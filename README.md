@@ -25,8 +25,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
-    <img src="docs/images/dashboard-light.png" width="860" alt="대시보드: 빠른 변환으로 9개 파일을 변환한 결과 표">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/welcome-dark.webp">
+    <img src="docs/images/welcome-light.webp" width="860" alt="첫 실행 환영 화면: 흐르는 그라데이션 위로 여러 언어의 인사말이 번갈아 나타난다">
   </picture>
 </p>
 
@@ -43,19 +43,20 @@
 
 <table>
   <tr>
+    <td width="50%"><img src="docs/images/dashboard-light.png" alt="대시보드: 빠른 변환으로 9개 파일을 변환한 결과 표"></td>
     <td width="50%"><img src="docs/images/wizard-light.png" alt="변환 마법사: 변환 방식 선택"></td>
-    <td width="50%"><img src="docs/images/about-light.png" alt="정보 탭: 새 버전 업데이트 알림"></td>
   </tr>
   <tr>
+    <td align="center"><b>대시보드</b><br><sub>파일별 정점·삼각형·재질 수와 상태를 결과 표로 보여 줍니다</sub></td>
     <td align="center"><b>변환 마법사</b><br><sub>종류 → 경로 → 옵션 → 완료, 4단계로 변환을 시작합니다</sub></td>
-    <td align="center"><b>업데이트 알림</b><br><sub>새 버전이 있으면 <code>정보</code> 메뉴에 표시되고, 버튼 하나로 설치합니다</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/dashboard-dark.png" alt="다크 테마 대시보드"></td>
+    <td width="50%"><img src="docs/images/about-light.png" alt="정보 탭: 새 버전 업데이트 알림"></td>
     <td width="50%"><img src="docs/images/about-dark.png" alt="다크 테마 정보 탭"></td>
   </tr>
   <tr>
-    <td align="center" colspan="2"><b>라이트 / 다크 테마</b><br><sub><code>설정</code>에서 테마(시스템 / 라이트 / 다크)와 강조 색(인디고 / 틸 / 로즈), 언어(한국어 / English)를 고를 수 있습니다</sub></td>
+    <td align="center"><b>업데이트 알림</b><br><sub>새 버전이 있으면 <code>정보</code> 메뉴에 표시되고, 버튼 하나로 설치합니다</sub></td>
+    <td align="center"><b>다크 테마</b><br><sub><code>설정</code>에서 테마(시스템 / 라이트 / 다크), 강조 색(인디고 / 틸 / 로즈), 언어(한국어 / English / Deutsch / 日本語 / 中文), 글꼴을 고를 수 있습니다</sub></td>
   </tr>
 </table>
 

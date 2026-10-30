@@ -47,6 +47,17 @@ public class LangItem {
     public override string ToString() { return Name; }   // 드롭다운 닫힌 상자에 보이는 글자
 }
 
+// 번역되는 드롭다운 한 줄 (글꼴, 애니메이션 배율). 언어를 바꿔도 목록은 그대로 두고 이름만 다시 읽게 한다.
+// 목록을 새로 만들면 ComboBox가 선택을 잃고 빈 칸이 되기 때문이다.
+public class TrItem : Observable {
+    readonly Func<string> name;
+    public string Code { get; private set; }
+    public string Name { get { return name(); } }
+    public TrItem(string code, Func<string> name) { Code = code; this.name = name; }
+    public void Refresh() { Raise("Name"); }
+    public override string ToString() { return Name; }
+}
+
 // 고급: OmsiXConv 체크박스 한 개
 public class CoptItem : Observable {
     readonly Settings s; readonly string key;
@@ -77,7 +88,11 @@ public partial class MainViewModel : Observable {
         InitDev();
         WireEngine();
         // 저장해 둔 문구(상태, 배너, 마법사 안내)는 새 언어로 다시 만든 뒤 모든 속성을 다시 읽게 한다
-        Loc.Changed += delegate { RefreshStatus(); RaiseAll(); RecentRefresh(); };
+        Loc.Changed += delegate {
+            foreach (TrItem t in Fonts) t.Refresh();
+            foreach (TrItem t in AnimChoices) t.Refresh();
+            RefreshStatus(); RaiseAll(); RecentRefresh();
+        };
         RefreshStatus();
     }
 

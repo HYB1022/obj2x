@@ -23,6 +23,8 @@ public class WelcomeWindow : Window {
     const double Cycle = 2.6, Fade = 0.45;     // 인사말 하나가 머무는 시간 / 올라오며 나타나고 올라가며 사라지는 시간(초)
     bool finished;
     readonly List<string> greetings = new List<string>();
+    readonly HeroBackdrop backdrop = new HeroBackdrop();
+    double seekT = double.NaN;                 // 개발용(--welcome-frames): 정한 시간으로 그린다
     public DialogHost LastDialog;
 
     public WelcomeWindow(Settings s) {
@@ -72,7 +74,7 @@ public class WelcomeWindow : Window {
         start.HorizontalAlignment = HorizontalAlignment.Center; start.VerticalAlignment = VerticalAlignment.Bottom;
         start.Margin = new Thickness(0, 0, 0, 64);
 
-        host.Children.Add(new HeroBackdrop());
+        host.Children.Add(backdrop);
         host.Children.Add(mid);
         host.Children.Add(start);
         host.Children.Add(overlay);
@@ -137,7 +139,9 @@ public class WelcomeWindow : Window {
         if (Motion.Disabled) {                     // 애니메이션 꺼짐: 지금 언어의 인사만
             title.Text = greetings[0]; title.Opacity = 1; titleMove.Y = 0; return;
         }
-        double t = clock.Elapsed.TotalSeconds / Motion.Scale;   // 개발자 옵션 애니메이션 배율
+        double t = double.IsNaN(seekT) ? clock.Elapsed.TotalSeconds / Motion.Scale : seekT;   // 개발자 옵션 애니메이션 배율
+        double period = Cycle * greetings.Count;
+        t = ((t % period) + period) % period;
         int idx = (int)(t / Cycle) % greetings.Count;
         double c = t % Cycle;
         double rise = 22;
@@ -150,6 +154,10 @@ public class WelcomeWindow : Window {
             title.Opacity = 1 - e; titleMove.Y = -e * rise;
         } else { title.Opacity = 1; titleMove.Y = 0; }
     }
+
+    // 개발용: t초 순간의 인사말과 배경 (README 움직이는 그림을 한 장씩 찍을 때)
+    public double Period { get { return Cycle * greetings.Count; } }
+    public void Seek(double t) { seekT = t; TickTitle(); backdrop.Seek(t); }
 
     void PickLang() {
         LastDialog = Dialogs.Choose(overlay, L.T("wel_lang"), L.Languages, S.Lang,

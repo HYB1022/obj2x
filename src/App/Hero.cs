@@ -229,7 +229,11 @@ public class HeroBackdrop : FrameworkElement {
         else if (!run) Halt();
     }
     void Halt() { if (!running) return; running = false; CompositionTarget.Rendering -= Frame; }
+    // 개발용(--welcome-frames): 시간을 정해서 그 순간의 그라데이션을 그린다. 그다음부터는 스스로 움직이지 않는다.
+    bool seeking;
+    public void Seek(double t) { seeking = true; clock = t; RenderGradient(); }
     void Frame(object s, EventArgs e) {
+        if (seeking) return;
         double now = sw.Elapsed.TotalSeconds;
         clock += Math.Min(0.1, now - last) / Math.Max(0.05, Motion.Scale); last = now;
         RenderGradient();
