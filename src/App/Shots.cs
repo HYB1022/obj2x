@@ -113,6 +113,21 @@ public static class Shots {
             f.VM.DevMode = true; f.VM.Page = "dev"; Save(f, Path.Combine(dir, tag + "_dev.png"));
             foreach (ScrollViewer sv in UiTreeAll<ScrollViewer>(f.Host)) if (sv.IsVisible) sv.ScrollToEnd();
             Pump.Run(50); Save(f, Path.Combine(dir, tag + "_dev2.png"));
+            if (tag == "light_ko" || tag == "dark_en") {   // 누름 효과: 위로 올려서 '버그 신고' 줄 오른쪽을 누른 모습
+                foreach (ScrollViewer sv in UiTreeAll<ScrollViewer>(f.Host)) if (sv.IsVisible) sv.ScrollToHome();
+                Pump.Run(50);
+                Button row = UiTreeAll<Button>(f.Host).Find(delegate(Button b) { return b.IsVisible && b.Command == f.VM.BugReportCmd; });
+                Ripple rp = row == null ? null : UiTreeAll<Ripple>(row).Find(delegate(Ripple x) { return true; });
+                if (rp != null) {
+                    Motion.Off = false;
+                    foreach (double sc in new double[] { 4, 1 }) {
+                        Motion.Scale = sc; rp.Press(new Point(rp.ActualWidth * 0.7, rp.ActualHeight * 0.5));
+                        Save(f, Path.Combine(dir, tag + "_ripple" + sc + ".png"));
+                        rp.Release(); Pump.Run(1500);
+                    }
+                    Motion.Scale = 1; Motion.Off = true;
+                }
+            }
             f.VM.DevMode = false;
             f.VM.Page = "dashboard"; f.Disclaimer(false, null); Save(f, Path.Combine(dir, tag + "_disc.png"));
             f.LastDialog.Close(1); Pump.Run(50);   // 0은 "종료"라 창이 닫힌다

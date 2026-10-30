@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Controls.Primitives;
 
 namespace Obj2x.UI {
@@ -238,6 +239,24 @@ public static class SelfTest {
             ComboBox anim = null;
             foreach (ComboBox cb in FindAll<ComboBox>(f.Host)) if (cb.IsVisible) anim = cb;
             T("개발자: 화면 열기 + 애니메이션 배율 선택", f.VM.Page == "dev" && anim != null && (string)anim.SelectedValue == "1" && anim.Items.Count == 7, anim == null ? "없음" : anim.Items.Count.ToString());
+            // 애니메이션 배율: 드롭다운으로 고르면 XAML 스위치 움직임도 느려진다
+            if (anim != null) { anim.SelectedValue = "10"; Pump.Run(30); }
+            bool scaled = us.DevAnim == 10 && Motion.Scale == 10;
+            CheckBox fpsBox = null;
+            foreach (CheckBox cb in FindAll<CheckBox>(f.Host)) if (cb.IsVisible && cb.GetBindingExpression(CheckBox.IsCheckedProperty) != null
+                && cb.GetBindingExpression(CheckBox.IsCheckedProperty).ParentBinding.Path.Path == "DevFps") fpsBox = cb;
+            System.Windows.Shapes.Ellipse knob = fpsBox == null ? null : FindAll<System.Windows.Shapes.Ellipse>(fpsBox).Find(delegate(System.Windows.Shapes.Ellipse el) { return el.Name == "knob"; });
+            bool off = Motion.Off; Motion.Off = false;   // 이 점검만 애니메이션을 켠다
+            f.VM.DevFps = true; Pump.Run(300);
+            TranslateTransform kt = knob == null ? null : knob.RenderTransform as TranslateTransform;
+            double midX = kt == null ? -1 : kt.X;      // 0.18초 × 10배 = 1.8초 중 0.3초 → 아직 가는 중
+            T("개발자: 애니메이션 배율이 스위치에도 적용 (드롭다운 10x)", scaled && midX > 0.5 && midX < 19, scaled + " x=" + midX.ToString("0.0"));
+            if (anim != null) { anim.SelectedValue = "1"; Pump.Run(30); }
+            f.VM.DevFps = false; Pump.Run(450);
+            T("개발자: 배율 1x면 스위치가 0.18초 안에 끝까지", Motion.Scale == 1 && kt != null && Math.Abs(kt.X) < 0.5, kt == null ? "없음" : kt.X.ToString("0.0"));
+            Motion.Off = off;
+            Button devRow = FindAll<Button>(f.Host).Find(delegate(Button b) { return b.IsVisible && b.Command == f.VM.BugReportCmd; });
+            T("누름 효과: 버튼 템플릿에 물결 층", devRow != null && FindAll<Ripple>(devRow).Count == 1 && FindAll<Ripple>(f.Host).Count > 3, "");
             f.VM.DevFps = true; f.VM.DevAnim = "0"; Pump.Run(30);
             T("개발자: FPS 표시 + 애니메이션 끄기", f.FpsVisible && Motion.Scale == 0 && Motion.Disabled, f.FpsVisible + " " + Motion.Scale);
             f.VM.DevMode = false; Pump.Run(60);

@@ -41,7 +41,8 @@ public class AboutHero : Drawn {
     readonly double[] hov = new double[8];
     readonly List<KeyValuePair<Rect, int>> hits = new List<KeyValuePair<Rect, int>>();
 
-    public AboutHero() { IsVisibleChanged += delegate { if (!IsVisible) Halt(); }; }
+    readonly RippleFx fx;
+    public AboutHero() { fx = new RippleFx(this); IsVisibleChanged += delegate { if (!IsVisible) { Halt(); fx.Stop(); } }; }
 
     public void StartIntro() { intro = Motion.Disabled ? 10 : 0; Run(); InvalidateVisual(); }
     void Run() {
@@ -57,7 +58,7 @@ public class AboutHero : Drawn {
         bool moving = intro < 1.4 || valIn < 1;
         for (int i = 0; i < hov.Length; i++) {
             double tg = (i == hot) ? 1 : 0, d = tg - hov[i];
-            if (Math.Abs(d) > 0.01) { hov[i] += d * (1 - Math.Exp(-dt * 14)); moving = true; } else hov[i] = tg;
+            if (Math.Abs(d) > 0.01) { hov[i] += d * (1 - Math.Exp(-dt * 14 / Math.Max(0.05, Motion.Scale))); moving = true; } else hov[i] = tg;
         }
         InvalidateVisual();
         if (!moving) Halt();
@@ -120,6 +121,11 @@ public class AboutHero : Drawn {
                     dc.DrawRectangle(Theme.Brush(Theme.A(Theme.Dark ? Color.FromArgb(28, 255, 255, 255) : Color.FromArgb(18, 40, 30, 80), a * hov[id])), null, rr);
                     dc.Pop();
                 }
+                if (click && fx.Active) {               // 누른 줄에서 퍼지는 물결
+                    dc.PushClip(new RectangleGeometry(gr, 16, 16)); dc.PushClip(new RectangleGeometry(rr));
+                    fx.Draw(dc, RippleFx.Tint(txt), id);
+                    dc.Pop(); dc.Pop();
+                }
                 double pad = 22, chev = chevron ? 22 : 0;
                 Art.Text(dc, Art.Ft(row[0], fR, false, Theme.A(txt, a)), new Rect(rr.X + pad, rr.Y, rr.Width / 2 - pad, rr.Height), TextAlignment.Left);
                 if (id == 1) DrawUpdateValue(dc, row[1], new Rect(rr.X + rr.Width / 3, rr.Y, rr.Width * 2 / 3 - pad - chev, rr.Height), sub, a, fRv);
@@ -169,8 +175,14 @@ public class AboutHero : Drawn {
         if (h != hot) { hot = h; Cursor = h >= 0 ? Cursors.Hand : Cursors.Arrow; if (Motion.Disabled) { for (int i = 0; i < hov.Length; i++) hov[i] = i == hot ? 1 : 0; InvalidateVisual(); } else Run(); }
         base.OnMouseMove(e);
     }
-    protected override void OnMouseLeave(MouseEventArgs e) { hot = -1; Run(); base.OnMouseLeave(e); }
+    protected override void OnMouseLeave(MouseEventArgs e) { hot = -1; Run(); fx.Release(); base.OnMouseLeave(e); }
+    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) {
+        Point p = e.GetPosition(this);
+        foreach (KeyValuePair<Rect, int> kv in hits) if (kv.Key.Contains(p)) { fx.Press(p, kv.Key, kv.Value); break; }
+        base.OnMouseLeftButtonDown(e);
+    }
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) {
+        fx.Release();
         int h = HitAt(e.GetPosition(this));
         ICommand c = null;
         if (h == 0 || h == 1) c = UpdateCommand; else if (h == 2) c = RepoCommand; else if (h == 3) c = DisclaimerCommand; else if (h == 4) c = VersionCommand;
@@ -219,7 +231,7 @@ public class HeroBackdrop : FrameworkElement {
     void Halt() { if (!running) return; running = false; CompositionTarget.Rendering -= Frame; }
     void Frame(object s, EventArgs e) {
         double now = sw.Elapsed.TotalSeconds;
-        clock += Math.Min(0.1, now - last); last = now;
+        clock += Math.Min(0.1, now - last) / Math.Max(0.05, Motion.Scale); last = now;
         RenderGradient();
     }
     protected override void OnRender(DrawingContext dc) {

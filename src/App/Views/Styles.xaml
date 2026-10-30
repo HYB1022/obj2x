@@ -33,20 +33,17 @@
     </Style.Triggers>
   </Style>
 
-  <!-- 버튼: 바탕 위에 호버 색 층이 부드럽게 나타난다. 모서리는 ui:Behave.Radius, 호버 색은 ui:Behave.Hover -->
+  <!-- 버튼: 바탕 위에 호버 색 층이 부드럽게 나타나고, 누르면 누른 지점에서 물결이 퍼진다. 모서리는 ui:Behave.Radius, 호버 색은 ui:Behave.Hover -->
   <ControlTemplate x:Key="BtnTpl" TargetType="Button">
     <Grid>
       <Border x:Name="bg" Background="{TemplateBinding Background}" CornerRadius="{Binding Path=(ui:Behave.Radius), RelativeSource={RelativeSource TemplatedParent}}"/>
       <Border x:Name="hov" Background="{Binding Path=(ui:Behave.Hover), RelativeSource={RelativeSource TemplatedParent}}" Opacity="0"
               CornerRadius="{Binding Path=(ui:Behave.Radius), RelativeSource={RelativeSource TemplatedParent}}"/>
+      <ui:Ripple CornerRadius="{Binding Path=(ui:Behave.Radius), RelativeSource={RelativeSource TemplatedParent}}"/>
       <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
     </Grid>
     <ControlTemplate.Triggers>
-      <Trigger Property="IsMouseOver" Value="True">
-        <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="hov" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
-        <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="hov" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
-      </Trigger>
-      <Trigger Property="IsPressed" Value="True"><Setter TargetName="bg" Property="Opacity" Value="0.85"/></Trigger>
+      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="ui:Anim.Opacity" Value="1"/></Trigger>
       <Trigger Property="IsEnabled" Value="False">
         <Setter TargetName="bg" Property="Background" Value="{DynamicResource DisBg}"/>
         <Setter TargetName="hov" Property="Visibility" Value="Collapsed"/>
@@ -103,10 +100,11 @@
         <ControlTemplate TargetType="Button">
           <Grid Background="Transparent">
             <Border x:Name="hov" Background="{DynamicResource Btn}" CornerRadius="8" Margin="0,1" Opacity="0"/>
+            <ui:Ripple CornerRadius="8" Margin="0,1"/>
             <ContentPresenter/>
           </Grid>
           <ControlTemplate.Triggers>
-            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="Opacity" Value="1"/></Trigger>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="ui:Anim.Opacity" Value="1"/></Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>
@@ -123,20 +121,12 @@
           <Grid Width="46" Height="24" Background="Transparent">
             <Border CornerRadius="10" Margin="2" Background="{DynamicResource ToggleOff}"/>
             <Border x:Name="on" CornerRadius="10" Margin="2" Background="{DynamicResource Accent}" Opacity="0"/>
-            <Ellipse Width="14" Height="14" Fill="White" HorizontalAlignment="Left" Margin="6,0,0,0">
-              <Ellipse.RenderTransform><TranslateTransform x:Name="kx"/></Ellipse.RenderTransform>
-            </Ellipse>
+            <Ellipse x:Name="knob" Width="14" Height="14" Fill="White" HorizontalAlignment="Left" Margin="6,0,0,0"/>
           </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="IsChecked" Value="True">
-              <Trigger.EnterActions><BeginStoryboard><Storyboard>
-                <DoubleAnimation Storyboard.TargetName="kx" Storyboard.TargetProperty="X" To="20" Duration="0:0:0.18"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-                <DoubleAnimation Storyboard.TargetName="on" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.18"/>
-              </Storyboard></BeginStoryboard></Trigger.EnterActions>
-              <Trigger.ExitActions><BeginStoryboard><Storyboard>
-                <DoubleAnimation Storyboard.TargetName="kx" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.18"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
-                <DoubleAnimation Storyboard.TargetName="on" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/>
-              </Storyboard></BeginStoryboard></Trigger.ExitActions>
+              <Setter TargetName="knob" Property="ui:Anim.X" Value="20"/>
+              <Setter TargetName="on" Property="ui:Anim.Opacity" Value="1"/>
             </Trigger>
             <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.5"/></Trigger>
           </ControlTemplate.Triggers>
@@ -293,9 +283,7 @@
                               Margin="12,0,34,0" VerticalAlignment="Center" HorizontalAlignment="Left"/>
             <Path IsHitTestVisible="False" Data="M 0,0 L 4.5,4.5 L 9,0" Stroke="{DynamicResource Muted}" StrokeThickness="1.6"
                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Right" VerticalAlignment="Center"
-                  Margin="0,0,13,0" RenderTransformOrigin="0.5,0.5">
-              <Path.RenderTransform><RotateTransform x:Name="rot"/></Path.RenderTransform>
-            </Path>
+                  Margin="0,0,13,0" RenderTransformOrigin="0.5,0.5" x:Name="arrow"/>
             <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Placement="Bottom" VerticalOffset="4"
                    PopupAnimation="Fade" Focusable="False">
               <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBdr}" BorderThickness="1" CornerRadius="10" Padding="4"
@@ -306,10 +294,7 @@
             </Popup>
           </Grid>
           <ControlTemplate.Triggers>
-            <Trigger Property="IsDropDownOpen" Value="True">
-              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="rot" Storyboard.TargetProperty="Angle" To="180" Duration="0:0:0.15"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
-              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="rot" Storyboard.TargetProperty="Angle" To="0" Duration="0:0:0.15"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
-            </Trigger>
+            <Trigger Property="IsDropDownOpen" Value="True"><Setter TargetName="arrow" Property="ui:Anim.Angle" Value="180"/></Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>
@@ -357,7 +342,7 @@
     <Setter Property="VerticalAlignment" Value="Center"/>
     <Setter Property="Margin" Value="14,0,0,0"/>
   </Style>
-  <!-- 누를 수 있는 줄: 누르면 살짝 어두워진다 -->
+  <!-- 누를 수 있는 줄: 마우스를 올리면 옅게 칠해지고, 누르면 물결이 퍼진다 -->
   <Style x:Key="DevRow" TargetType="Button">
     <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -368,11 +353,11 @@
         <ControlTemplate TargetType="Button">
           <Grid Background="Transparent">
             <Border x:Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+            <ui:Ripple/>
             <ContentPresenter Margin="24,14"/>
           </Grid>
           <ControlTemplate.Triggers>
-            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="Opacity" Value="0.6"/></Trigger>
-            <Trigger Property="IsPressed" Value="True"><Setter TargetName="hov" Property="Opacity" Value="1"/></Trigger>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="ui:Anim.Opacity" Value="0.6"/></Trigger>
             <Trigger Property="IsEnabled" Value="False"><Setter Property="Cursor" Value="Arrow"/></Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>

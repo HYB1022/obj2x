@@ -52,16 +52,20 @@ public class NavItem : Drawn {
     public ICommand Command { get { return (ICommand)GetValue(CommandProperty); } set { SetValue(CommandProperty, value); } }
     public bool Active { get { return Current == Page; } }
 
-    public NavItem() { Width = 190; Height = 42; Cursor = Cursors.Hand; }
+    readonly RippleFx fx;
+    public NavItem() { Width = 190; Height = 42; Cursor = Cursors.Hand; fx = new RippleFx(this); }
+    Rect Box { get { return new Rect(2, 2, Math.Max(0, ActualWidth - 4), Math.Max(0, ActualHeight - 4)); } }
     protected override void OnMouseEnter(MouseEventArgs e) { Animate(HoverProperty, 1, 0.18); base.OnMouseEnter(e); }
-    protected override void OnMouseLeave(MouseEventArgs e) { Animate(HoverProperty, 0, 0.18); base.OnMouseLeave(e); }
-    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) { if (Command != null) Command.Execute(Page); base.OnMouseLeftButtonUp(e); }
+    protected override void OnMouseLeave(MouseEventArgs e) { Animate(HoverProperty, 0, 0.18); fx.Release(); base.OnMouseLeave(e); }
+    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { fx.Press(e.GetPosition(this), Box, 0); base.OnMouseLeftButtonDown(e); }
+    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) { fx.Release(); if (Command != null) Command.Execute(Page); base.OnMouseLeftButtonUp(e); }
 
     protected override void OnRender(DrawingContext dc) {
         HitArea(dc);
-        Rect r = new Rect(2, 2, ActualWidth - 4, ActualHeight - 4);
+        Rect r = Box;
         double hv = (double)GetValue(HoverProperty);
         if (!Active && hv > 0.01) dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.Btn, hv)), null, r, 12, 12);
+        if (fx.Active) { dc.PushClip(new RectangleGeometry(r, 12, 12)); fx.Draw(dc, RippleFx.Tint(Theme.Text), 0); dc.Pop(); }
         double isz = 24, ix = r.X + 10;
         Art.Icon(dc, Page, ix, r.Y + (r.Height - isz) / 2, isz, 1);
         double tx = ix + isz + 12, right = r.Right - 8;
@@ -125,10 +129,12 @@ public class RadioCard : Drawn {
     public bool Selected { get { return (bool)GetValue(SelectedProperty); } set { SetValue(SelectedProperty, value); } }
     public ICommand Command { get { return (ICommand)GetValue(CommandProperty); } set { SetValue(CommandProperty, value); } }
 
-    public RadioCard() { Height = 72; IsEnabledChanged += delegate { Cursor = IsEnabled ? Cursors.Hand : Cursors.Arrow; }; Cursor = Cursors.Hand; }
+    readonly RippleFx fx;
+    public RadioCard() { Height = 72; IsEnabledChanged += delegate { Cursor = IsEnabled ? Cursors.Hand : Cursors.Arrow; }; Cursor = Cursors.Hand; fx = new RippleFx(this); }
     protected override void OnMouseEnter(MouseEventArgs e) { Animate(HoverProperty, 1, 0.18); base.OnMouseEnter(e); }
-    protected override void OnMouseLeave(MouseEventArgs e) { Animate(HoverProperty, 0, 0.18); base.OnMouseLeave(e); }
-    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) { if (IsEnabled && Command != null) Command.Execute(Mode); base.OnMouseLeftButtonUp(e); }
+    protected override void OnMouseLeave(MouseEventArgs e) { Animate(HoverProperty, 0, 0.18); fx.Release(); base.OnMouseLeave(e); }
+    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { if (IsEnabled) fx.Press(e.GetPosition(this), new Rect(0, 0, ActualWidth, ActualHeight), 0); base.OnMouseLeftButtonDown(e); }
+    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) { fx.Release(); if (IsEnabled && Command != null) Command.Execute(Mode); base.OnMouseLeftButtonUp(e); }
 
     protected override void OnRender(DrawingContext dc) {
         double W = ActualWidth, H = ActualHeight, k = H / 72.0;
@@ -136,6 +142,7 @@ public class RadioCard : Drawn {
         double h = IsEnabled ? Math.Max(0, Math.Min(1, (double)GetValue(HoverProperty))) : 0;
         Color bdr = Theme.Mix(Theme.Mix(Theme.CardBdr, Theme.Muted, h), Theme.Accent, s);
         dc.DrawRoundedRectangle(Theme.Brush(Theme.Mix(Theme.Card, Theme.NavPill, s)), Art.Pen(bdr, 1 + s), new Rect(1, 1, W - 2, H - 2), 10 * k, 10 * k);
+        if (fx.Active) { dc.PushClip(new RectangleGeometry(new Rect(1, 1, W - 2, H - 2), 10 * k, 10 * k)); fx.Draw(dc, RippleFx.Tint(Theme.Text), 0); dc.Pop(); }
         Color tc = IsEnabled ? Theme.Text : Theme.DisText, sc = IsEnabled ? Theme.Muted : Theme.DisText;
         Color rc = Selected ? Theme.Accent : (IsEnabled ? Theme.Muted : Theme.DisText);
         dc.DrawEllipse(null, Art.Pen(rc, 2), new Point(27 * k, H / 2), 9 * k, 9 * k);

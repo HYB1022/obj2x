@@ -84,7 +84,7 @@ public class WelcomeWindow : Window {
     void OnFrame(object s, EventArgs e) { TickTitle(); }
 
     void TickTitle() {
-        double t = clock.Elapsed.TotalSeconds;
+        double t = clock.Elapsed.TotalSeconds / Math.Max(0.05, Motion.Scale);   // 개발자 옵션 애니메이션 배율
         int idx = (int)(t / Cycle) % Greetings.Length;
         double c = t % Cycle;
         double a = Math.Max(0, Math.Min(1.0, Math.Min(c / Fade, (Cycle - c) / Fade)));
