@@ -143,6 +143,14 @@ public static class Theme {
         a.Completed += delegate { host.Children.Remove(img); img.Source = null; };
         img.BeginAnimation(UIElement.OpacityProperty, a);
     }
+    // 창이 작업 영역(작업 표시줄 제외)보다 크면 줄인다. 최소 크기도 같이 줄여서 잘리지 않게 한다
+    public static void FitToScreen(Window w) {
+        Rect wa = SystemParameters.WorkArea;
+        double mw = wa.Width - 40, mh = wa.Height - 40;
+        if (w.Width > mw) { w.Width = mw; w.MinWidth = Math.Min(w.MinWidth, mw); }
+        if (w.Height > mh) { w.Height = mh; w.MinHeight = Math.Min(w.MinHeight, mh); }
+    }
+
     public static Color A(Color c, double a) { return Color.FromArgb((byte)Math.Max(0, Math.Min(255, c.A * a)), c.R, c.G, c.B); }
     public static Color Mix(Color a, Color b, double t) {
         return Color.FromRgb((byte)(a.R + (b.R - a.R) * t), (byte)(a.G + (b.G - a.G) * t), (byte)(a.B + (b.B - a.B) * t));

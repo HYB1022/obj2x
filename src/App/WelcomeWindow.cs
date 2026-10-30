@@ -29,7 +29,7 @@ public class WelcomeWindow : Window {
         S = s;
         Width = 1000; Height = 700; MinWidth = 760; MinHeight = 600;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        WindowState = WindowState.Maximized;
+        Theme.FitToScreen(this);
         Icon = Art.AppIcon();
         host.SetResourceReference(Panel.BackgroundProperty, "Bg");
         host.SetResourceReference(TextElement.FontFamilyProperty, "UiFont");

@@ -35,7 +35,7 @@ public class MainWindow : Window, IUi {
         Icon = Art.AppIcon();
         Width = 1056; Height = 725; MinWidth = 920; MinHeight = 640;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        WindowState = WindowState.Maximized;
+        Theme.FitToScreen(this);                  // 창 모드로 화면 가운데에 (화면이 작으면 그 안에 들어가게)
         UseLayoutRounding = true;
 
         host = new Grid(); host.SetResourceReference(Panel.BackgroundProperty, "Bg");
