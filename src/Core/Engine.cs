@@ -164,14 +164,13 @@ public class Engine {
                 FastO3D.ConvertEx(it.Path, dst, out nv, out nt, out nm, out wn);
                 ok++;
                 string sec = (DateTime.Now - tf).TotalSeconds.ToString("0.00");
-                wn = L.TrFast(wn);
                 ResRow r = new ResRow();
                 r.Name = it.Rel + ".o3d"; r.V = nv.ToString(); r.T = nt.ToString(); r.M = nm.ToString(); r.Sec = sec;
                 if (wn.Length > 0) { warn++; r.Status = L.T("r_warn", wn); r.Kind = 1; } else { r.Status = "OK"; r.Kind = 0; }
                 Row(r);
                 Say(L.T("m_fast_ok", r.Name, nv, nt, nm, wn.Length > 0 ? L.T("m_fast_warn", wn) : ""));
             } catch (Exception ex) {
-                string msg = L.TrFast(ex.Message);
+                string msg = ex.Message;
                 ResRow r = new ResRow();
                 r.Name = it.Rel + ".o3d"; r.V = "-"; r.T = "-"; r.M = "-"; r.Sec = "-"; r.Status = L.T("r_fail", msg); r.Kind = 2;
                 Row(r);

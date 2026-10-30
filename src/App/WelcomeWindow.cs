@@ -34,7 +34,7 @@ public class WelcomeWindow : Window {
         Icon = Art.AppIcon();
         host.SetResourceReference(Panel.BackgroundProperty, "Bg");
         host.SetResourceReference(TextElement.FontFamilyProperty, "UiFont");
-        TextOptions.SetTextFormattingMode(host, TextFormattingMode.Display);
+        TextOptions.SetTextFormattingMode(host, TextFormattingMode.Ideal);   // Display는 나눔스퀘어 네오를 너무 가늘게 그린다
         host.Children.Add(cv); host.Children.Add(overlay);
         Content = host;
 
@@ -45,7 +45,7 @@ public class WelcomeWindow : Window {
         FontFamily glyph = new FontFamily("Segoe MDL2 Assets");
         gLang.Text = ""; gView.Text = "";
         foreach (TextBlock g in new TextBlock[] { gLang, gView }) { g.FontFamily = glyph; g.FontSize = Art.Pt(20); g.Width = 44; g.TextAlignment = TextAlignment.Center; g.VerticalAlignment = VerticalAlignment.Center; }
-        foreach (TextBlock l in new TextBlock[] { lblLang, lblView }) { l.FontSize = Art.Pt(17); l.FontWeight = FontWeights.Bold; l.VerticalAlignment = VerticalAlignment.Center; l.Margin = new Thickness(8, 0, 0, 2); }
+        foreach (TextBlock l in new TextBlock[] { lblLang, lblView }) { l.FontSize = Art.Pt(17); l.FontWeight = FontWeights.Bold; l.VerticalAlignment = VerticalAlignment.Center; l.Margin = new Thickness(8, 0, 0, 0); }
         rowLang.Orientation = rowView.Orientation = Orientation.Horizontal;
         rowLang.Height = rowView.Height = 44;
         rowLang.Children.Add(gLang); rowLang.Children.Add(lblLang);

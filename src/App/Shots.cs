@@ -84,7 +84,7 @@ public static class Shots {
         Motion.Off = true;
         string sample = Path.Combine(dir, "sample_obj"); Directory.CreateDirectory(sample);
         File.WriteAllText(Path.Combine(sample, "x.obj"), "v 0 0 0\nv 1 0 0\nv 1 1 0\nf 1 2 3\n");
-        foreach (string[] v in new string[][] { new string[] { "light", "ko", "indigo" }, new string[] { "dark", "en", "teal" }, new string[] { "light", "de", "rose" } }) {
+        foreach (string[] v in new string[][] { new string[] { "light", "ko", "indigo" }, new string[] { "dark", "en", "teal" }, new string[] { "light", "de", "rose" }, new string[] { "dark", "zh", "indigo" }, new string[] { "light", "ja", "teal" } }) {
             Settings s = new Settings(); s.Path = Path.Combine(dir, "shot.ini");
             s.Theme = v[0]; s.Lang = v[1]; s.Accent = v[2]; s.Inp = sample; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
             s.AddRecent(sample); s.AddRecent(@"C:\Models\Bus\ELE19"); s.AddRecent(@"D:\OMSI\Vehicles\Regs_SD77"); s.AddRecent(@"E:\gone\folder");

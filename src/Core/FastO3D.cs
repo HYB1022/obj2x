@@ -12,14 +12,6 @@ public static class FastO3D {
     static string BaseName(string p) { p = p.Replace('\\', '/'); int i = p.LastIndexOf('/'); return i >= 0 ? p.Substring(i + 1) : p; }
     static void Triple(string[] w, float[] dst) { for (int i = 0; i < 3 && i + 1 < w.Length; i++) dst[i] = F(w[i + 1]); }
 
-    // obj(+mtl) -> o3d. 결과 요약 문자열을 돌려주고, 실패하면 예외를 던진다.
-    public static string Convert(string objPath, string o3dPath) {
-        int v, t, m; string w;
-        ConvertEx(objPath, o3dPath, out v, out t, out m, out w);
-        string res = "정점 " + v + ", 삼각형 " + t + ", 재질 " + m;
-        if (w.Length > 0) res += "  [주의: " + w + "]";
-        return res;
-    }
 
     public static void ConvertEx(string objPath, string o3dPath, out int nVerts, out int nTris, out int nMats, out string warn) {
         string dir = Path.GetDirectoryName(objPath);
@@ -49,7 +41,7 @@ public static class FastO3D {
         List<float[]> verts = new List<float[]>();
         List<int[]> tris = new List<int[]>();
         int curMat = 0; int objCount = 0; List<string> warns = new List<string>();
-        if (!File.Exists(mtlPath)) warns.Add("mtl 파일 없음");
+        if (!File.Exists(mtlPath)) warns.Add(L.T("w_nomtl"));
         char[] sp = new char[] { ' ', '\t' };
         foreach (string ln in lines) {
             if (ln.Length < 2) continue;
@@ -60,7 +52,7 @@ public static class FastO3D {
             else if (ln.StartsWith("usemtl ")) {
                 string nm = ln.Substring(7).Trim();
                 int k = order.IndexOf(nm);
-                if (k < 0) { order.Add(nm); mats[nm] = new Mat(); k = order.Count - 1; warns.Add("재질 '" + nm + "'이 mtl에 없음"); }
+                if (k < 0) { order.Add(nm); mats[nm] = new Mat(); k = order.Count - 1; warns.Add(L.T("w_mat", nm)); }
                 curMat = k;
             }
             else if (ln[0] == 'f' && ln[1] == ' ') {
@@ -85,9 +77,9 @@ public static class FastO3D {
                 for (int i = 1; i < n - 1; i++) tris.Add(new int[] { ids[0], ids[i], ids[i + 1], curMat });
             }
         }
-        if (tris.Count == 0) throw new Exception("면(f)이 없음");
-        if (verts.Count > 65535) throw new Exception("정점 " + verts.Count + "개: 65535개를 넘어 지원하지 않음");
-        if (tris.Count > 65535) throw new Exception("삼각형 " + tris.Count + "개: 65535개를 넘어 지원하지 않음");
+        if (tris.Count == 0) throw new Exception(L.T("e_noface"));
+        if (verts.Count > 65535) throw new Exception(L.T("e_verts", verts.Count));
+        if (tris.Count > 65535) throw new Exception(L.T("e_tris", tris.Count));
         if (order.Count == 0) { order.Add("default"); mats["default"] = new Mat(); }
         using (BinaryWriter bw = new BinaryWriter(new FileStream(o3dPath, FileMode.Create, FileAccess.Write))) {
             bw.Write(new byte[] { 0x84, 0x19, 0x01, 0x17 });
@@ -108,7 +100,7 @@ public static class FastO3D {
             float[] mtx = new float[] { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1 };
             foreach (float f in mtx) bw.Write(f);
         }
-        if (objCount > 1) warns.Add("오브젝트 " + objCount + "개가 하나로 합쳐짐");
+        if (objCount > 1) warns.Add(L.T("w_objs", objCount));
         nVerts = verts.Count; nTris = tris.Count; nMats = order.Count; warn = string.Join("; ", warns.ToArray());
     }
 }

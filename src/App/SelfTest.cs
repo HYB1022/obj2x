@@ -36,8 +36,33 @@ public static class SelfTest {
         string ph = L.PlaceholderParity();
         T("문구표: 모든 언어의 {0} 자리 표시가 같음", ph.Length == 0, ph);
         L.Lang = "de"; string g1 = L.T("m_fast_done", 3, 5, "1.5");
-        T("문구표: 독일어", g1.StartsWith("Fertig") && L.T("nav_settings") == "Einstellungen" && L.TrFast("mtl 파일 없음") == "mtl-Datei nicht gefunden", g1);
+        T("문구표: 독일어", g1.StartsWith("Fertig") && L.T("nav_settings") == "Einstellungen" && L.T("w_nomtl") == "mtl-Datei nicht gefunden", g1);
+        L.Lang = "zh"; string z1 = L.T("nav_settings"); L.Lang = "ja"; string j1 = L.T("nav_settings");
+        T("문구표: 중국어/일본어", z1 == "设置" && j1 == "設定" && L.BuiltinCount >= 5, z1 + " " + j1 + " builtin=" + L.BuiltinCount);
         L.Lang = "ko";
+        // 사용자 언어 파일: lang 폴더에 새 언어와 기존 언어 덮어쓰기를 넣고 다시 읽는다
+        string ud = L.UserDir; bool hadDir = Directory.Exists(ud);
+        Directory.CreateDirectory(ud);
+        string fx = Path.Combine(ud, "xx.json"), fd = Path.Combine(ud, "de.json"), fbad = Path.Combine(ud, "yy.json");
+        bool hadDe = File.Exists(fd);
+        string deBackup = hadDe ? File.ReadAllText(fd, Encoding.UTF8) : null;
+        try {
+            File.WriteAllText(fx, "{ \"_name\": \"Test-Sprache\", \"nav_settings\": \"Réglages\", \"m_fast_done\": \"ok {0}/{1} {2}\" }", new UTF8Encoding(false));
+            if (!hadDe) File.WriteAllText(fd, "{ \"nav_info\": \"Über\" }", new UTF8Encoding(false));
+            File.WriteAllText(fbad, "{ \"nav_info\": broken }", new UTF8Encoding(false));
+            L.Load();
+            bool hasXx = false; foreach (string[] l in L.Languages) if (l[0] == "xx" && l[1] == "Test-Sprache") hasXx = true;
+            L.Lang = "xx";
+            T("언어 파일: 새 언어 추가 + 빠진 문구는 영어로", hasXx && L.T("nav_settings") == "Réglages" && L.T("nav_wizard") == "Wizard", L.T("nav_settings") + " " + L.T("nav_wizard"));
+            L.Lang = "de";
+            T("언어 파일: 기존 언어 일부 덮어쓰기", hadDe || (L.T("nav_info") == "Über" && L.T("nav_settings") == "Einstellungen"), L.T("nav_info"));
+            T("언어 파일: 잘못된 파일은 건너뛰고 이유 기록", L.LoadErrors.Count == 1 && L.LoadErrors[0].StartsWith("yy.json"), string.Join(" / ", L.LoadErrors.ToArray()));
+            L.WriteTemplate();
+            T("언어 파일: 번역용 틀 만들기", File.Exists(Path.Combine(ud, "_template.json")) && Json.ParseObject(File.ReadAllText(Path.Combine(ud, "_template.json"), Encoding.UTF8)).Count == L.Count + 2, "");
+        } finally {
+            try { File.Delete(fx); File.Delete(fbad); File.Delete(Path.Combine(ud, "_template.json")); if (!hadDe) File.Delete(fd); if (!hadDir) Directory.Delete(ud); } catch (Exception) { }
+            L.Load(); L.Lang = "ko";
+        }
         T("문구표: {0} 안 남음", !L.T("lbl_cores", 8).Contains("{0}") && !L.T("m_retry", "a", "b").Contains("{"), "");
         L.Lang = "ko";
 
@@ -106,6 +131,16 @@ public static class SelfTest {
         List<ObjItem> prep = Conversion.Prepare(cs, Conversion.BuildOptions(cs, "fast", ""), out err, out note);
         T("준비: 빠른 변환은 도구 없이 가능", prep != null && prep.Count == 1, err);
         T("준비: 없는 도구 목록", Conversion.MissingTools(cs).Count == 2, "");
+
+        // 5-1. 글꼴: fonts 폴더가 있으면 나눔스퀘어 네오, 중국어/일본어 글자는 대체 글꼴이 그린다
+        if (Theme.BundledFont) {
+            System.Windows.Media.GlyphTypeface gt;
+            bool nanum = new System.Windows.Media.Typeface(Theme.MakeFont(false), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal).TryGetGlyphTypeface(out gt)
+                && gt.FamilyNames.Values.Contains("NanumSquare Neo");
+            System.Windows.Media.GlyphTypeface gb;
+            bool bold = new System.Windows.Media.Typeface(Theme.MakeFont(false), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal).TryGetGlyphTypeface(out gb) && gb.Weight == FontWeights.Bold;
+            T("글꼴: 나눔스퀘어 네오 (보통/굵게)", nanum && bold, nanum + " " + bold);
+        }
 
         // 6. XAML 화면
         List<string> bad = new List<string>();

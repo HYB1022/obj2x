@@ -34,3 +34,6 @@ __pycache__/
 .vscode/
 Thumbs.db
 desktop.ini
+
+# 번역 검수용 표 (L 문구표에서 생성)
+translation_review.csv

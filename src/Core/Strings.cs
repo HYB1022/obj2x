@@ -1,70 +1,78 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Obj2x {
-// 문구표. 언어마다 표를 하나씩 들고 있고, 현재 언어에 맞는 문구를 돌려준다.
-// 언어를 늘리려면: Languages에 한 줄, Fill<언어>(StringsXx.cs), 아래 FillExtra와 TrFast에 그 언어 줄을 넣는다.
-public static partial class L {
+// 문구표. 언어마다 JSON 파일 하나(키 → 문구, "_name"은 그 언어로 쓴 언어 이름).
+//  1) 기본 언어는 저장소의 lang/*.json을 exe에 넣어 둔 것 (리소스 Obj2x.Lang.<코드>.json)
+//  2) exe 옆 lang 폴더의 <코드>.json을 그 위에 덮어쓴다. 새 코드면 언어가 추가되고, 있는 코드면 그 문구만 바뀐다.
+// 빠진 문구는 영어 → 한국어 순으로 대신 보여 준다.
+public static class L {
     public static string Lang = "ko";
-    // 지원 언어: { 코드, 그 언어로 쓴 이름 }
-    public static readonly string[][] Languages = new string[][] {
-        new string[] { "ko", "한국어" }, new string[] { "en", "English" }, new string[] { "de", "Deutsch" } };
+    // { 코드, 그 언어로 쓴 이름 } — 기본 언어가 먼저, 그다음 사용자 언어(코드 순)
+    public static string[][] Languages { get; private set; }
+    // 읽지 못한 사용자 언어 파일과 이유
+    public static readonly List<string> LoadErrors = new List<string>();
+    public static string UserDir { get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lang"); } }
+    static readonly string[] BuiltinOrder = new string[] { "ko", "en", "de", "ja", "zh" };
 
     static readonly Dictionary<string, Dictionary<string, string>> tables = new Dictionary<string, Dictionary<string, string>>();
-    static Dictionary<string, string> ko, en, de;
+    static readonly Dictionary<string, string> names = new Dictionary<string, string>();
+    static readonly List<string> builtin = new List<string>();
+    static Dictionary<string, string> ko = new Dictionary<string, string>(), en = new Dictionary<string, string>();
 
-    static L() {
-        ko = Table("ko"); en = Table("en"); de = Table("de");
-        FillKo(ko);
-        FillEn(en);
-        FillDe(de);
-        FillExtra();
-    }
-    static Dictionary<string, string> Table(string lang) { Dictionary<string, string> d = new Dictionary<string, string>(); tables[lang] = d; return d; }
+    static L() { Load(); }
 
-    // 한 키를 세 언어로 한 번에
-    static void X(string key, string k, string e, string g) { ko[key] = k; en[key] = e; de[key] = g; }
+    public static void Load() {
+        tables.Clear(); names.Clear(); builtin.Clear(); LoadErrors.Clear();
+        System.Reflection.Assembly asm = typeof(L).Assembly;
+        foreach (string res in asm.GetManifestResourceNames()) {
+            if (!res.StartsWith("Obj2x.Lang.") || !res.EndsWith(".json")) continue;
+            string code = res.Substring(11, res.Length - 16);
+            using (Stream s = asm.GetManifestResourceStream(res))
+            using (StreamReader r = new StreamReader(s, Encoding.UTF8)) Merge(code, Json.ParseObject(r.ReadToEnd()));
+            builtin.Add(code);
+        }
+        try {
+            if (Directory.Exists(UserDir)) {
+                string[] files = Directory.GetFiles(UserDir, "*.json");
+                Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+                foreach (string f in files) {
+                    string code = Path.GetFileNameWithoutExtension(f);
+                    if (code.StartsWith("_")) continue;          // _template.json 같은 것은 건너뛴다
+                    try { Merge(code.ToLowerInvariant(), Json.ParseObject(File.ReadAllText(f, Encoding.UTF8))); }
+                    catch (Exception ex) { LoadErrors.Add(Path.GetFileName(f) + ": " + ex.Message); }
+                }
+            }
+        } catch (Exception ex) { LoadErrors.Add(ex.Message); }
+        if (!tables.ContainsKey("ko")) tables["ko"] = new Dictionary<string, string>();
+        if (!tables.ContainsKey("en")) tables["en"] = new Dictionary<string, string>();
+        ko = tables["ko"]; en = tables["en"];
 
-    static void FillExtra() {
-        X("upd_nofile", "내려받은 파일에서 obj2x.exe 를 찾지 못했습니다.", "Could not find obj2x.exe in the downloaded file.", "obj2x.exe wurde in der heruntergeladenen Datei nicht gefunden.");
-        X("wiz_avail_head", "경로 누락/오류: {0}. ", "Missing/invalid: {0}. ", "Fehlend/ungültig: {0}. ");
-        X("wiz_avail_noblender", "Blender가 없어 DirectX → O3D와 .X 단독 방식이 비활성화되었습니다. ", "DirectX → O3D and .X-only are disabled. ", "DirectX → O3D und nur .X sind deaktiviert. ");
-        X("wiz_avail_noconv", "OmsiXConv가 없어 DirectX → O3D 방식이 비활성화되었습니다. ", "DirectX → O3D is disabled. ", "DirectX → O3D ist deaktiviert. ");
-        X("wiz_avail_tail", "설정에서 경로를 지정하세요. FastO3D는 실험적 기능으로 계속 사용할 수 있습니다.", "Set the paths in Settings. FastO3D is experimental and remains available.", "Legen Sie die Pfade in den Einstellungen fest. FastO3D ist experimentell und bleibt verfügbar.");
-        X("err_title", "obj2x", "obj2x", "obj2x");
-        X("lbl_cores_hint", "이 PC 논리 코어 {0}개", "{0} logical cores on this PC", "{0} logische Kerne auf diesem PC");
-        X("m_stopping", "중지하는 중...", "Stopping...", "Wird angehalten...");
-        X("m_x_stat", "Blender 변환 중... {0}", "Converting with Blender... {0}", "Konvertierung mit Blender... {0}");
-        X("lbl_recent_empty", "아직 선택한 폴더가 없습니다.", "No folders chosen yet.", "Noch keine Ordner ausgewählt.");
-        X("sum_yes", "예", "Yes", "Ja");
-        X("sum_no", "아니오", "No", "Nein");
-        X("sum_mode_std", "DirectX → O3D (권장)", "DirectX → O3D (Recommended)", "DirectX → O3D (empfohlen)");
-        X("sum_mode_fast", "FastO3D (실험적)", "FastO3D (experimental)", "FastO3D (experimentell)");
-        X("sum_mode_x", "Blender .x 단독", "Blender .x only", "Nur Blender .x");
-        X("sum_opt_inc", "변경된 것만", "changed only", "nur geänderte");
-        X("sum_opt_sub", "하위 폴더 포함", "subfolders", "Unterordner");
-        X("sum_opt_par", "동시 {0}개", "{0} at a time", "{0} gleichzeitig");
-        X("sum_opt_none", "기본", "default", "Standard");
-        X("upd_prompt",
-            "새 버전 v{0} 이(가) 있습니다. (현재 v{1})\r\n\r\n지금 다운로드해서 설치할까요?\r\n설정(obj2x.ini)은 그대로 유지되고, 기존 파일은 obj2x_backup 폴더에 보관됩니다.",
-            "Version v{0} is available (current v{1}).\r\n\r\nDownload and install it now?\r\nYour settings (obj2x.ini) are kept and the old files are backed up to the obj2x_backup folder.",
-            "Version v{0} ist verfügbar (aktuell v{1}).\r\n\r\nJetzt herunterladen und installieren?\r\nIhre Einstellungen (obj2x.ini) bleiben erhalten, die alten Dateien werden im Ordner obj2x_backup gesichert.");
-        X("upd_btn_install", "설치", "Install", "Installieren");
-        X("about_pill_update", "업데이트", "Update", "Update");
-        X("about_row_version", "버전", "Version", "Version");
-        X("about_row_update", "업데이트", "Updates", "Updates");
-        X("about_row_repo", "GitHub 저장소", "GitHub repository", "GitHub-Repository");
-        X("about_upd_idle", "눌러서 확인", "Click to check", "Zum Prüfen klicken");
-        X("about_upd_new", "새 버전 v{0} 설치 가능", "v{0} available - click to install", "v{0} verfügbar – zum Installieren klicken");
-        X("about_upd_row_title", "새 버전 v{0}", "Version v{0}", "Version v{0}");
-        X("about_upd_row_sub", "현재 v{0} · 설정은 그대로 유지됩니다", "Current v{0} · your settings are kept", "Aktuell v{0} · Ihre Einstellungen bleiben erhalten");
-        X("about_upd_installing", "설치 중...", "Installing...", "Wird installiert...");
-        X("err_selftest", "자가 검사 실패", "Self-test failed", "Selbsttest fehlgeschlagen");
+        List<string> codes = new List<string>(tables.Keys);
+        codes.Sort(delegate(string a, string b) {
+            int ia = Array.IndexOf(BuiltinOrder, a), ib = Array.IndexOf(BuiltinOrder, b);
+            if (ia < 0) ia = 100; if (ib < 0) ib = 100;
+            return ia != ib ? ia.CompareTo(ib) : string.CompareOrdinal(a, b);
+        });
+        List<string[]> list = new List<string[]>();
+        foreach (string c in codes) { string n; list.Add(new string[] { c, names.TryGetValue(c, out n) && n.Length > 0 ? n : c }); }
+        Languages = list.ToArray();
+        if (!Supported(Lang)) Lang = "ko";
     }
 
-    // 현재 언어 → 영어 → 한국어 순으로 찾는다 (새 언어에 빠진 문구가 있어도 빈칸이 되지 않게)
+    static void Merge(string code, Dictionary<string, string> d) {
+        Dictionary<string, string> t;
+        if (!tables.TryGetValue(code, out t)) { t = new Dictionary<string, string>(); tables[code] = t; }
+        foreach (KeyValuePair<string, string> kv in d) {
+            if (kv.Key == "_name") names[code] = kv.Value;
+            else if (!kv.Key.StartsWith("_")) t[kv.Key] = kv.Value;
+        }
+    }
+
+    // 현재 언어 → 영어 → 한국어 순으로 찾는다
     public static string T(string key) {
         string v;
         Dictionary<string, string> d;
@@ -79,21 +87,22 @@ public static partial class L {
         try { return string.Format(v, args); } catch (FormatException) { return v; }
     }
 
-    // 모든 언어의 문구표 키가 한국어와 같은지 확인 (다르면 빠진/남는 키 목록)
+    // 기본 언어들의 키가 한국어와 같은지 (다르면 빠진/남는 키 목록). 사용자 언어 파일은 일부만 있어도 된다.
     public static string Parity() {
         List<string> miss = new List<string>();
-        foreach (KeyValuePair<string, Dictionary<string, string>> t in tables) {
-            if (t.Value == ko) continue;
-            foreach (string k in ko.Keys) { if (!t.Value.ContainsKey(k)) miss.Add(t.Key + ":" + k); }
-            foreach (string k in t.Value.Keys) { if (!ko.ContainsKey(k)) miss.Add("ko:" + k + "(" + t.Key + ")"); }
+        foreach (string code in builtin) {
+            Dictionary<string, string> t = tables[code];
+            if (t == ko) continue;
+            foreach (string k in ko.Keys) { if (!t.ContainsKey(k)) miss.Add(code + ":" + k); }
+            foreach (string k in t.Keys) { if (!ko.ContainsKey(k)) miss.Add("ko:" + k + "(" + code + ")"); }
         }
         return string.Join(",", miss.ToArray());
     }
     public static int Count { get { return ko.Count; } }
-
+    public static int BuiltinCount { get { return builtin.Count; } }
     public static bool Has(string key) { return ko.ContainsKey(key); }
 
-    // 문구 안의 {0} 같은 자리 표시가 모든 언어에서 같은지 (다르면 키 목록)
+    // 문구 안의 {0} 같은 자리 표시가 모든 언어(사용자 파일 포함)에서 한국어와 같은지 (다르면 키 목록)
     public static string PlaceholderParity() {
         List<string> bad = new List<string>();
         foreach (KeyValuePair<string, Dictionary<string, string>> t in tables) {
@@ -113,36 +122,95 @@ public static partial class L {
         return string.Join("", h.ToArray());
     }
 
-    // OmsiXConv 실패 사유 키를 현재 언어 문구로
-    public static string Fail(string reason) {
-        return T(reason);
-    }
+    public static bool Supported(string lang) { return lang != null && tables.ContainsKey(lang); }
 
-    // 지원하는 언어 코드인지
-    public static bool Supported(string lang) {
-        foreach (string[] l in Languages) if (l[0] == lang) return true;
-        return false;
+    // 번역용 틀: lang 폴더에 _template.json(영어 문구 + 설명)을 만든다. 만든(또는 이미 있는) 폴더를 돌려준다.
+    public static string WriteTemplate() {
+        Directory.CreateDirectory(UserDir);
+        List<KeyValuePair<string, string>> items = new List<KeyValuePair<string, string>>();
+        items.Add(new KeyValuePair<string, string>("_name", "Language name in that language (e.g. Français)"));
+        items.Add(new KeyValuePair<string, string>("_help", "Copy this file as <code>.json (e.g. fr.json), translate the values, keep {0} {1} placeholders, then restart obj2x. Missing keys fall back to English."));
+        foreach (string k in ko.Keys) { string v; items.Add(new KeyValuePair<string, string>(k, en.TryGetValue(k, out v) ? v : ko[k])); }
+        File.WriteAllText(Path.Combine(UserDir, "_template.json"), Json.WriteObject(items), new UTF8Encoding(false));
+        return UserDir;
     }
+}
 
-    // FastO3D 경고/오류 원문(한국어)을 현재 언어로 바꿔 준다.
-    public static string TrFast(string s) {
-        if (s == null) return "";
-        if (Lang == "en") {
-            s = s.Replace("mtl 파일 없음", "mtl file not found");
-            s = Regex.Replace(s, "재질 '(.*?)'이 mtl에 없음", "material '$1' is not in the mtl");
-            s = Regex.Replace(s, @"오브젝트 (\d+)개가 하나로 합쳐짐", "$1 objects merged into one");
-            s = s.Replace("면(f)이 없음", "no faces (f) found");
-            s = Regex.Replace(s, @"정점 (\d+)개: 65535개를 넘어 지원하지 않음", "$1 vertices: more than 65535 is not supported");
-            s = Regex.Replace(s, @"삼각형 (\d+)개: 65535개를 넘어 지원하지 않음", "$1 triangles: more than 65535 is not supported");
-        } else if (Lang == "de") {
-            s = s.Replace("mtl 파일 없음", "mtl-Datei nicht gefunden");
-            s = Regex.Replace(s, "재질 '(.*?)'이 mtl에 없음", "Material '$1' ist nicht in der mtl");
-            s = Regex.Replace(s, @"오브젝트 (\d+)개가 하나로 합쳐짐", "$1 Objekte zu einem zusammengeführt");
-            s = s.Replace("면(f)이 없음", "keine Flächen (f) gefunden");
-            s = Regex.Replace(s, @"정점 (\d+)개: 65535개를 넘어 지원하지 않음", "$1 Eckpunkte: mehr als 65535 werden nicht unterstützt");
-            s = Regex.Replace(s, @"삼각형 (\d+)개: 65535개를 넘어 지원하지 않음", "$1 Dreiecke: mehr als 65535 werden nicht unterstützt");
+// 문구표용 아주 작은 JSON: 문자열 값만 있는 평평한 객체 하나를 읽고 쓴다
+public static class Json {
+    public static Dictionary<string, string> ParseObject(string s) {
+        Dictionary<string, string> d = new Dictionary<string, string>();
+        int i = 0;
+        Ws(s, ref i);
+        if (i < s.Length && s[i] == '﻿') { i++; Ws(s, ref i); }
+        Expect(s, ref i, '{');
+        Ws(s, ref i);
+        if (i < s.Length && s[i] == '}') return d;
+        while (true) {
+            Ws(s, ref i);
+            string k = Str(s, ref i);
+            Ws(s, ref i); Expect(s, ref i, ':'); Ws(s, ref i);
+            d[k] = Str(s, ref i);
+            Ws(s, ref i);
+            if (i < s.Length && s[i] == ',') { i++; Ws(s, ref i); if (i < s.Length && s[i] == '}') { i++; break; } continue; }
+            Expect(s, ref i, '}');
+            break;
         }
-        return s;
+        return d;
+    }
+    static void Ws(string s, ref int i) { while (i < s.Length && (char.IsWhiteSpace(s[i]) || s[i] == '﻿')) i++; }
+    static void Expect(string s, ref int i, char c) {
+        if (i >= s.Length || s[i] != c) throw new FormatException(string.Format("'{0}' expected at {1}", c, Pos(s, i)));
+        i++;
+    }
+    static string Pos(string s, int i) {
+        int line = 1, col = 1;
+        for (int k = 0; k < i && k < s.Length; k++) { if (s[k] == '\n') { line++; col = 1; } else col++; }
+        return "line " + line + ", column " + col;
+    }
+    static string Str(string s, ref int i) {
+        Expect(s, ref i, '"');
+        StringBuilder b = new StringBuilder();
+        while (true) {
+            if (i >= s.Length) throw new FormatException("unterminated string at " + Pos(s, i));
+            char c = s[i++];
+            if (c == '"') break;
+            if (c != '\\') { b.Append(c); continue; }
+            if (i >= s.Length) throw new FormatException("bad escape at " + Pos(s, i));
+            char e = s[i++];
+            switch (e) {
+                case 'n': b.Append("\r\n"); break;           // 화면에서는 Windows 줄바꿈
+                case 't': b.Append('\t'); break;
+                case 'r': break;
+                case 'b': b.Append('\b'); break;
+                case 'f': b.Append('\f'); break;
+                case 'u': b.Append((char)Convert.ToInt32(s.Substring(i, 4), 16)); i += 4; break;
+                default: b.Append(e); break;                 // \" \\ \/
+            }
+        }
+        return b.ToString();
+    }
+    public static string WriteObject(List<KeyValuePair<string, string>> items) {
+        StringBuilder sb = new StringBuilder("{\n");
+        for (int i = 0; i < items.Count; i++) {
+            sb.Append("  \"").Append(Esc(items[i].Key)).Append("\": \"").Append(Esc(items[i].Value)).Append('"');
+            sb.Append(i < items.Count - 1 ? ",\n" : "\n");
+        }
+        return sb.Append("}\n").ToString();
+    }
+    static string Esc(string s) {
+        StringBuilder b = new StringBuilder();
+        foreach (char c in s) {
+            switch (c) {
+                case '"': b.Append("\\\""); break;
+                case '\\': b.Append("\\\\"); break;
+                case '\n': b.Append("\\n"); break;
+                case '\r': break;
+                case '\t': b.Append("\\t"); break;
+                default: if (c < 0x20) b.AppendFormat("\\u{0:x4}", (int)c); else b.Append(c); break;
+            }
+        }
+        return b.ToString();
     }
 }
 }

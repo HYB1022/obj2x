@@ -2,7 +2,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x"
       Background="{DynamicResource Bg}" TextElement.FontFamily="{DynamicResource UiFont}" TextElement.FontSize="12"
-      TextElement.Foreground="{DynamicResource Text}" TextOptions.TextFormattingMode="Display">
+      TextElement.Foreground="{DynamicResource Text}" TextOptions.TextFormattingMode="Ideal">
   <!-- 메인 창 껍데기: 사이드바(아래에 버전/상태) + 페이지(창 높이 전체), 맨 위에 대화 상자 층 -->
   <Grid x:Name="Root">
     <Grid.ColumnDefinitions><ColumnDefinition Width="210"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

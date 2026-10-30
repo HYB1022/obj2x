@@ -19,7 +19,7 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 
 - 라이선스: GPL-3.0-or-later (v2.2까지는 MIT). 외부 코드를 가져올 때는 GPL과 호환되는 라이선스인지 확인한다.
 - **C# 5 / .NET Framework 4**: `csc.exe` v4.0.30319가 지원하는 문법만 쓴다. 문자열 보간 `$""`, `?.`, `nameof`, 식 본문 멤버(`=>`), 자동 속성 초기값, `out var`, 튜플 문법은 컴파일되지 않는다. 람다 대신 `delegate { }`를 쓰는 기존 스타일을 따른다.
-- 외부 의존성 없음. 참조는 .NET Framework에 들어 있는 WPF(`PresentationFramework` 등)와 `System.IO.Compression`뿐이다. WinForms는 쓰지 않는다(폴더 선택도 `FolderPicker`의 Windows 기본 창).
+- 외부 의존성 없음. 참조는 .NET Framework에 들어 있는 WPF(`PresentationFramework` 등)와 `System.IO.Compression`뿐이다. 글꼴은 `fonts/`(나눔스퀘어 네오, SIL OFL 1.1 — `fonts/OFL.txt`)를 exe 옆에 두고 읽는다. 릴리스 zip에도 `fonts` 폴더를 넣는다. WinForms는 쓰지 않는다(폴더 선택도 `FolderPicker`의 Windows 기본 창).
 - **XAML은 실행할 때 `XamlReader`로 읽는다**(MSBuild 없이 빌드하려고). 그래서:
   - XAML 오류는 컴파일할 때 잡히지 않는다. 고친 뒤 `--selftest`의 "XAML: 모든 화면 읽기"로 확인한다.
   - `x:Class`, 이벤트 속성(`Click="..."`)을 쓸 수 없다. 동작은 ViewModel의 명령(`Command="{Binding ...}"`)으로, 화면 쪽 처리는 C# 컨트롤/첨부 속성(`ui:Behave`)으로 한다.
@@ -41,7 +41,7 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 | `Conversion.cs` | 변환 전 검사와 준비: 도구 경로 확인, 옵션 만들기, 대상 obj 고르기 |
 | `Updater.cs` | GitHub 최신 릴리스 확인, zip 받아서 exe 교체 |
 | `Settings.cs` | `obj2x.ini` 읽기/쓰기 |
-| `Strings.cs`, `StringsData.cs`, `StringsDe.cs` | 문구표 `L.T("키")` (한국어/영어/독일어). 새 문구는 모든 언어에 추가한다(`--selftest`가 빠진 키와 `{0}` 불일치를 잡는다). 언어를 늘리려면 `L.Languages`에 한 줄, `Fill<언어>` 표, `FillExtra`의 `X(...)`와 `TrFast`에 그 언어를 넣는다 |
+| `Strings.cs` | 문구표 `L.T("키")`와 작은 JSON 읽기/쓰기. 문구는 저장소의 `lang/<코드>.json`(ko/en/de/ja/zh)에 있고 빌드 때 exe에 들어간다. exe 옆 `lang` 폴더의 `<코드>.json`이 그 위에 덮어쓴다(새 언어 추가/일부 수정). 새 문구는 `lang/*.json` 모두에 넣는다(`--selftest`가 빠진 키와 `{0}` 불일치를 잡는다) |
 | `Win32.cs` | OmsiXConv 창 찾기/조작 P/Invoke |
 
 ### `src/App` (네임스페이스 `Obj2x.UI`) — WPF 화면
@@ -62,6 +62,6 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 ## 릴리스
 
 - 버전은 `src/Core/AppInfo.cs`의 `Version`에서 바꾸고, README의 변경 내역에도 적는다.
-- 자동 업데이트는 최신 릴리스의 `.zip` 첨부 파일을 받아 exe를 교체한다. 릴리스 zip `obj2x.zip`에는 `obj2x.exe`, `obj2x.bat`, `obj2x.py`, `obj2x_gui.ps1`, `LICENSE`를 같은 폴더(최상위)에 넣는다. GPL-3.0이라 바이너리와 함께 라이선스 원문을 배포해야 한다.
+- 자동 업데이트는 최신 릴리스의 `.zip` 첨부 파일을 받아 exe를 교체한다. 릴리스 zip `obj2x.zip`에는 `obj2x.exe`, `obj2x.bat`, `obj2x.py`, `obj2x_gui.ps1`, `LICENSE`, `fonts\`를 같은 폴더(최상위)에 넣는다. `lang` 폴더는 넣지 않는다(사용자가 만든 언어 파일을 덮어쓰지 않게). GPL-3.0이라 바이너리와 함께 라이선스 원문을 배포해야 한다.
   - C# 업데이터는 zip 안의 `obj2x.exe`를, v2.0 이하의 PowerShell 업데이터는 `obj2x_gui.ps1`을 찾아 그 폴더를 덮어쓴 뒤 `obj2x.bat`을 실행한다. `obj2x_gui.ps1`(exe 런처)을 빼면 v2.0 사용자의 업데이트가 실패한다.
 - `obj2x.exe`와 `obj2x.ini`는 저장소에 넣지 않는다(`.gitignore`). exe는 릴리스 zip으로만 배포한다.

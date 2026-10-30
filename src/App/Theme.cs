@@ -63,10 +63,25 @@ public static class Theme {
             BnBg = C(255, 240, 186); BnBorder = C(224, 168, 16); BnText = C(33, 28, 10);
             BnBtnBg = C(30, 24, 10); BnBtnFg = Colors.White; BnBtnHov = C(62, 52, 28);
         }
-        Font = sysFont ? SystemFonts.MessageFontFamily : new FontFamily("Malgun Gothic");
+        Font = MakeFont(sysFont);
         Push();
         if (Changed != null) Changed();
     }
+
+    // 글꼴: exe 옆 fonts 폴더의 나눔스퀘어 네오(없으면 설치된 것, 그것도 없으면 맑은 고딕).
+    // 나눔스퀘어 네오에는 한자/가나가 없어서 중국어/일본어일 땐 그 언어 글꼴이 먼저 대신 그리게 한다.
+    public static FontFamily MakeFont(bool sysFont) {
+        string cjk = L.Lang == "zh" ? "Microsoft YaHei UI, Microsoft YaHei, " : (L.Lang == "ja" ? "Yu Gothic UI, Meiryo UI, Meiryo, " : "");
+        string tail = cjk + "Malgun Gothic, Microsoft YaHei UI, Yu Gothic UI, Segoe UI";
+        try {
+            if (sysFont) return new FontFamily(SystemFonts.MessageFontFamily.Source + ", " + tail);
+            string dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts");
+            if (System.IO.File.Exists(System.IO.Path.Combine(dir, "NanumSquareNeo-bRg.ttf")))
+                return new FontFamily(new Uri(dir + System.IO.Path.DirectorySeparatorChar), "./#NanumSquare Neo, " + tail);
+        } catch (Exception) { }
+        return new FontFamily("NanumSquare Neo, " + tail);
+    }
+    public static bool BundledFont { get { return System.IO.File.Exists(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fonts", "NanumSquareNeo-bRg.ttf")); } }
 
     // 앱 리소스에 브러시로 넣는다
     static void Push() {

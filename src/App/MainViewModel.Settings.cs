@@ -13,6 +13,7 @@ public partial class MainViewModel {
     public ICommand BrowseBlenderCmd { get; private set; }
     public ICommand BrowseConvCmd { get; private set; }
     public ICommand OpenBackupCmd { get; private set; }
+    public ICommand LangFolderCmd { get; private set; }
     public ICommand CleanTempCmd { get; private set; }
 
     void InitSettings() {
@@ -25,6 +26,10 @@ public partial class MainViewModel {
         BrowseConvCmd = new Cmd(delegate {
             string f = ui.PickFile(L.T("lbl_conv_path"), "OmsiXConv.exe|OmsiXConv.exe|Executable (*.exe)|*.exe", ConvPath);
             if (f != null) ConvPath = f;
+        });
+        // 번역용 틀(_template.json)을 만들고 lang 폴더를 연다
+        LangFolderCmd = new Cmd(delegate {
+            try { Process.Start(L.WriteTemplate()); } catch (Exception ex) { ui.Msg(ex.Message); }
         });
         OpenBackupCmd = new Cmd(delegate {
             try { if (!Directory.Exists(BackupPath)) Directory.CreateDirectory(BackupPath); Process.Start(BackupPath); } catch (Exception) { }
@@ -56,7 +61,7 @@ public partial class MainViewModel {
             if (value == null || value == S.Lang) return;
             bool known = false; foreach (string[] l in L.Languages) if (l[0] == value) known = true;
             if (!known) return;
-            S.Lang = value; Loc.SetLang(value); S.Save();
+            S.Lang = value; Loc.SetLang(value); ui.ApplyLook(); S.Save();
         }
     }
     public string ThemeName { get { return S.Theme; } set { if (value == S.Theme) return; S.Theme = value; ui.ApplyLook(); S.Save(); Raise("ThemeName"); } }
