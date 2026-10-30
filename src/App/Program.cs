@@ -21,7 +21,9 @@ public static class Program {
         for (int i = 0; i < args.Length; i++) {
             if (args[i] == "--fps") { fps = true; fpsNav = i + 1 < args.Length && args[i + 1] == "nav"; }
             if (i + 1 < args.Length && args[i] == "--page") startPage = args[i + 1];
-            if (args[i] == "--selftest" || args[i] == "/selftest") return SelfTest.Run(here);
+            // --selftest [결과 파일]: 결과 파일을 주면 exe 폴더 대신 거기에 쓴다 (개발자 옵션의 '자체 점검 실행')
+            if (args[i] == "--selftest" || args[i] == "/selftest")
+                return SelfTest.Run(here, i + 1 < args.Length && !args[i + 1].StartsWith("-") ? args[i + 1] : Path.Combine(here, "obj2x_selftest.txt"));
             if (i + 1 < args.Length && args[i] == "--shots") return Shots.Run(args[i + 1]);
             if (i + 1 < args.Length && args[i] == "--readme-shots") return Shots.Readme(args[i + 1]);
             if (i + 1 < args.Length && args[i] == "--welcome-frames") return Shots.WelcomeFrames(args[i + 1], i + 2 < args.Length ? args[i + 2] : "light");

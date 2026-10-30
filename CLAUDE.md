@@ -28,6 +28,7 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
   - 문구는 `{ui:Tr 키}`, 색은 `{DynamicResource 이름}`(Theme.cs가 넣는 브러시)으로 쓴다. 스타일 키를 브러시 이름(`Card`, `Btn` 등)과 같게 지으면 브러시가 대신 잡히므로 겹치지 않게 한다.
 - **성능**: 직접 그리는 컨트롤(`OnRender`)에서는 `new SolidColorBrush`/`new Pen` 대신 `Theme.Brush(색)`/`Art.Pen`/`Art.RoundPen`(캐시)을 쓴다. 애니메이션은 화면 주사율(보통 60fps)에 맞춰 `CompositionTarget.Rendering`이나 WPF 애니메이션으로 돌린다. `Rendering`은 구독만 해도 WPF가 매 프레임 다시 그리므로, 끝나면 바로 구독을 끊고(`AboutHero`) 계속 도는 것은 창이 비활성/최소화면 멈춘다(`HeroBackdrop`). 움직이는 요소는 레이아웃 속성(`Canvas.Top` 등) 대신 `RenderTransform`/`Opacity`를 애니메이션한다.
 - **애니메이션 시간은 모두 개발자 옵션의 배율(`Motion.Scale`)을 따라야 한다.** C#은 `Motion.D(초)`를 쓰고, 프레임마다 도는 것은 경과 시간을 `Motion.Scale`로 나눈다. XAML에는 스토리보드(`Duration="..."`)를 쓰지 않는다. 트리거에서 `ui:Anim.Opacity`/`ui:Anim.X`/`ui:Anim.Angle`을 Setter로 바꾸면 `Effects.cs`가 배율대로 움직인다. 누름 효과(누른 지점에서 퍼지는 물결)는 템플릿에 `<ui:Ripple/>`, 직접 그리는 컨트롤은 `RippleFx`를 쓴다.
+- **백신 오진 주의**: 서명이 없는 exe라서 Windows Defender의 머신러닝 진단(`...!ml`)에 걸리기 쉽다. exe가 자기 자신을 다른 폴더(특히 `%TEMP%`)에 복사해서 실행하거나 창 없이 띄우는 코드를 넣지 않는다(v2.7.1이 `Trojan:Win32/Bearfoos.A!ml`로 오진됨). 릴리스 전에 `"C:\Program Files\Windows Defender\MpCmdRun.exe" -Scan -ScanType 3 -File <exe> -DisableRemediation`으로 검사해 본다.
 - 변환 스레드에서 화면으로 보내는 일은 `IUi.Post`로 보낸다. `MainWindow`가 모아서 Background 우선순위로 한 번에 처리하고, 로그도 줄을 모아 한 번에 붙인다.
 - `obj2x.py`는 **Blender 2.79b**(Python 3.5)에서 `blender -b -P obj2x.py -- <obj 폴더> <x 폴더> [작업 파일]`로 실행된다. f-string을 쓰지 않는다.
 
@@ -60,7 +61,8 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 | `Theme.cs` | 라이트/다크 × 인디고/틸/로즈 팔레트 → 앱 리소스 브러시, 브러시 캐시, 테마 전환 크로스페이드 |
 | `Dialogs.cs` | 창 안에 어둡게 깔리는 대화 상자(메시지, 면책 조항, 선택 목록) |
 | `Mvvm.cs` | `Observable`, `Cmd`, `Loc`/`Tr`(문구 바인딩), `Xaml`(리소스 XAML 읽기), `UiTree`, `Pump` |
-| `SelfTest.cs`, `Shots.cs` | `--selftest`, `--shots`, `--readme-shots` |
+| `SelfTest.cs`, `Shots.cs` | `--selftest [결과 파일]`, `--shots`, `--readme-shots` |
+| `AssemblyInfo.cs` | exe 파일 정보(이름/버전/회사/설명). 버전은 `AppInfo.Version`을 따른다 |
 
 ## 릴리스
 

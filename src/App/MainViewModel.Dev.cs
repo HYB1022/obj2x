@@ -112,23 +112,19 @@ public partial class MainViewModel {
     void RunSelfTest() {
         if (selfTesting) return;
         selfTesting = true; Raise("SelfTestValue"); CommandManager.InvalidateRequerySuggested();
+        // 이 exe를 그 자리에서 --selftest로 한 번 더 실행하고, 결과만 임시 폴더의 파일로 받는다.
+        // (예전처럼 exe를 임시 폴더에 복사해서 숨겨 실행하면 Windows Defender가 악성 코드로 오진했다)
         string exe = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        string dir = Path.Combine(Path.GetTempPath(), "obj2x_devtest");
+        string result = Path.Combine(Path.GetTempPath(), "obj2x_selftest_" + Process.GetCurrentProcess().Id + ".txt");
         Thread th = new Thread(delegate() {
             int pass = 0, fail = 0; string err = null;
             try {
-                Directory.CreateDirectory(dir);
-                // 자체 점검은 결과를 exe 폴더에 쓰므로 임시 폴더에 exe와 글꼴을 복사해서 돌린다
-                string copy = Path.Combine(dir, "obj2x.exe");
-                File.Copy(exe, copy, true);
-                string fonts = Path.Combine(Here, "fonts");
-                if (Directory.Exists(fonts)) {
-                    Directory.CreateDirectory(Path.Combine(dir, "fonts"));
-                    foreach (string f in Directory.GetFiles(fonts)) File.Copy(f, Path.Combine(dir, "fonts", Path.GetFileName(f)), true);
-                }
-                ProcessStartInfo psi = new ProcessStartInfo(copy, "--selftest"); psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.WorkingDirectory = dir;
+                if (File.Exists(result)) File.Delete(result);
+                ProcessStartInfo psi = new ProcessStartInfo(exe, "--selftest \"" + result + "\""); psi.UseShellExecute = false; psi.WorkingDirectory = Here;
                 using (Process p = Process.Start(psi)) p.WaitForExit(120000);
-                foreach (string line in File.ReadAllLines(Path.Combine(dir, "obj2x_selftest.txt"))) {
+                string[] lines = File.ReadAllLines(result);
+                try { File.Delete(result); } catch (Exception) { }
+                foreach (string line in lines) {
                     if (line.StartsWith("PASS")) pass++;
                     else if (line.StartsWith("FAIL")) fail++;
                 }

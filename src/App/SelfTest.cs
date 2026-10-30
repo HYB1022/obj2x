@@ -42,7 +42,7 @@ public static class SelfTest {
         sb.AppendLine(line); Console.WriteLine(line);
     }
 
-    public static int Run(string here) {
+    public static int Run(string here, string outFile) {
         Motion.Off = true;
         string root = Path.Combine(Path.GetTempPath(), "obj2x_selftest_cs");
         try { if (Directory.Exists(root)) Directory.Delete(root, true); } catch (Exception) { }
@@ -333,7 +333,7 @@ public static class SelfTest {
 
         sb.AppendLine(fail == 0 ? "ALL PASS" : (fail + " FAILED"));
         Console.WriteLine(fail == 0 ? "ALL PASS" : (fail + " FAILED"));
-        try { File.WriteAllText(Path.Combine(here, "obj2x_selftest.txt"), sb.ToString(), new UTF8Encoding(true)); } catch (Exception) { }
+        try { File.WriteAllText(outFile, sb.ToString(), new UTF8Encoding(true)); } catch (Exception) { }
         return fail == 0 ? 0 : 1;
     }
 }
