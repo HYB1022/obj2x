@@ -12,6 +12,7 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 - 자체 점검: `obj2x.exe --selftest`. 문구표, 설정, FastO3D, 엔진(중지 포함), 변환 준비, 모든 XAML 읽기, 메인 창 + ViewModel(페이지/테마/언어/마법사/면책/업데이트 표시)을 점검하고 결과를 `obj2x_selftest.txt`에 `PASS`/`FAIL` 줄로 남긴다. 코드를 바꾼 뒤 빌드하고 이것부터 돌린다.
 - 스크린샷: `obj2x.exe --shots <폴더>` (개발용, 모든 화면을 PNG로 저장). 창 내용을 직접 그려 저장하므로 가려져도 된다. 애니메이션은 꺼진 상태로 찍힌다.
 - 시작 페이지 지정: `obj2x.exe --page about` (개발용, 성능 측정 등).
+- 프레임 측정: `obj2x.exe --fps [--page about]` 또는 `--fps nav`(0.4초마다 페이지 전환)로 3초간 프레임 간격을 `obj2x_fps.txt`에 남긴다. 창이 활성이어야 정보 화면 배경이 움직인다.
 - README 화면: `obj2x.exe --readme-shots <폴더>`로 찍어서 `docs/images/`에 넣는다. 사용자 경로가 보이는 화면은 찍지 않는다.
 
 ## 제약
@@ -24,7 +25,7 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
   - `x:Class`, 이벤트 속성(`Click="..."`)을 쓸 수 없다. 동작은 ViewModel의 명령(`Command="{Binding ...}"`)으로, 화면 쪽 처리는 C# 컨트롤/첨부 속성(`ui:Behave`)으로 한다.
   - 사용자 컨트롤은 `xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x"`로 쓴다. 출력 exe 이름이 `obj2x`여야 한다.
   - 문구는 `{ui:Tr 키}`, 색은 `{DynamicResource 이름}`(Theme.cs가 넣는 브러시)으로 쓴다. 스타일 키를 브러시 이름(`Card`, `Btn` 등)과 같게 지으면 브러시가 대신 잡히므로 겹치지 않게 한다.
-- **성능**: 직접 그리는 컨트롤(`OnRender`)에서는 `new SolidColorBrush`/`new Pen` 대신 `Theme.Brush(색)`/`Art.Pen`/`Art.RoundPen`(캐시)을 쓴다. 계속 움직이는 것은 `CompositionTarget.Rendering`을 구독만 해도 WPF가 매 프레임 다시 그리므로, 끝나면 바로 구독을 끊거나(`AboutHero`) 낮은 빈도의 타이머를 쓴다(`HeroBackdrop`, 창이 비활성/최소화면 멈춤).
+- **성능**: 직접 그리는 컨트롤(`OnRender`)에서는 `new SolidColorBrush`/`new Pen` 대신 `Theme.Brush(색)`/`Art.Pen`/`Art.RoundPen`(캐시)을 쓴다. 애니메이션은 화면 주사율(보통 60fps)에 맞춰 `CompositionTarget.Rendering`이나 WPF 애니메이션으로 돌린다. `Rendering`은 구독만 해도 WPF가 매 프레임 다시 그리므로, 끝나면 바로 구독을 끊고(`AboutHero`) 계속 도는 것은 창이 비활성/최소화면 멈춘다(`HeroBackdrop`). 움직이는 요소는 레이아웃 속성(`Canvas.Top` 등) 대신 `RenderTransform`/`Opacity`를 애니메이션한다.
 - 변환 스레드에서 화면으로 보내는 일은 `IUi.Post`로 보낸다. `MainWindow`가 모아서 Background 우선순위로 한 번에 처리하고, 로그도 줄을 모아 한 번에 붙인다.
 - `obj2x.py`는 **Blender 2.79b**(Python 3.5)에서 `blender -b -P obj2x.py -- <obj 폴더> <x 폴더> [작업 파일]`로 실행된다. f-string을 쓰지 않는다.
 

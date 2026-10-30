@@ -16,9 +16,10 @@ public static class Program {
             e.Handled = true;
         };
 
-        // 개발용: --selftest, --shots 폴더, --readme-shots 폴더, --page 이름(시작 페이지)
-        string startPage = null;
+        // 개발용: --selftest, --shots 폴더, --readme-shots 폴더, --page 이름(시작 페이지), --fps (프레임 측정을 obj2x_fps.txt에)
+        string startPage = null; bool fps = false, fpsNav = false;
         for (int i = 0; i < args.Length; i++) {
+            if (args[i] == "--fps") { fps = true; fpsNav = i + 1 < args.Length && args[i + 1] == "nav"; }
             if (i + 1 < args.Length && args[i] == "--page") startPage = args[i + 1];
             if (args[i] == "--selftest" || args[i] == "/selftest") return SelfTest.Run(here);
             if (i + 1 < args.Length && args[i] == "--shots") return Shots.Run(args[i + 1]);
@@ -35,6 +36,10 @@ public static class Program {
             MainWindow mw = new MainWindow(s, here, !firstRun);
             mw.Closed += delegate { s.Save(); app.Shutdown(); };
             if (startPage != null) mw.Loaded += delegate { mw.VM.Page = startPage; };
+            if (fps) mw.Loaded += delegate {
+                int n = 0; string[] cyc = new string[] { "wizard", "advanced", "settings", "dashboard" };
+                FrameMeter.Start(mw, Path.Combine(here, "obj2x_fps.txt"), fpsNav ? (Action)delegate { mw.VM.Page = cyc[n++ % cyc.Length]; } : null);
+            };
             mw.Show();
         };
         if (firstRun) {

@@ -19,7 +19,7 @@
           </DockPanel>
         </StackPanel>
         <Canvas x:Name="PillLayer">
-          <Border x:Name="NavPill" Width="186" Height="38" Canvas.Left="12" Canvas.Top="70" CornerRadius="12" BorderThickness="1"
+          <Border x:Name="NavPill" Width="186" Height="38" Canvas.Left="12" Canvas.Top="0" CornerRadius="12" BorderThickness="1"
                   Background="{DynamicResource NavPill}" BorderBrush="{DynamicResource NavPillBdr}"/>
         </Canvas>
         <StackPanel x:Name="NavList">

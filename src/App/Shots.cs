@@ -7,6 +7,45 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace Obj2x.UI {
+// 개발용: 2초 기다린 뒤 3초 동안 프레임 간격을 재서 파일로 남긴다 (obj2x.exe --fps [--page about])
+// step이 있으면 재는 동안 0.4초마다 불러서 페이지 전환 같은 애니메이션을 일으킨다 (--fps nav)
+public static class FrameMeter {
+    public static void Start(Window w, string path) { Start(w, path, null); }
+    public static void Start(Window w, string path, Action step) {
+        System.Collections.Generic.List<double> t = new System.Collections.Generic.List<double>();
+        System.Collections.Generic.List<double> steps = new System.Collections.Generic.List<double>();
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+        bool rec = false;
+        EventHandler h = delegate(object o, EventArgs e) { if (rec) t.Add(sw.Elapsed.TotalMilliseconds); };
+        System.Windows.Threading.DispatcherTimer a = new System.Windows.Threading.DispatcherTimer(), b = new System.Windows.Threading.DispatcherTimer(), c = new System.Windows.Threading.DispatcherTimer();
+        a.Interval = TimeSpan.FromSeconds(2); b.Interval = TimeSpan.FromSeconds(3); c.Interval = TimeSpan.FromSeconds(0.4);
+        c.Tick += delegate { steps.Add(sw.Elapsed.TotalMilliseconds); step(); };
+        a.Tick += delegate { a.Stop(); CompositionTarget.Rendering += h; rec = true; b.Start(); if (step != null) c.Start(); };
+        b.Tick += delegate {
+            b.Stop(); c.Stop(); rec = false; CompositionTarget.Rendering -= h;
+            string r;
+            if (step == null) {
+                double max = 0; int slow = 0;
+                for (int i = 1; i < t.Count; i++) { double g = t[i] - t[i - 1]; if (g > max) max = g; if (g > 20) slow++; }
+                double span = t.Count > 1 ? t[t.Count - 1] - t[0] : 1;
+                r = string.Format("frames={0} fps={1:0.0} maxGap={2:0.0}ms gaps>20ms={3}", t.Count, (t.Count - 1) / (span / 1000), max, slow);
+            } else {
+                // 전환마다: 누른 뒤 첫 프레임까지 걸린 시간, 그 뒤 0.26초 애니메이션 동안의 프레임 간격
+                double firstMax = 0, firstSum = 0, gapMax = 0; int frames = 0, slow = 0, n = 0;
+                foreach (double s0 in steps) {
+                    int i = t.FindIndex(delegate(double x) { return x > s0; });
+                    if (i < 0) continue;
+                    n++; double first = t[i] - s0; firstSum += first; if (first > firstMax) firstMax = first;
+                    for (int j = i + 1; j < t.Count && t[j] <= t[i] + 260; j++) { double g = t[j] - t[j - 1]; frames++; if (g > gapMax) gapMax = g; if (g > 20) slow++; }
+                }
+                r = string.Format("switches={0} firstFrame avg={1:0.0}ms max={2:0.0}ms | anim frames={3} maxGap={4:0.0}ms gaps>20ms={5}", n, n > 0 ? firstSum / n : 0, firstMax, frames, gapMax, slow);
+            }
+            File.WriteAllText(path, r + " active=" + w.IsActive);
+        };
+        a.Start();
+    }
+}
+
 // 개발용: 화면을 PNG로 저장한다 (obj2x.exe --shots 폴더, --readme-shots 폴더)
 // 화면을 복사하지 않고 창 내용을 직접 그려서 저장하므로, 다른 창에 가려져도 같은 결과가 나온다.
 public static class Shots {

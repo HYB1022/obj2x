@@ -19,8 +19,9 @@ public class WelcomeWindow : Window {
     readonly TextBlock title = new TextBlock(), gLang = new TextBlock(), gView = new TextBlock(), lblLang = new TextBlock(), lblView = new TextBlock();
     readonly StackPanel rowLang = new StackPanel(), rowView = new StackPanel();
     readonly Button start = new Button();
-    readonly DispatcherTimer tm = new DispatcherTimer();
-    int tick;
+    readonly System.Diagnostics.Stopwatch clock = new System.Diagnostics.Stopwatch();
+    bool ticking;
+    const double Cycle = 2.4, Fade = 0.32;     // 인사말 하나가 머무는 시간 / 나타나고 사라지는 시간(초)
     bool finished;
     static readonly string[] Greetings = new string[] { "안녕하세요", "Hello", "Hallo" };
     public DialogHost LastDialog;
@@ -39,6 +40,8 @@ public class WelcomeWindow : Window {
 
         tile.Width = tile.Height = 150;
         title.FontSize = Art.Pt(30); title.FontWeight = FontWeights.Bold;
+        title.Width = 420; title.TextAlignment = TextAlignment.Center;   // 로고 가운데 아래에 맞춘다
+        title.SetResourceReference(TextBlock.ForegroundProperty, "Text");
         FontFamily glyph = new FontFamily("Segoe MDL2 Assets");
         gLang.Text = ""; gView.Text = "";
         foreach (TextBlock g in new TextBlock[] { gLang, gView }) { g.FontFamily = glyph; g.FontSize = Art.Pt(20); g.Width = 44; g.TextAlignment = TextAlignment.Center; g.VerticalAlignment = VerticalAlignment.Center; }
@@ -58,11 +61,9 @@ public class WelcomeWindow : Window {
         gView.MouseLeftButtonUp += pickView; lblView.MouseLeftButtonUp += pickView;
         start.Click += delegate { OnStart(); };
         SizeChanged += delegate { DoLayout(); };
-        tm.Interval = TimeSpan.FromMilliseconds(40);
-        tm.Tick += delegate { tick++; TickTitle(); };
-        Loaded += delegate { tm.Start(); DoLayout(); };
+        Loaded += delegate { StartTicking(); DoLayout(); };
         SourceInitialized += delegate { Theme.TitleBar(this); };
-        Closed += delegate { tm.Stop(); if (!finished) { finished = true; if (Done != null) Done(false); } };
+        Closed += delegate { StopTicking(); if (!finished) { finished = true; if (Done != null) Done(false); } };
         ApplyAll();
     }
 
@@ -77,18 +78,26 @@ public class WelcomeWindow : Window {
         TickTitle();
     }
 
+    // 화면이 새로 그려질 때마다(보통 60fps) 지난 시간으로 투명도를 계산한다
+    void StartTicking() { if (ticking) return; ticking = true; clock.Start(); CompositionTarget.Rendering += OnFrame; }
+    void StopTicking() { if (!ticking) return; ticking = false; clock.Stop(); CompositionTarget.Rendering -= OnFrame; }
+    void OnFrame(object s, EventArgs e) { TickTitle(); }
+
     void TickTitle() {
-        int cyc = tick % 60;
-        double a = Math.Max(0, Math.Min(1.0, Math.Min(cyc / 8.0, (60 - cyc) / 8.0)));
-        title.Text = Greetings[(tick / 60) % Greetings.Length];
-        title.Foreground = Theme.Brush(Theme.Mix(Theme.Bg, Theme.Text, a));
+        double t = clock.Elapsed.TotalSeconds;
+        int idx = (int)(t / Cycle) % Greetings.Length;
+        double c = t % Cycle;
+        double a = Math.Max(0, Math.Min(1.0, Math.Min(c / Fade, (Cycle - c) / Fade)));
+        a = a * a * (3 - 2 * a);                   // 부드러운 가감속
+        if (title.Text != Greetings[idx]) title.Text = Greetings[idx];
+        title.Opacity = a;
     }
 
     void DoLayout() {
         double fw = ActualWidth > 0 ? ((FrameworkElement)Content).ActualWidth : Width, fh = ActualHeight > 0 ? ((FrameworkElement)Content).ActualHeight : Height;
         double lx = fw * 0.14, ty = fh * 0.24;
         Place(tile, lx + 14, ty + 14);
-        Place(title, lx + 4, ty + 224);
+        Place(title, lx + 14 + 75 - title.Width / 2, ty + 224);   // 로고(150px) 가운데 기준
         double rx = fw * 0.56, ry = fh * 0.56;
         Place(rowLang, rx, ry);
         Place(rowView, rx, ry + 72);

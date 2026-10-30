@@ -59,6 +59,7 @@ public class MainWindow : Window, IUi {
         Loaded += delegate {
             UpdateZoom();
             MovePill(shown, false);
+            PreloadPages();
             if (S.UpdCheck) VM.StartUpdateCheck();
             if (this.upgrade && S.NeedDisclaimer()) Disclaimer(false, null);
         };
@@ -91,10 +92,20 @@ public class MainWindow : Window, IUi {
         FrameworkElement p;
         if (pages.TryGetValue(name, out p)) return p;
         p = (FrameworkElement)Xaml.Load(char.ToUpper(name[0]) + name.Substring(1) + ".xaml");
-        p.Visibility = Visibility.Collapsed;
+        // Collapsed가 아니라 Hidden: 숨겨 둔 동안에도 크기 계산이 유지되어 다시 보일 때 레이아웃을 새로 하지 않는다
+        p.Visibility = Visibility.Hidden;
         p.RenderTransform = new TranslateTransform();
         pages[name] = p; pageHost.Children.Add(p);
         return p;
+    }
+
+    // 시작한 뒤 한가할 때 나머지 페이지를 하나씩 미리 만들어 둔다 (처음 열 때 XAML을 읽느라 끊기지 않게)
+    void PreloadPages() {
+        foreach (string n in PageNames) {
+            if (pages.ContainsKey(n)) continue;
+            string name = n;
+            Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(delegate { Page(name); }));
+        }
     }
     public int OverlayCount { get { return overlay.Children.Count; } }
 
@@ -103,12 +114,17 @@ public class MainWindow : Window, IUi {
         if (Array.IndexOf(PageNames, name) < 0) return;
         FrameworkElement np = Page(name);
         if (name != shown) {
-            pages[shown].Visibility = Visibility.Collapsed;
+            pages[shown].Visibility = Visibility.Hidden;
             np.Visibility = Visibility.Visible;
             if (!Motion.Off) {
+                // 전환하는 동안만 페이지를 비트맵 한 장으로 굳혀서 그래픽카드가 옮기게 한다 (글자/상자를 매 프레임 다시 그리지 않음)
+                BitmapCache cache = new BitmapCache(zoom.ScaleX); cache.SnapsToDevicePixels = true;
+                np.CacheMode = cache;
+                FrameworkElement page = np;
                 DoubleAnimation fade = new DoubleAnimation(0, 1, Motion.D(0.24));
                 DoubleAnimation rise = new DoubleAnimation(14, 0, Motion.D(0.24));
                 rise.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+                rise.Completed += delegate { page.CacheMode = null; };
                 np.BeginAnimation(OpacityProperty, fade);
                 ((TranslateTransform)np.RenderTransform).BeginAnimation(TranslateTransform.YProperty, rise);
             }
@@ -122,10 +138,12 @@ public class MainWindow : Window, IUi {
         NavItem ni = shell.FindName("Nav_" + page) as NavItem;
         if (ni == null || !ni.IsLoaded) return;
         double top = ni.TranslatePoint(new Point(0, 0), pillLayer).Y + 2;
-        if (!anim || Motion.Off) { pill.BeginAnimation(Canvas.TopProperty, null); Canvas.SetTop(pill, top); return; }
+        TranslateTransform tt = pill.RenderTransform as TranslateTransform;
+        if (tt == null) { tt = new TranslateTransform(); pill.RenderTransform = tt; }
+        if (!anim || Motion.Off) { tt.BeginAnimation(TranslateTransform.YProperty, null); tt.Y = top; return; }
         DoubleAnimation a = new DoubleAnimation(top, Motion.D(0.25));
         a.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
-        pill.BeginAnimation(Canvas.TopProperty, a);
+        tt.BeginAnimation(TranslateTransform.YProperty, a);
     }
 
     // ------------------------------------------------------------ IUi

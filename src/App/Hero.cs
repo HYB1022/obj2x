@@ -176,25 +176,23 @@ public class AboutHero : Drawn {
     }
 }
 
-// 정보 화면 뒤쪽: 흐르는 그라데이션. 48x32 비트맵의 픽셀만 초당 20번 바꾸고,
+// 정보 화면 뒤쪽: 흐르는 그라데이션. 48x32 비트맵의 픽셀만 매 프레임(화면 주사율, 보통 60fps) 바꾸고,
 // 늘려 그리는 것은 WPF가 알아서 한다 (글자/상자는 다시 그리지 않는다).
-// 아주 느리게 움직여서 20번이면 충분하고, 창이 최소화되었거나 다른 프로그램을 쓰는 중이면 멈춘다.
+// 창이 최소화되었거나 다른 프로그램을 쓰는 중이면 멈춘다.
 public class HeroBackdrop : FrameworkElement {
     readonly WriteableBitmap grad;
     const int GW = 48, GH = 32;
     readonly int[] px = new int[GW * GH];
     double clock, last;
     readonly Stopwatch sw = Stopwatch.StartNew();
-    // 화면 프레임마다 깨우는 CompositionTarget.Rendering 대신 초당 20번 타이머 (구독만 해도 WPF가 매 프레임 그리게 된다)
-    readonly DispatcherTimer timer = new DispatcherTimer(DispatcherPriority.Render);
+    bool running;
     Window win;
 
     public HeroBackdrop() {
         grad = new WriteableBitmap(GW, GH, 96, 96, PixelFormats.Bgr32, null);
-        RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
+        // 작은 그라데이션을 늘리는 데는 그래픽카드의 선형 확대로 충분하다 (HighQuality는 매 프레임 돌리기엔 무겁다)
+        RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.Linear);
         RenderGradient();
-        timer.Interval = TimeSpan.FromMilliseconds(50);
-        timer.Tick += Tick;
         IsVisibleChanged += delegate { Wake(); };
         Loaded += delegate {
             Theme.Changed += RenderGradient;
@@ -205,19 +203,20 @@ public class HeroBackdrop : FrameworkElement {
         Unloaded += delegate {
             Theme.Changed -= RenderGradient;
             if (win != null) { win.Activated -= OnWin; win.Deactivated -= OnWin; win.StateChanged -= OnWin; win = null; }
-            timer.Stop();
+            Halt();
         };
     }
     void OnWin(object s, EventArgs e) { Wake(); }
     // 보이고, 창이 앞에 있고, 최소화되지 않았을 때만 돈다
     void Wake() {
         bool run = !Motion.Off && IsVisible && win != null && win.IsActive && win.WindowState != WindowState.Minimized;
-        if (run && !timer.IsEnabled) { last = sw.Elapsed.TotalSeconds; timer.Start(); }
-        else if (!run && timer.IsEnabled) timer.Stop();
+        if (run && !running) { running = true; last = sw.Elapsed.TotalSeconds; CompositionTarget.Rendering += Frame; }
+        else if (!run) Halt();
     }
-    void Tick(object s, EventArgs e) {
+    void Halt() { if (!running) return; running = false; CompositionTarget.Rendering -= Frame; }
+    void Frame(object s, EventArgs e) {
         double now = sw.Elapsed.TotalSeconds;
-        clock += Math.Min(0.2, now - last); last = now;
+        clock += Math.Min(0.1, now - last); last = now;
         RenderGradient();
     }
     protected override void OnRender(DrawingContext dc) {
