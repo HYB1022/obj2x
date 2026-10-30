@@ -26,8 +26,8 @@
   <Border Grid.Row="1" Margin="0,12,0,0" Height="72" CornerRadius="14" BorderThickness="2" Background="{DynamicResource BnBg}" BorderBrush="{DynamicResource BnBorder}"
           Visibility="{Binding BannerVisible, Converter={StaticResource Vis}}">
     <Grid>
-      <Path Data="M 34,24 L 49,50 L 19,50 Z M 34,32 L 34,41 M 34,45 L 34,45.5" Stroke="{DynamicResource BnText}" StrokeThickness="1.8"
-            StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-2,-2,0,0"/>
+      <Path Data="M 15,0 L 30,26 L 0,26 Z M 15,8 L 15,17 M 15,21 L 15,21.5" Stroke="{DynamicResource BnText}" StrokeThickness="1.8"
+            StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="17,0,0,0"/>
       <StackPanel Margin="68,0,200,0" VerticalAlignment="Center">
         <TextBlock Text="{ui:Tr dash_banner_title}" Style="{StaticResource TH2}" Foreground="{DynamicResource BnText}" TextTrimming="CharacterEllipsis"/>
         <TextBlock Text="{Binding BannerText}" Style="{StaticResource TSub}" Foreground="{DynamicResource BnText}" TextWrapping="Wrap" Margin="0,4,0,0" MaxHeight="32"/>
@@ -40,7 +40,7 @@
   <Border Grid.Row="2" Margin="0,12,0,0" Style="{StaticResource CardBox}">
     <Grid Margin="20,0,20,20">
       <Grid.RowDefinitions><RowDefinition Height="48"/><RowDefinition Height="32"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-      <TextBlock Text="{ui:Tr card_history_title}" Style="{StaticResource TH2}" VerticalAlignment="Center" Margin="0,2,0,0"/>
+      <TextBlock Text="{ui:Tr card_history_title}" Style="{StaticResource TH2}" VerticalAlignment="Center" Margin="0,0,0,2"/>
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
         <Button Content="{ui:Tr btn_clear}" Style="{StaticResource BtnSmall}" Command="{Binding ClearCmd}"/>
         <Button Content="{ui:Tr btn_save}" Style="{StaticResource BtnSmall}" Command="{Binding SaveLogCmd}" Margin="6,0,16,0"/>

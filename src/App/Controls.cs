@@ -131,19 +131,22 @@ public class RadioCard : Drawn {
         Color rc = Selected ? Theme.Accent : (IsEnabled ? Theme.Muted : Theme.DisText);
         dc.DrawEllipse(null, Art.Pen(rc, 2), new Point(27 * k, H / 2), 9 * k, 9 * k);
         if (s > 0.02) dc.DrawEllipse(Theme.Brush(Theme.Accent), null, new Point(27 * k, H / 2), 4 * k * s, 4 * k * s);
-        double tx = 54 * k;
+        double tx = 54 * k, gap = 8 * k, bh = 20 * k;
         FormattedText title = Art.Ft(L.T(TitleKey), 12, true, tc);
-        dc.DrawText(title, new Point(tx, 12 * k));
+        FormattedText sub = Art.Ft(L.T(SubKey), Art.Pt(8.5), false, sc);
+        sub.MaxTextWidth = Math.Max(1, W - tx - 12 * k); sub.MaxLineCount = 2; sub.Trimming = TextTrimming.CharacterEllipsis;
+        // 제목 줄 높이는 배지와 제목 중 큰 쪽, 묶음 전체를 카드 가운데에
+        double line = Math.Max(title.Height, string.IsNullOrEmpty(BadgeKey) ? 0 : bh);
+        double top = (H - (line + gap + sub.Height)) / 2, mid = top + line / 2;
+        dc.DrawText(title, new Point(tx, mid - title.Height / 2));
         if (!string.IsNullOrEmpty(BadgeKey)) {
             FormattedText bt = Art.Ft(L.T(BadgeKey), Art.Pt(8), true, IsEnabled ? Colors.White : Theme.DisText);
-            double bw = bt.Width + 16 * k, bh = 20 * k, bx = tx + title.Width + 10 * k, by = 11 * k;
+            double bw = bt.Width + 16 * k, bx = tx + title.Width + 10 * k, by = mid - bh / 2 + k;   // 글자는 줄 상자 가운데보다 조금 아래에 찍혀서 1px 내린다
             Color bc = (Mode == "fast") ? Theme.Warn : Theme.Accent;
             dc.DrawRoundedRectangle(Theme.Brush(IsEnabled ? bc : Theme.DisBg), null, new Rect(bx, by, bw, bh), bh / 2, bh / 2);
             dc.DrawText(bt, new Point(bx + (bw - bt.Width) / 2, by + (bh - bt.Height) / 2));
         }
-        FormattedText sub = Art.Ft(L.T(SubKey), Art.Pt(8.5), false, sc);
-        sub.MaxTextWidth = Math.Max(1, W - tx - 12 * k); sub.MaxLineCount = 2; sub.Trimming = TextTrimming.CharacterEllipsis;
-        dc.DrawText(sub, new Point(tx, 38 * k));
+        dc.DrawText(sub, new Point(tx, top + line + gap));
     }
 }
 

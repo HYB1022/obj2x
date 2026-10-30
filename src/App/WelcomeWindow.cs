@@ -17,6 +17,7 @@ public class WelcomeWindow : Window {
     readonly Grid overlay = new Grid();
     readonly LogoArt tile = new LogoArt();
     readonly TextBlock title = new TextBlock(), gLang = new TextBlock(), gView = new TextBlock(), lblLang = new TextBlock(), lblView = new TextBlock();
+    readonly StackPanel rowLang = new StackPanel(), rowView = new StackPanel();
     readonly Button start = new Button();
     readonly DispatcherTimer tm = new DispatcherTimer();
     int tick;
@@ -40,12 +41,16 @@ public class WelcomeWindow : Window {
         title.FontSize = Art.Pt(30); title.FontWeight = FontWeights.Bold;
         FontFamily glyph = new FontFamily("Segoe MDL2 Assets");
         gLang.Text = ""; gView.Text = "";
-        foreach (TextBlock g in new TextBlock[] { gLang, gView }) { g.FontFamily = glyph; g.FontSize = Art.Pt(20); g.Width = 44; g.Height = 44; g.TextAlignment = TextAlignment.Center; g.Padding = new Thickness(0, 8, 0, 0); }
-        foreach (TextBlock l in new TextBlock[] { lblLang, lblView }) { l.FontSize = Art.Pt(17); l.FontWeight = FontWeights.Bold; l.Height = 44; l.Padding = new Thickness(0, 6, 0, 0); }
+        foreach (TextBlock g in new TextBlock[] { gLang, gView }) { g.FontFamily = glyph; g.FontSize = Art.Pt(20); g.Width = 44; g.TextAlignment = TextAlignment.Center; g.VerticalAlignment = VerticalAlignment.Center; }
+        foreach (TextBlock l in new TextBlock[] { lblLang, lblView }) { l.FontSize = Art.Pt(17); l.FontWeight = FontWeights.Bold; l.VerticalAlignment = VerticalAlignment.Center; l.Margin = new Thickness(8, 0, 0, 2); }
+        rowLang.Orientation = rowView.Orientation = Orientation.Horizontal;
+        rowLang.Height = rowView.Height = 44;
+        rowLang.Children.Add(gLang); rowLang.Children.Add(lblLang);
+        rowView.Children.Add(gView); rowView.Children.Add(lblView);
         foreach (TextBlock t in new TextBlock[] { gLang, gView, lblLang, lblView }) { t.Cursor = Cursors.Hand; t.SetResourceReference(TextBlock.ForegroundProperty, "Accent"); }
         start.SetResourceReference(StyleProperty, "BtnPrimary");
         start.Height = 42; start.MinWidth = 110; start.FontWeight = FontWeights.Bold; start.Padding = new Thickness(24, 0, 24, 0);
-        foreach (UIElement e in new UIElement[] { tile, title, gLang, lblLang, gView, lblView, start }) cv.Children.Add(e);
+        foreach (UIElement e in new UIElement[] { tile, title, rowLang, rowView, start }) cv.Children.Add(e);
 
         MouseButtonEventHandler pickLang = delegate { PickLang(); };
         MouseButtonEventHandler pickView = delegate { PickView(); };
@@ -85,8 +90,8 @@ public class WelcomeWindow : Window {
         Place(tile, lx + 14, ty + 14);
         Place(title, lx + 4, ty + 224);
         double rx = fw * 0.56, ry = fh * 0.56;
-        Place(gLang, rx, ry); Place(lblLang, rx + 52, ry);
-        Place(gView, rx, ry + 72); Place(lblView, rx + 52, ry + 72);
+        Place(rowLang, rx, ry);
+        Place(rowView, rx, ry + 72);
         start.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         Place(start, fw - start.DesiredSize.Width - fw * 0.06, fh * 0.80);
     }

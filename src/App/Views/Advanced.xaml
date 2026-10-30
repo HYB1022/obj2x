@@ -41,12 +41,12 @@
         <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
         <TextBlock Text="{ui:Tr lbl_blender_path}" Margin="0,10,0,6"/>
         <DockPanel>
-          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" Command="{Binding BrowseBlenderCmd}" Margin="10,0,0,0"/>
+          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseBlenderCmd}" Margin="10,0,0,0"/>
           <TextBox Text="{Binding BlenderPath}"/>
         </DockPanel>
         <TextBlock Text="{ui:Tr lbl_conv_path}" Margin="0,12,0,6"/>
         <DockPanel>
-          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" Command="{Binding BrowseConvCmd}" Margin="10,0,0,0"/>
+          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseConvCmd}" Margin="10,0,0,0"/>
           <TextBox Text="{Binding ConvPath}"/>
         </DockPanel>
       </StackPanel>
