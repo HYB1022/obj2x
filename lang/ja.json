@@ -500,6 +500,8 @@
   "map_miss_spl": "スプライン · {0} 回使用",
   "map_miss_ai": "AI 車両 · {0} 台",
   "map_miss_human": "人",
+  "map_more": "ほか {0} 件",
+  "map_more_sub": "すべての一覧は「一覧をコピー」で取得できます",
   "map_sec_ai": "AI 車両（ailists.cfg）",
   "map_ai_count": "{0} 種 {1} 台",
   "map_ai_miss": "見つからない車両 {0} 種",

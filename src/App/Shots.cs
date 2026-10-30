@@ -82,15 +82,27 @@ public static class Shots {
         s.OmsiDir = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetFullPath(map).TrimEnd('\\')));
         MainWindow f = Open(s, dir);
         f.VM.Page = "map"; Pump.Run(100);
+        // UI 스레드가 얼마나 오래 막혔는지(가장 긴 틈)를 함께 남긴다
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+        double lastTick = 0, maxGap = 0;
+        System.Windows.Threading.DispatcherTimer tm = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Normal);
+        tm.Interval = TimeSpan.FromMilliseconds(15);
+        tm.Tick += delegate { double now = sw.Elapsed.TotalMilliseconds; maxGap = Math.Max(maxGap, now - lastTick); lastTick = now; };
+        tm.Start();
         f.VM.LoadMap(map);
         for (int i = 0; i < 2400 && f.VM.MapBusy; i++) Pump.Run(50);
+        double loaded = sw.Elapsed.TotalSeconds;
         if (hofPath != null) f.VM.LoadHof(hofPath);
         Pump.Run(400);
+        tm.Stop();
+        string timing = string.Format("load {0:0.0}s, UI max gap {1:0}ms", loaded, maxGap);
+        double t0 = sw.Elapsed.TotalMilliseconds;
         Save(f, png);
+        timing += string.Format(", render {0:0}ms", sw.Elapsed.TotalMilliseconds - t0);
         ScrollViewer sv = null;
         foreach (ScrollViewer x in UiTreeAll<ScrollViewer>(f.Host)) if (x.IsVisible && x.ActualWidth > 500) { sv = x; break; }
         if (sv != null) for (int k = 1; k <= 5; k++) { sv.ScrollToVerticalOffset(k * 640); Pump.Run(100); Save(f, Path.Combine(dir, Path.GetFileNameWithoutExtension(png) + "_" + k + ".png")); }
-        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.MapStats + "\r\n" + f.VM.MissingText, new UTF8Encoding(true));
+        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.MapStats + "\r\n" + f.VM.MissingText + "\r\n" + timing, new UTF8Encoding(true));
         f.Close();
         return 0;
     }

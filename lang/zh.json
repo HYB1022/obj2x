@@ -500,6 +500,8 @@
   "map_miss_spl": "样条 · 使用 {0} 次",
   "map_miss_ai": "AI 车辆 · {0} 辆",
   "map_miss_human": "人物",
+  "map_more": "还有 {0} 项",
+  "map_more_sub": "用“复制列表”可获取完整列表",
   "map_sec_ai": "AI 车辆（ailists.cfg）",
   "map_ai_count": "{0} 种 {1} 辆",
   "map_ai_miss": "缺失 {0} 种",

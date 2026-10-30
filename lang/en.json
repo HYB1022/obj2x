@@ -500,6 +500,8 @@
   "map_miss_spl": "Spline · used {0}×",
   "map_miss_ai": "AI vehicle · {0}",
   "map_miss_human": "Person",
+  "map_more": "{0} more",
+  "map_more_sub": "Use 'Copy list' to get the full list",
   "map_sec_ai": "AI vehicles (ailists.cfg)",
   "map_ai_count": "{0} types, {1} vehicles",
   "map_ai_miss": "{0} types missing",

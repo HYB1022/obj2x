@@ -158,7 +158,9 @@ public partial class MainViewModel {
         Repose();
     }
 
-    // cfg의 anim_rot / anim_trans에 쓰인 변수. 범위는 시뮬레이터처럼: factor가 크면(각도) -1~1, 작으면 0~(180/factor)
+    // cfg의 anim_rot / anim_trans에 쓰인 변수의 범위. OMSI의 문(door_*), 와이퍼(wiperpos), 스위치는 0~1이라 factor가 크면(각도) 0~1.
+    // 조향·변속 레버처럼 양쪽으로 움직이는 이름만 -1~1, 라디안(factor 57.3)은 한 바퀴(0~2π), factor가 작으면 0~(180/factor)
+    static readonly System.Text.RegularExpressions.Regex SignedVar = new System.Text.RegularExpressions.Regex("steer|lenk|shifter|joystick|_posx|_posy|winkel_x|winkel_y", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     void BuildVars() {
         StopPlay();
         Vars.Clear();
@@ -174,9 +176,11 @@ public partial class MainViewModel {
         names.Sort(delegate(string a, string b) { int c = parts[b].Count.CompareTo(parts[a].Count); return c != 0 ? c : string.Compare(a, b, StringComparison.OrdinalIgnoreCase); });
         foreach (string n in names) {
             double a = 0; foreach (double f in fs[n]) a = Math.Max(a, f);
-            bool big = a >= 20 || a == 0;
+            bool big = a >= 20 || a == 0, signed = SignedVar.IsMatch(n), rad = Math.Abs(a - 180 / Math.PI) < 0.01;
             VarItem v = new VarItem(delegate { if (!playingAny) Repose(); });
-            v.Name = n; v.Min = big ? -1 : 0; v.Max = big ? 1 : Math.Ceiling(180 / a);
+            v.Name = n;
+            v.Max = rad ? (signed ? 0.7 : Math.Round(2 * Math.PI, 2)) : big ? 1 : Math.Ceiling(180 / a);
+            v.Min = signed ? -v.Max : 0;
             v.Info = L.T("bus_var_info", parts[n].Count);
             VarItem me = v;
             v.PlayCmd = new Cmd(delegate { me.Playing = !me.Playing; if (me.Playing) StartPlay(); });

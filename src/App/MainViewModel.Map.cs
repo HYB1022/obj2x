@@ -109,13 +109,18 @@ public partial class MainViewModel {
     }
     void RaiseMap() { Raise("MapData", "MapLoaded", "MapEmpty", "MapBusy", "MapStatus", "MapPath", "MapTitle", "MapDesc", "MapPicture", "MapStats", "MissingText"); CommandManager.InvalidateRequerySuggested(); }
 
+    public const int MissingMax = 150;
     void FillMapRows() {
         MissingRows.Clear(); AiRows.Clear(); PeopleRows.Clear();
         if (mapInfo == null) return;
-        foreach (UseItem u in mapInfo.MissingObjects) MissingRows.Add(new InfoRow { Title = u.Path, Sub = L.T("map_miss_obj", u.Count) });
-        foreach (UseItem u in mapInfo.MissingSplines) MissingRows.Add(new InfoRow { Title = u.Path, Sub = L.T("map_miss_spl", u.Count) });
-        foreach (UseItem u in mapInfo.MissingAi) MissingRows.Add(new InfoRow { Title = u.Path, Sub = L.T("map_miss_ai", u.Count) });
-        foreach (string h in mapInfo.MissingHumans) MissingRows.Add(new InfoRow { Title = h, Sub = L.T("map_miss_human") });
+        // 줄이 수천 개면 화면이 멈추므로 앞의 MissingMax개만 보여 주고 나머지는 개수만 (전체는 '목록 복사')
+        List<InfoRow> mrows = new List<InfoRow>();
+        foreach (UseItem u in mapInfo.MissingObjects) mrows.Add(new InfoRow { Title = u.Path, Sub = L.T("map_miss_obj", u.Count) });
+        foreach (UseItem u in mapInfo.MissingSplines) mrows.Add(new InfoRow { Title = u.Path, Sub = L.T("map_miss_spl", u.Count) });
+        foreach (UseItem u in mapInfo.MissingAi) mrows.Add(new InfoRow { Title = u.Path, Sub = L.T("map_miss_ai", u.Count) });
+        foreach (string h in mapInfo.MissingHumans) mrows.Add(new InfoRow { Title = h, Sub = L.T("map_miss_human") });
+        for (int i = 0; i < mrows.Count && i < MissingMax; i++) MissingRows.Add(mrows[i]);
+        if (mrows.Count > MissingMax) MissingRows.Add(new InfoRow { Title = L.T("map_more", mrows.Count - MissingMax), Sub = L.T("map_more_sub") });
         foreach (AiGroup g in mapInfo.Ai) {
             int n = 0, miss = 0; foreach (UseItem v in g.Vehicles) { n += v.Count; if (mapInfo.MissingAi.Exists(delegate(UseItem x) { return string.Equals(x.Path, v.Path, StringComparison.OrdinalIgnoreCase); })) miss++; }
             List<string> names = new List<string>(); foreach (UseItem v in g.Vehicles) names.Add(Path.GetFileNameWithoutExtension(v.Path) + " ×" + v.Count);
@@ -130,16 +135,14 @@ public partial class MainViewModel {
         return string.Join(", ", n.ToArray());
     }
 
-    // ---- HOF: OMSI Vehicles 아래 차량 폴더들의 .hof 목록 (이름 | 차량 폴더)
+    // ---- HOF: OMSI Vehicles 아래 차량 폴더들의 .hof 목록.
+    // 여러 차량에 똑같은 hof(이름과 내용이 완전히 같음)가 들어 있는 경우가 많아서 하나로 합친다.
+    // 이름은 같은데 내용이 다르면 구별되게 뒤에 차량 폴더 이름을 붙인다
     void FindHofsAsync() {
         if (!OmsiOk) return;
         string veh = Path.Combine(S.OmsiDir, "Vehicles");
         Thread th = new Thread(delegate() {
-            List<string[]> found = new List<string[]>();
-            try {
-                foreach (string d in Directory.GetDirectories(veh))
-                    foreach (string f in Directory.GetFiles(d, "*.hof")) found.Add(new string[] { f, HofFile.ReadName(f) + " · " + Path.GetFileName(d) });
-            } catch (Exception) { }
+            List<string[]> found = HofList(veh);
             found.Sort(delegate(string[] a, string[] b) { return string.Compare(a[1], b[1], StringComparison.CurrentCultureIgnoreCase); });
             ui.Post(delegate {
                 Hofs.Clear();
@@ -148,6 +151,37 @@ public partial class MainViewModel {
             });
         });
         th.IsBackground = true; th.Start();
+    }
+    // [경로, 표시 이름]
+    public static List<string[]> HofList(string vehiclesDir) {
+        List<string> keys = new List<string>();                     // 이름 + 내용 해시, 처음 나온 순서
+        Dictionary<string, string> first = new Dictionary<string, string>();
+        Dictionary<string, string> nameOf = new Dictionary<string, string>();
+        Dictionary<string, List<string>> dirs = new Dictionary<string, List<string>>();
+        try {
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+                foreach (string d in Directory.GetDirectories(vehiclesDir))
+                    foreach (string f in Directory.GetFiles(d, "*.hof")) {
+                        string name, hash;
+                        try { name = HofFile.ReadName(f); hash = Convert.ToBase64String(md5.ComputeHash(File.ReadAllBytes(f))); } catch (Exception) { continue; }
+                        if (name.Length == 0) name = Path.GetFileNameWithoutExtension(f);
+                        string key = name + "\n" + hash;
+                        if (!first.ContainsKey(key)) { first[key] = f; nameOf[key] = name; dirs[key] = new List<string>(); keys.Add(key); }
+                        dirs[key].Add(Path.GetFileName(d));
+                    }
+        } catch (Exception) { }
+        Dictionary<string, int> sameName = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+        foreach (string k in keys) { int n; sameName.TryGetValue(nameOf[k], out n); sameName[nameOf[k]] = n + 1; }
+        List<string[]> r = new List<string[]>();
+        foreach (string k in keys) {
+            string label = nameOf[k];
+            if (sameName[label] > 1) {
+                List<string> ds = dirs[k];
+                label += " · " + ds[0] + (ds.Count > 1 ? " +" + (ds.Count - 1) : "");
+            }
+            r.Add(new string[] { first[k], label });
+        }
+        return r;
     }
     public bool HofsVisible { get { return Hofs.Count > 0; } }
     string hofPick = "";

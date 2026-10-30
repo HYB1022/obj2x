@@ -500,6 +500,8 @@
   "map_miss_spl": "Spline · {0}× verwendet",
   "map_miss_ai": "KI-Fahrzeug · {0}",
   "map_miss_human": "Person",
+  "map_more": "{0} weitere",
+  "map_more_sub": "Die vollständige Liste gibt es mit 'Liste kopieren'",
   "map_sec_ai": "KI-Fahrzeuge (ailists.cfg)",
   "map_ai_count": "{0} Typen, {1} Fahrzeuge",
   "map_ai_miss": "{0} Typen fehlen",

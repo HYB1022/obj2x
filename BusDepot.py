@@ -58,35 +58,7 @@ def to_blend(obj, out):
         for s in getattr(m, "texture_slots", []):
             if s and s.texture and hasattr(s.texture, "use_alpha"):
                 s.texture.use_alpha = False
-    # o3d는 삼각형만 담으므로 Blender에서 편집하기 좋게 사각형으로 합친다 (UV·재질 경계는 지킴)
-    quads = 0
-    for o in list(bpy.data.objects):
-        if o.type != "MESH":
-            continue
-        try:
-            for s in bpy.data.objects:
-                s.select_set(False) if hasattr(s, "select_set") else setattr(s, "select", False)
-            if hasattr(o, "select_set"):
-                o.select_set(True)
-                bpy.context.view_layer.objects.active = o
-            else:
-                o.select = True
-                bpy.context.scene.objects.active = o
-            bpy.ops.object.mode_set(mode="EDIT")
-            bpy.ops.mesh.select_all(action="SELECT")
-            try:
-                bpy.ops.mesh.tris_convert_to_quads(uvs=True, materials=True)
-            except TypeError:
-                bpy.ops.mesh.tris_convert_to_quads()
-            bpy.ops.object.mode_set(mode="OBJECT")
-            quads += 1
-        except Exception as ex:
-            try:
-                bpy.ops.object.mode_set(mode="OBJECT")
-            except Exception:
-                pass
-            print("quads failed:", o.name, ex)
-    print("tris to quads:", quads)
+    # OMSI는 삼각형만 쓰므로 o3d의 삼각형을 그대로 둔다 (사각형으로 합치지 않음)
     try:
         bpy.ops.file.pack_all()
         print("packed images:", len(bpy.data.images))

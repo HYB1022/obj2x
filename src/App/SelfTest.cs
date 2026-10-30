@@ -368,6 +368,13 @@ public static class SelfTest {
         File.WriteAllText(hofp, "[name]\r\nTest Hof\r\n\r\n[servicetrip]\r\nDepot\r\n\r\n[addterminus_list]\r\n1\tA\tA TOWN\r\n2\tB\tB TOWN\r\n[end]\r\n\r\n[addbusstop_list]\r\nStop 1\r\nStop 2\r\n[end]\r\n\r\n[infosystem_trip]\r\n101\r\nA-B\r\n1\r\n5\r\n\r\n[infosystem_busstop_list]\r\n2\r\nStop 1\r\nStop 2\r\n", Encoding.Default);
         HofFile hf = HofFile.Load(hofp);
         T("HOF: 이름·종점·정류장·운행(정류장 순서)", hf.Name == "Test Hof" && hf.ServiceTrip == "Depot" && hf.Termini.Count == 2 && hf.Busstops.Count == 2 && hf.Trips.Count == 1 && hf.Trips[0].Line == "5" && hf.Trips[0].Stops.Count == 2 && HofFile.ReadName(hofp) == "Test Hof", hf.Trips.Count.ToString());
+        // HOF 목록: 이름과 내용이 같은 hof는 하나로, 이름만 같고 내용이 다르면 차량 폴더 이름을 붙여 따로
+        string vroot = Path.Combine(root, "HofVeh");
+        foreach (string vd in new string[] { "busA", "busB", "busC" }) Directory.CreateDirectory(Path.Combine(vroot, vd));
+        File.Copy(hofp, Path.Combine(vroot, "busA", "t.hof"), true); File.Copy(hofp, Path.Combine(vroot, "busB", "t.hof"), true);
+        File.WriteAllText(Path.Combine(vroot, "busC", "t.hof"), File.ReadAllText(hofp, Encoding.Default) + "\r\n[addbusstop_list]\r\nStop 3\r\n[end]\r\n", Encoding.Default);
+        List<string[]> hl = MainViewModel.HofList(vroot);
+        T("HOF 목록: 같은 hof는 하나로 합치고, 내용이 다르면 구별", hl.Count == 2 && hl[0][1] == "Test Hof · busA +1" && hl[1][1] == "Test Hof · busC", hl.Count + (hl.Count > 0 ? " " + hl[0][1] : ""));
 
         mp.Paint = null;
         T("도색: 기본 텍스처로 돌리면 원래 텍스처 (cti가 있으면 이름 규칙으로 찾지 않음)", mp.FindTex("wall.bmp", mp.Meshes[0]).EndsWith(Path.Combine("Texture", "wall.bmp")), mp.FindTex("wall.bmp", mp.Meshes[0]));
