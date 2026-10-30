@@ -38,3 +38,6 @@ desktop.ini
 # 번역 검수용 표 (L 문구표에서 생성)
 translation_review.csv
 lang/_template.json
+
+# MiSans: license forbids redistribution; users install it themselves
+fonts/MiSans*

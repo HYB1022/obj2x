@@ -88,14 +88,17 @@
               <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding Sub}"/>
               <TextBlock Text="{ui:Tr chk_sub}" VerticalAlignment="Center"/>
             </DockPanel>
+            <!-- OmsiXConv를 쓰는 표준 방식일 때만 보인다 (FastO3D/.x만은 OmsiXConv를 띄우지 않는다) -->
+            <StackPanel Visibility="{Binding ParEnabled, Converter={StaticResource Vis}}">
             <Rectangle Style="{StaticResource Div}" Margin="20,0"/>
-            <DockPanel Height="64" Margin="20,0" IsEnabled="{Binding ParEnabled}">
+            <DockPanel Height="64" Margin="20,0">
               <ui:NumBox DockPanel.Dock="Right" Value="{Binding Par}" Minimum="1" Maximum="20" VerticalAlignment="Center"/>
               <StackPanel VerticalAlignment="Center">
                 <TextBlock Text="{ui:Tr lbl_par}"/>
                 <TextBlock Text="{Binding CoresText}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
               </StackPanel>
             </DockPanel>
+            </StackPanel>
           </StackPanel>
         </Border>
       </StackPanel>

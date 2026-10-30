@@ -104,15 +104,21 @@ public class Stepper : Drawn {
     public Stepper() { Height = 58; }
     protected override void OnRender(DrawingContext dc) {
         double W = ActualWidth, cy = 18, r = 12;
-        dc.DrawLine(Art.Pen(Theme.Divider, 2), new Point(40, cy), new Point(W - 40, cy));
         double usable = Math.Max(240, W - 96), span = usable / 3;
+        dc.DrawLine(Art.Pen(Theme.Divider, 2), new Point(48, cy), new Point(48 + 3 * span, cy));
+        if (Step > 1) dc.DrawLine(Art.Pen(Theme.Accent, 2), new Point(48, cy), new Point(48 + Math.Min(3, Step - 1) * span, cy));   // 지나온 구간은 강조색
         for (int i = 0; i < 4; i++) {
             double cx = 48 + i * span;
             bool done = (i + 1 < Step), active = (i + 1 == Step);
             Color fill = (active || done) ? Theme.Accent : Theme.Card;
             dc.DrawEllipse(Theme.Brush(fill), Art.Pen((active || done) ? Theme.Accent : Theme.Divider, 2), new Point(cx, cy), r, r);
-            FormattedText num = Art.Ft(done ? "✓" : (i + 1).ToString(), 12, true, (active || done) ? Colors.White : Theme.Muted);
-            dc.DrawText(num, new Point(cx - num.Width / 2, cy - num.Height / 2));
+            if (done) {                            // 글꼴의 ✓ 대신 둥근 선으로 그린 체크
+                dc.DrawGeometry(null, Art.RoundPen(Colors.White, 2.2), Art.Poly(false,
+                    new Point(cx - 4.6, cy + 0.3), new Point(cx - 1.4, cy + 3.5), new Point(cx + 4.8, cy - 3.4)));
+            } else {
+                FormattedText num = Art.Ft((i + 1).ToString(), 12, true, active ? Colors.White : Theme.Muted);
+                dc.DrawText(num, new Point(cx - num.Width / 2, cy - num.Height / 2));
+            }
             FormattedText t = Art.Ft(L.T(keys[i]), Art.Pt(8.5), false, active ? Theme.Text : Theme.Muted);
             double tw = t.Width + 12;
             double lx = Math.Max(0, Math.Min(W - tw, cx - tw / 2));

@@ -204,7 +204,11 @@ public static class SelfTest {
             f.VM.WizNextCmd.Execute(null); Pump.Run(30);
             T("마법사: 2단계 + 최근 폴더 2개(없는 폴더 표시)", f.VM.WizStep == 2 && f.VM.Recent.Count == 2 && !f.VM.Recent[0].Exists && f.VM.Recent[1].Exists, f.VM.Recent.Count.ToString());
             T("마법사: 빠른 변환이면 출력 폴더 잠김", f.VM.OutLocked && f.VM.OutPath == big, f.VM.OutPath);
-            f.VM.WizNextCmd.Execute(null); f.VM.WizNextCmd.Execute(null); Pump.Run(30);
+            f.VM.WizNextCmd.Execute(null); Pump.Run(50);
+            bool parShown = false;
+            foreach (NumBox nbx in FindAll<NumBox>(f.Host)) if (nbx.IsVisible) parShown = true;
+            T("마법사: 3단계, 빠른 변환이면 OmsiXConv 동시 실행 숨김", f.VM.WizStep == 3 && !parShown, f.VM.WizStep + " " + parShown);
+            f.VM.WizNextCmd.Execute(null); Pump.Run(30);
             T("마법사: 4단계 요약", f.VM.WizStep == 4 && f.VM.Summary[1] == big && f.VM.NextText == L.T("btn_run"), f.VM.Summary[1]);
             f.VM.WizNextCmd.Execute(null);
             for (int i = 0; i < 300 && f.VM.Running; i++) Pump.Run(20);
