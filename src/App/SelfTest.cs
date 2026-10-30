@@ -316,6 +316,8 @@ public static class SelfTest {
             Button devRow = FindAll<Button>(f.Host).Find(delegate(Button b) { return b.IsVisible && b.Command == f.VM.BugReportCmd; });
             T("개발자: 스위치/값 선택은 줄 전체가 눌림 + 물결", fpsBox != null && fpsBox.ActualWidth > 400 && FindAll<Ripple>(fpsBox).Count == 1
                 && anim != null && anim.ActualWidth > 400 && FindAll<Ripple>(anim).Count == 1, fpsBox == null ? "없음" : fpsBox.ActualWidth + " / " + (anim == null ? 0 : anim.ActualWidth));
+            ContentControl infoRow = FindAll<ContentControl>(f.Host).Find(delegate(ContentControl c) { return c.IsVisible && c.Style == f.Host.TryFindResource("DevStatic"); });
+            T("누름 효과: 기능 없는 줄(앱 정보 등)에도 물결 층", infoRow != null && FindAll<Ripple>(infoRow).Count == 1, infoRow == null ? "없음" : "");
             T("누름 효과: 버튼 템플릿에 물결 층", devRow != null && FindAll<Ripple>(devRow).Count == 1 && FindAll<Ripple>(f.Host).Count > 3, "");
             f.VM.DevFps = true; f.VM.DevAnim = "0"; Pump.Run(30);
             T("개발자: FPS 표시 + 애니메이션 끄기", f.FpsVisible && Motion.Scale == 0 && Motion.Disabled, f.FpsVisible + " " + Motion.Scale);

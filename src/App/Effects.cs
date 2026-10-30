@@ -164,10 +164,21 @@ public class Ripple : FrameworkElement {
     }
     void Down(object s, MouseButtonEventArgs e) {
         Point p = e.GetPosition(this);
-        if (p.X >= 0 && p.Y >= 0 && p.X <= ActualWidth && p.Y <= ActualHeight) Press(p);   // 펼친 목록(팝업)을 누른 것은 무시
+        if (p.X < 0 || p.Y < 0 || p.X > ActualWidth || p.Y > ActualHeight) return;   // 펼친 목록(팝업)을 누른 것은 무시
+        if (InnerControl(e.OriginalSource as DependencyObject)) return;                  // 줄 안의 버튼/드롭다운/입력란을 누른 것은 그쪽 몫
+        Press(p);
     }
     void Up(object s, MouseEventArgs e) { fx.Release(); }
-    public void Press(Point p) { fx.Press(p, new Rect(0, 0, ActualWidth, ActualHeight), 0); }   // --shots에서도 부른다
+    // 누른 곳과 주인(src) 사이에 다른 컨트롤(버튼, 입력란, 드롭다운, 직접 그리는 컨트롤 등)이 있는지
+    bool InnerControl(DependencyObject d) {
+        for (int i = 0; d != null && d != src && i < 64; i++) {
+            FrameworkElement fe = d as FrameworkElement;
+            if ((d is Control || d is Drawn) && fe.TemplatedParent != src) return true;   // 주인 템플릿 안의 부품(콤보 상자의 토글 등)은 주인 것으로 본다
+            d = d is Visual || d is System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
+        }
+        return false;
+    }
+        public void Press(Point p) { fx.Press(p, new Rect(0, 0, ActualWidth, ActualHeight), 0); }   // --shots에서도 부른다
     public void Release() { fx.Release(); }
 
     protected override void OnRender(DrawingContext dc) {

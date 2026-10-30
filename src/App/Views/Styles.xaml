@@ -388,7 +388,8 @@
       </Setter.Value>
     </Setter>
   </Style>
-  <!-- 누르는 기능은 없지만 마우스를 올리면 옅게 칠해지는 줄 (앱 정보, 오른쪽에 컨트롤이 있는 줄) -->
+  <!-- 누르는 기능은 없지만 마우스를 올리면 옅게 칠해지고, 누르면 물결이 퍼지는 줄 (앱 정보, 오른쪽에 컨트롤이 있는 줄).
+       줄 안의 컨트롤을 누를 때는 줄 물결이 생기지 않는다 (Ripple이 알아서 거른다) -->
   <Style x:Key="DevStatic" TargetType="ContentControl">
     <Setter Property="Focusable" Value="False"/>
     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -397,6 +398,7 @@
         <ControlTemplate TargetType="ContentControl">
           <Grid Background="Transparent">
             <Border x:Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+            <ui:Ripple/>
             <ContentPresenter Margin="24,17"/>
           </Grid>
           <ControlTemplate.Triggers>
