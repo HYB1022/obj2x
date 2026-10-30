@@ -126,6 +126,10 @@ public static class SelfTest {
             }
             f.VM.ThemeName = "light"; f.VM.AccentName = "indigo";
             f.VM.Lang = "en"; Pump.Run(50);
+            T("언어 전환: 상태/배너 문구도 바뀜", f.VM.StatusText == L.T("status_blender_missing") && f.VM.StatusText.StartsWith("Required") && f.VM.BannerText.StartsWith("Missing"), f.VM.StatusText + " | " + f.VM.BannerText);
+            f.VM.Lang = "de"; Pump.Run(50);
+            T("언어 전환: 독일어 상태 문구", f.VM.StatusText == "Programmpfad fehlt", f.VM.StatusText);
+            f.VM.Lang = "en"; Pump.Run(20);
             bool en = f.VM.NextText == "Next" || L.Lang == "en";
             f.VM.Lang = "ko"; Pump.Run(50);
             T("화면: 테마 9가지 + 언어 전환(재시작 없음)", en && L.Lang == "ko", L.Lang);
