@@ -74,6 +74,27 @@ public static class Shots {
         if (pp != null && pp.Child is FrameworkElement) Save(f, (FrameworkElement)pp.Child, path);
         cb.IsDropDownOpen = false; Pump.Run(100);
     }
+    // 개발용: --map-shot <맵 폴더> <png> [hof] — 맵 탭을 열어 맵을 읽고(hof를 주면 그것도) 위에서부터 몇 장 찍는다
+    public static int MapShot(string map, string png, string hofPath) {
+        Motion.Off = true;
+        string dir = Path.GetDirectoryName(Path.GetFullPath(png));
+        Settings s = new Settings(); s.Path = Path.Combine(dir, "shot.ini"); s.Lang = "ko"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
+        s.OmsiDir = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetFullPath(map).TrimEnd('\\')));
+        MainWindow f = Open(s, dir);
+        f.VM.Page = "map"; Pump.Run(100);
+        f.VM.LoadMap(map);
+        for (int i = 0; i < 2400 && f.VM.MapBusy; i++) Pump.Run(50);
+        if (hofPath != null) f.VM.LoadHof(hofPath);
+        Pump.Run(400);
+        Save(f, png);
+        ScrollViewer sv = null;
+        foreach (ScrollViewer x in UiTreeAll<ScrollViewer>(f.Host)) if (x.IsVisible && x.ActualWidth > 500) { sv = x; break; }
+        if (sv != null) for (int k = 1; k <= 5; k++) { sv.ScrollToVerticalOffset(k * 640); Pump.Run(100); Save(f, Path.Combine(dir, Path.GetFileNameWithoutExtension(png) + "_" + k + ".png")); }
+        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.MapStats + "\r\n" + f.VM.MissingText, new UTF8Encoding(true));
+        f.Close();
+        return 0;
+    }
+
     // 개발용: --view-shot <model.cfg|.sco> <png> [light|dark] [ext|int|all] — 모델 보기 화면에 모델을 띄워 찍는다
     public static int ViewShot(string cfg, string png, string theme, string preset) {
         Motion.Off = true;

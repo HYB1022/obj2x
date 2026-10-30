@@ -1,0 +1,192 @@
+<ScrollViewer xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI;assembly=BusDepot"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- 맵: 맵 정보, 2D 지도(타일·스플라인·오브젝트), 없는 파일, AI, 사람, HOF 보기 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="980">
+    <TextBlock Text="{ui:Tr nav_map}" Style="{StaticResource PageTitle}" Margin="8,4,0,4"/>
+    <TextBlock Text="{ui:Tr map_intro}" Style="{StaticResource DevSub}" Margin="8,0,8,6"/>
+    <TextBlock Text="{ui:Tr map_sec_file}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Style="{StaticResource DevRow}" Command="{Binding BrowseMapCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr map_folder}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding MapPath}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DevCard}" Margin="0,14,0,0" Visibility="{Binding MapLoaded, Converter={StaticResource Vis}}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <Border DockPanel.Dock="Left" Width="200" Height="130" CornerRadius="12" Margin="0,0,18,0" ui:RoundClip.On="True" Background="{DynamicResource Bg}" VerticalAlignment="Top">
+              <Image Source="{Binding MapPicture}" Stretch="UniformToFill"/>
+            </Border>
+            <StackPanel>
+              <TextBlock Text="{Binding MapTitle}" Style="{StaticResource DevTitle}" FontSize="19" FontWeight="Bold"/>
+              <TextBlock Text="{Binding MapStats}" Style="{StaticResource DevSub}"/>
+              <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+                <TextBlock Text="{Binding MapDesc}" Style="{StaticResource DevSub}" Margin="0"/>
+              </ScrollViewer>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DevCard}" Margin="0,14,0,0" Padding="10">
+      <Grid Height="520">
+        <ui:MapCanvas Map="{Binding MapData}" Layers="{Binding MapLayers}"/>
+        <TextBlock Text="{ui:Tr map_empty}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   Visibility="{Binding MapEmpty, Converter={StaticResource Vis}}"/>
+        <TextBlock Text="{Binding MapStatus}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   Visibility="{Binding MapBusy, Converter={StaticResource Vis}}"/>
+      </Grid>
+    </Border>
+    <TextBlock Text="{ui:Tr map_controls}" Style="{StaticResource DevSub}" Margin="24,8,24,0"/>
+    <TextBlock Text="{ui:Tr map_sec_layers}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding MapShowSplines}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr map_show_splines}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr map_show_splines_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding MapShowObjects}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr map_show_objects}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr map_show_objects_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding MapMissingOnly}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr map_missing_only}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr map_missing_only_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr map_sec_missing}" Style="{StaticResource DevCaption}" Visibility="{Binding MapLoaded, Converter={StaticResource Vis}}"/>
+    <Border Style="{StaticResource DevCard}" Visibility="{Binding MapLoaded, Converter={StaticResource Vis}}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr map_copy}" Style="{StaticResource BtnSmall}" Command="{Binding CopyMissingCmd}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr map_missing}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding MissingText}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding MissingRows}" Margin="0,0,0,8">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <ContentControl Style="{StaticResource DevStatic}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource DevTitle}" FontSize="13.5" TextWrapping="Wrap" TextTrimming="None"/>
+                    <TextBlock Text="{Binding Sub}" Style="{StaticResource DevSub}"/>
+                  </StackPanel>
+                </ContentControl>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr map_sec_ai}" Style="{StaticResource DevCaption}" Visibility="{Binding MapLoaded, Converter={StaticResource Vis}}"/>
+    <Border Style="{StaticResource DevCard}" Visibility="{Binding MapLoaded, Converter={StaticResource Vis}}">
+      <StackPanel>
+        <ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding AiRows}" Margin="0,0,0,8">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <ContentControl Style="{StaticResource DevStatic}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource DevTitle}" FontSize="13.5" TextWrapping="Wrap" TextTrimming="None"/>
+                    <TextBlock Text="{Binding Sub}" Style="{StaticResource DevSub}"/>
+                  </StackPanel>
+                </ContentControl>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr map_sec_people}" Style="{StaticResource DevCaption}" Visibility="{Binding MapLoaded, Converter={StaticResource Vis}}"/>
+    <Border Style="{StaticResource DevCard}" Visibility="{Binding MapLoaded, Converter={StaticResource Vis}}">
+      <StackPanel>
+        <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding PeopleRows}" Margin="0,0,0,8">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <ContentControl Style="{StaticResource DevStatic}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource DevTitle}" FontSize="13.5" TextWrapping="Wrap" TextTrimming="None"/>
+                    <TextBlock Text="{Binding Sub}" Style="{StaticResource DevSub}"/>
+                  </StackPanel>
+                </ContentControl>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr map_sec_hof}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" Command="{Binding BrowseHofCmd}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="300" VerticalAlignment="Center" Margin="16,0,0,0"
+                      ItemsSource="{Binding Hofs}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding HofPick}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr map_hof}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr map_hof_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <StackPanel Visibility="{Binding HofLoaded, Converter={StaticResource Vis}}">
+          <ContentControl Style="{StaticResource DevStatic}">
+            <StackPanel>
+              <TextBlock Text="{Binding HofTitle}" Style="{StaticResource DevTitle}" FontWeight="Bold"/>
+              <TextBlock Text="{Binding HofStats}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </ContentControl>
+          <ContentControl Style="{StaticResource DevStatic}">
+            <StackPanel>
+              <TextBlock Text="{ui:Tr hof_termini}" Style="{StaticResource DevTitle}"/>
+              <ScrollViewer MaxHeight="110" VerticalScrollBarVisibility="Auto"><TextBlock Text="{Binding HofTermini}" Style="{StaticResource DevSub}"/></ScrollViewer>
+            </StackPanel>
+          </ContentControl>
+          <ContentControl Style="{StaticResource DevStatic}">
+            <StackPanel>
+              <TextBlock Text="{ui:Tr hof_stops}" Style="{StaticResource DevTitle}"/>
+              <ScrollViewer MaxHeight="110" VerticalScrollBarVisibility="Auto"><TextBlock Text="{Binding HofStops}" Style="{StaticResource DevSub}"/></ScrollViewer>
+            </StackPanel>
+          </ContentControl>
+          <TextBlock Text="{ui:Tr hof_trips}" Style="{StaticResource DevCaption}" Margin="24,10,0,2"/>
+          <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding HofTrips}" Margin="0,0,0,8">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <ContentControl Style="{StaticResource DevStatic}">
+                    <StackPanel>
+                      <TextBlock Text="{Binding Title}" Style="{StaticResource DevTitle}" FontSize="13.5" TextWrapping="Wrap" TextTrimming="None"/>
+                      <TextBlock Text="{Binding Sub}" Style="{StaticResource DevSub}"/>
+                    </StackPanel>
+                  </ContentControl>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</ScrollViewer>

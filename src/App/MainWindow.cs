@@ -24,7 +24,7 @@ public class MainWindow : Window, IUi {
     readonly ScaleTransform zoom = new ScaleTransform(1, 1);
     string shown = "dashboard";
     public DialogHost LastDialog;
-    public static readonly string[] PageNames = new string[] { "dashboard", "wizard", "object", "spline", "bus", "advanced", "settings", "dev", "about" };
+    public static readonly string[] PageNames = new string[] { "dashboard", "wizard", "object", "spline", "bus", "map", "advanced", "settings", "dev", "about" };
     // 개발자 옵션: 알림(토스트), 새로 고침 빈도 표시, 레이아웃 경계 표시
     readonly Grid toastLayer = new Grid();
     readonly TextBlock fpsText = new TextBlock();
@@ -290,7 +290,7 @@ public class MainWindow : Window, IUi {
     public void DropPreview(bool on) { ShowDrop(on); }   // 개발용(소개 영상)
     void ShowDrop(bool on) {
         if (on == (dropLayer.Visibility == Visibility.Visible)) return;
-        ((TextBlock)dropLayer.Child).Text = L.T(VM.Page == "object" ? "drop_hint_obj" : VM.Page == "spline" ? "drop_hint_tex" : VM.Page == "bus" ? "drop_hint_bus" : "drop_hint");
+        ((TextBlock)dropLayer.Child).Text = L.T(VM.Page == "object" ? "drop_hint_obj" : VM.Page == "spline" ? "drop_hint_tex" : VM.Page == "bus" ? "drop_hint_bus" : VM.Page == "map" ? "drop_hint_map" : "drop_hint");
         dropLayer.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         if (on && !Motion.Disabled) dropLayer.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, Motion.D(0.15)));
     }

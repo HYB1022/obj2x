@@ -162,6 +162,9 @@ public partial class MainViewModel {
         string dir = Directory.Exists(path) ? path : (File.Exists(path) ? Path.GetDirectoryName(path) : null);
         if (dir == null) return;
         string ext = File.Exists(path) ? Path.GetExtension(path).ToLowerInvariant() : "";
+        // 맵: 맵 폴더, global.cfg, tile_*.map / HOF
+        if (Directory.Exists(path) && File.Exists(Path.Combine(path, "global.cfg")) || ext == ".map" || File.Exists(path) && Path.GetFileName(path).ToLowerInvariant() == "global.cfg") { Page = "map"; LoadMap(path); return; }
+        if (ext == ".hof") { Page = "map"; LoadHof(path); return; }
         if (ext == ".cfg" || ext == ".sco" || ext == ".bus" || ext == ".ovh") { Page = "bus"; LoadModel(path); return; }
         if (page == "object" || ext == ".o3d") { Page = "object"; ObjModels = dir; ui.Toast(L.T("toast_drop_obj")); return; }
         if (page == "spline" && File.Exists(path) && IsImage(ext)) { DropTexture(path); return; }

@@ -87,7 +87,10 @@ public static class Omsi {
     public static string[] Utf8Lines(string path) { return Lines(path, new UTF8Encoding(false)); }
     static string[] Lines(string path, Encoding enc) {
         byte[] b = File.ReadAllBytes(path);
-        int o = b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF ? 3 : 0;
+        // OMSI 편집기가 저장한 맵 파일(global.cfg, tile_*.map)은 UTF-16 (BOM FF FE)
+        if (b.Length >= 2 && b[0] == 0xFF && b[1] == 0xFE) enc = Encoding.Unicode;
+        else if (b.Length >= 2 && b[0] == 0xFE && b[1] == 0xFF) enc = Encoding.BigEndianUnicode;
+        int o = b.Length >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF ? 3 : (enc is UnicodeEncoding ? 2 : 0);
         return enc.GetString(b, o, b.Length - o).Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
     }
 

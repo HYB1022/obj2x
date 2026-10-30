@@ -79,6 +79,7 @@ public static class Art {
             case "object": return Color.FromRgb(0, 178, 190);
             case "spline": return Color.FromRgb(52, 168, 108);
             case "bus": return Color.FromRgb(255, 69, 58);
+            case "map": return Color.FromRgb(90, 160, 250);
             default: return Theme.Accent;
         }
     }
@@ -167,6 +168,14 @@ public static class Art {
                 dc.DrawLine(dash, new Point(x + 12 * k, y + 6.5 * k), new Point(x + 12 * k, y + 8.5 * k));
                 dc.DrawLine(dash, new Point(x + 12 * k, y + 11 * k), new Point(x + 12 * k, y + 13.2 * k));
                 dc.DrawLine(dash, new Point(x + 12 * k, y + 15.8 * k), new Point(x + 12 * k, y + 18.3 * k));
+                break;
+            }
+            case "map": {       // 접힌 지도 + 위치 핀 (맵 탭)
+                dc.DrawGeometry(null, p, Poly(true, new Point(x + 5 * k, y + 7.5 * k), new Point(x + 9.5 * k, y + 6 * k), new Point(x + 14.5 * k, y + 7.5 * k),
+                    new Point(x + 19 * k, y + 6 * k), new Point(x + 19 * k, y + 16.5 * k), new Point(x + 14.5 * k, y + 18 * k), new Point(x + 9.5 * k, y + 16.5 * k), new Point(x + 5 * k, y + 18 * k)));
+                Pen thin = RoundPen(wc, Math.Max(1.0, 1.2 * k));
+                dc.DrawLine(thin, new Point(x + 9.5 * k, y + 6 * k), new Point(x + 9.5 * k, y + 16.5 * k));
+                dc.DrawLine(thin, new Point(x + 14.5 * k, y + 7.5 * k), new Point(x + 14.5 * k, y + 18 * k));
                 break;
             }
             case "bus": {       // 버스 옆모습 (버스 탭)

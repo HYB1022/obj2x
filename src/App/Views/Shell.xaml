@@ -35,6 +35,7 @@
             <ui:NavItem x:Name="Nav_object" Page="object" Key="nav_object" Current="{Binding Page}" Command="{Binding NavCmd}"/>
             <ui:NavItem x:Name="Nav_spline" Page="spline" Key="nav_spline" Current="{Binding Page}" Command="{Binding NavCmd}"/>
             <ui:NavItem x:Name="Nav_bus" Page="bus" Key="nav_bus" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+            <ui:NavItem x:Name="Nav_map" Page="map" Key="nav_map" Current="{Binding Page}" Command="{Binding NavCmd}"/>
           </StackPanel>
         </Border>
         <Border Style="{StaticResource DevCard}" Padding="6" Margin="0,14,0,0">

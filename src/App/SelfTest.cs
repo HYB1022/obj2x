@@ -349,6 +349,26 @@ public static class SelfTest {
         T("업데이트: obj2x에서 올라온 찌꺼기 정리 (obj2x.exe 런처와 BusDepot 파일은 남김)", File.Exists(Path.Combine(up, "obj2x.exe")) && File.Exists(Path.Combine(up, "BusDepot.ini")) && !File.Exists(Path.Combine(up, "obj2x.ini"))
             && !File.Exists(Path.Combine(up, "obj2x.bat")) && !File.Exists(Path.Combine(up, "obj2x_gui.ps1")) && !File.Exists(Path.Combine(up, "obj2x.py")) && !Directory.Exists(Path.Combine(up, "obj2x_backup")), "");
 
+        // 맵: global.cfg(UTF-16) + 타일, 없는 오브젝트/스플라인/AI/사람, HOF
+        string om = Path.Combine(root, "OmsiRoot"), mdir = Path.Combine(om, "maps", "TestMap");
+        Directory.CreateDirectory(mdir); Directory.CreateDirectory(Path.Combine(om, "Sceneryobjects", "a")); Directory.CreateDirectory(Path.Combine(om, "Splines", "a"));
+        File.WriteAllText(Path.Combine(om, "Omsi.exe"), "");
+        File.WriteAllText(Path.Combine(om, "Sceneryobjects", "a", "have.sco"), ""); File.WriteAllText(Path.Combine(om, "Splines", "a", "road.sli"), "");
+        File.WriteAllText(Path.Combine(mdir, "global.cfg"), "File created with OMSI-Editor\r\n[name]\r\nTestMap\r\n\r\n[friendlyname]\r\nTest Map\r\n\r\n[years]\r\n1990\r\n2000\r\n\r\n[map]\r\n0\r\n0\r\ntile_0_0.map\r\n\r\n[map]\r\n1\r\n0\r\ntile_1_0.map\r\n", Encoding.Unicode);
+        File.WriteAllText(Path.Combine(mdir, "tile_0_0.map"), "[object]\r\n0\r\nSceneryobjects\\a\\have.sco\r\n1\r\n10\r\n20\r\n0\r\n0\r\n\r\n[object]\r\n0\r\nSceneryobjects\\a\\gone.sco\r\n2\r\n30\r\n40\r\n0\r\n0\r\n\r\n[object]\r\n0\r\nSceneryobjects\\a\\gone.sco\r\n3\r\n50\r\n60\r\n0\r\n0\r\n\r\n" +
+            "[spline]\r\n0\r\nSplines\\a\\road.sli\r\n4\r\n0\r\n0\r\n100\r\n30\r\n50\r\n90\r\n100\r\n0\r\n\r\n[spline]\r\n0\r\nSplines\\a\\nope.sli\r\n5\r\n0\r\n0\r\n0\r\n30\r\n0\r\n0\r\n50\r\n0\r\n", Encoding.Unicode);
+        File.WriteAllText(Path.Combine(mdir, "ailists.cfg"), "[aigroup_2]\r\nCars\r\n\r\nvehicles\\x\\car.bus\t3\r\nvehicles\\y\\van.ovh\t1\r\n[end]\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(mdir, "humans.txt"), "humans\\a\\man.hum\r\n", Encoding.ASCII);
+        MapInfo mpi = MapInfo.Load(mdir, null, null);
+        T("맵: global.cfg(UTF-16)·타일·오브젝트·스플라인 위치", mpi.Friendly == "Test Map" && mpi.YearFrom == 1990 && mpi.Tiles.Count == 2 && mpi.MissingTiles == 1 && mpi.Objects.Count == 3 && mpi.Splines.Count == 2
+            && Math.Abs(mpi.Objects[1].X - 30) < 1e-9 && Math.Abs(mpi.Splines[0].X - 100) < 1e-9 && Math.Abs(mpi.Splines[0].Y - 50) < 1e-9 && mpi.Splines[0].Dir == 90, mpi.Friendly + "|" + mpi.YearFrom + "|" + mpi.MissingTiles + "|" + mpi.Objects[1].X + "|" + mpi.Splines[0].X + "," + mpi.Splines[0].Y + "," + mpi.Splines[0].Dir);
+        T("맵: 없는 오브젝트(쓰인 횟수)·스플라인·AI·사람", mpi.MissingObjects.Count == 1 && mpi.MissingObjects[0].Count == 2 && mpi.MissingSplines.Count == 1 && mpi.MissingSplines[0].Path.EndsWith("nope.sli")
+            && mpi.Ai.Count == 1 && mpi.Ai[0].Vehicles.Count == 2 && mpi.MissingAi.Count == 2 && mpi.MissingAi[0].Count == 3 && mpi.Humans.Count == 1 && mpi.MissingHumans.Count == 1, mpi.MissingObjects.Count + " " + mpi.MissingAi.Count);
+        string hofp = Path.Combine(root, "t.hof");
+        File.WriteAllText(hofp, "[name]\r\nTest Hof\r\n\r\n[servicetrip]\r\nDepot\r\n\r\n[addterminus_list]\r\n1\tA\tA TOWN\r\n2\tB\tB TOWN\r\n[end]\r\n\r\n[addbusstop_list]\r\nStop 1\r\nStop 2\r\n[end]\r\n\r\n[infosystem_trip]\r\n101\r\nA-B\r\n1\r\n5\r\n\r\n[infosystem_busstop_list]\r\n2\r\nStop 1\r\nStop 2\r\n", Encoding.Default);
+        HofFile hf = HofFile.Load(hofp);
+        T("HOF: 이름·종점·정류장·운행(정류장 순서)", hf.Name == "Test Hof" && hf.ServiceTrip == "Depot" && hf.Termini.Count == 2 && hf.Busstops.Count == 2 && hf.Trips.Count == 1 && hf.Trips[0].Line == "5" && hf.Trips[0].Stops.Count == 2 && HofFile.ReadName(hofp) == "Test Hof", hf.Trips.Count.ToString());
+
         mp.Paint = null;
         T("도색: 기본 텍스처로 돌리면 원래 텍스처 (cti가 있으면 이름 규칙으로 찾지 않음)", mp.FindTex("wall.bmp", mp.Meshes[0]).EndsWith(Path.Combine("Texture", "wall.bmp")), mp.FindTex("wall.bmp", mp.Meshes[0]));
 
@@ -427,7 +447,7 @@ public static class SelfTest {
             Loc.SetLang("ko"); Theme.Apply("light", "indigo", "nanum");
             MainWindow f = new MainWindow(us, root, false);
             f.FixClientSize(1040, 686); f.Show(); Pump.Run(200);
-            foreach (string pg in new string[] { "wizard", "object", "spline", "bus", "advanced", "settings", "about", "dashboard" }) { f.VM.Page = pg; Pump.Run(50); }
+            foreach (string pg in new string[] { "wizard", "object", "spline", "bus", "map", "advanced", "settings", "about", "dashboard" }) { f.VM.Page = pg; Pump.Run(50); }
             T("화면: 모든 페이지 전환", f.VM.Page == "dashboard", f.VM.Page);
             T("작업 표시줄: 진행률 표시 준비", f.TaskbarItemInfo != null, "");
             // 끌어다 놓기: obj 폴더는 마법사 경로 단계로, o3d 파일은 오브젝트 만들기로
