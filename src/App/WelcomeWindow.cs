@@ -12,6 +12,7 @@ namespace Obj2x.UI {
 public class WelcomeWindow : Window {
     public event Action<bool> Done;          // 동의하면 true
     readonly Settings S;
+    readonly Grid host = new Grid();
     readonly Canvas cv = new Canvas();
     readonly Grid overlay = new Grid();
     readonly LogoArt tile = new LogoArt();
@@ -29,7 +30,6 @@ public class WelcomeWindow : Window {
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         WindowState = WindowState.Maximized;
         Icon = Art.AppIcon();
-        Grid host = new Grid();
         host.SetResourceReference(Panel.BackgroundProperty, "Bg");
         host.SetResourceReference(TextElement.FontFamilyProperty, "UiFont");
         TextOptions.SetTextFormattingMode(host, TextFormattingMode.Display);
@@ -100,7 +100,7 @@ public class WelcomeWindow : Window {
     void PickView() {
         LastDialog = Dialogs.Choose(overlay, L.T("wel_view"), new string[][] {
             new string[] { "system", L.T("theme_system") }, new string[] { "light", L.T("theme_light") }, new string[] { "dark", L.T("theme_dark") } }, S.Theme,
-            delegate(string r) { if (r != null && r != S.Theme) { S.Theme = r; ApplyAll(); } });
+            delegate(string r) { if (r != null && r != S.Theme) { S.Theme = r; Theme.Crossfade(host, ApplyAll); } });
     }
 
     void OnStart() {

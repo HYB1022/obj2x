@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 
 namespace Obj2x.UI {
 
@@ -18,7 +19,6 @@ public class MainWindow : Window, IUi {
     readonly Canvas pillLayer;
     readonly Border pill;
     readonly TextBox logBox;
-    readonly AboutHero hero;
     readonly Dictionary<string, FrameworkElement> pages = new Dictionary<string, FrameworkElement>();
     readonly ScaleTransform zoom = new ScaleTransform(1, 1);
     string shown = "dashboard";
@@ -46,17 +46,12 @@ public class MainWindow : Window, IUi {
 
         VM = new MainViewModel(s, here, this);
         DataContext = VM;
-        foreach (string n in PageNames) {
-            FrameworkElement p = (FrameworkElement)Xaml.Load(char.ToUpper(n[0]) + n.Substring(1) + ".xaml");
-            p.Visibility = n == "dashboard" ? Visibility.Visible : Visibility.Collapsed;
-            p.RenderTransform = new TranslateTransform();
-            pages[n] = p; pageHost.Children.Add(p);
-        }
-        logBox = (TextBox)pages["dashboard"].FindName("LogBox");
-        hero = (AboutHero)pages["about"];
+        // 대시보드만 바로 만들고, 다른 페이지는 처음 열 때 만든다 (시작이 빨라진다)
+        logBox = (TextBox)Page("dashboard").FindName("LogBox");
+        pages["dashboard"].Visibility = Visibility.Visible;
 
         VM.PageChanged += ShowPage;
-        VM.LogAppended += delegate(string t) { logBox.AppendText(t + "\r\n"); logBox.ScrollToEnd(); };
+        VM.LogAppended += delegate(string chunk) { logBox.AppendText(chunk); logBox.ScrollToEnd(); };
         VM.LogCleared += delegate { logBox.Clear(); };
         Loc.Changed += delegate { Title = L.T("app_title"); };
         SizeChanged += delegate { UpdateZoom(); };
@@ -90,12 +85,23 @@ public class MainWindow : Window, IUi {
         UpdateLayout(); UpdateZoom();
     }
     public FrameworkElement Host { get { return host; } }
+    public string LogText { get { return logBox.Text; } }     // 셀프 테스트용
+
+    FrameworkElement Page(string name) {
+        FrameworkElement p;
+        if (pages.TryGetValue(name, out p)) return p;
+        p = (FrameworkElement)Xaml.Load(char.ToUpper(name[0]) + name.Substring(1) + ".xaml");
+        p.Visibility = Visibility.Collapsed;
+        p.RenderTransform = new TranslateTransform();
+        pages[name] = p; pageHost.Children.Add(p);
+        return p;
+    }
     public int OverlayCount { get { return overlay.Children.Count; } }
 
     // ------------------------------------------------------------ 페이지 전환 (새 화면이 살짝 떠오르며 나타남)
     void ShowPage(string name) {
-        FrameworkElement np;
-        if (!pages.TryGetValue(name, out np)) return;
+        if (Array.IndexOf(PageNames, name) < 0) return;
+        FrameworkElement np = Page(name);
         if (name != shown) {
             pages[shown].Visibility = Visibility.Collapsed;
             np.Visibility = Visibility.Visible;
@@ -109,7 +115,7 @@ public class MainWindow : Window, IUi {
             shown = name;
         }
         MovePill(name, true);
-        if (name == "about") hero.StartIntro();
+        if (name == "about") ((AboutHero)np.FindName("Hero")).StartIntro();
     }
 
     void MovePill(string page, bool anim) {
@@ -150,9 +156,25 @@ public class MainWindow : Window, IUi {
         return d.ShowDialog(this) == true ? d.FileName : null;
     }
 
-    public void Post(Action a) { Dispatcher.BeginInvoke(a); }
+    // 변환 스레드가 보내는 일을 모아서 한 번에 처리한다 (줄마다 화면 스레드를 깨우지 않게).
+    // Background 우선순위라 화면 그리기와 입력이 먼저 처리되어 변환 중에도 창이 버벅이지 않는다.
+    readonly Queue<Action> posted = new Queue<Action>();
+    bool drainQueued;
+    public void Post(Action a) {
+        lock (posted) {
+            posted.Enqueue(a);
+            if (drainQueued) return;
+            drainQueued = true;
+        }
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(Drain));
+    }
+    void Drain() {
+        Action[] batch;
+        lock (posted) { batch = posted.ToArray(); posted.Clear(); drainQueued = false; }
+        foreach (Action a in batch) a();
+    }
 
-    public void ApplyLook() { Theme.Apply(S.Theme, S.Accent, S.SysFont); Theme.TitleBar(this); }
+    public void ApplyLook() { Theme.Crossfade(host, delegate { Theme.Apply(S.Theme, S.Accent, S.SysFont); Theme.TitleBar(this); }); }
 
     public void Exit() { Close(); }
 }

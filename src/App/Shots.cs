@@ -24,24 +24,13 @@ public static class Shots {
 
     // 언어 드롭다운을 펼친 모습 (팝업은 따로 그린다)
     static void SaveDrop(MainWindow f, string path) {
-        System.Windows.Controls.ComboBox cb = Find<System.Windows.Controls.ComboBox>(f.Host);
+        System.Windows.Controls.ComboBox cb = UiTree.Find<System.Windows.Controls.ComboBox>(f.Host);
         if (cb == null) return;
         cb.IsDropDownOpen = true; Pump.Run(400);
         System.Windows.Controls.Primitives.Popup pp = cb.Template.FindName("PART_Popup", cb) as System.Windows.Controls.Primitives.Popup;
         if (pp != null && pp.Child is FrameworkElement) Save(f, (FrameworkElement)pp.Child, path);
         cb.IsDropDownOpen = false; Pump.Run(100);
     }
-    static T Find<T>(DependencyObject r) where T : DependencyObject {
-        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(r); i++) {
-            DependencyObject c = VisualTreeHelper.GetChild(r, i);
-            UIElement u = c as UIElement;
-            if (u != null && !u.IsVisible) continue;
-            if (c is T) return (T)c;
-            T x = Find<T>(c); if (x != null) return x;
-        }
-        return null;
-    }
-
     static MainWindow Open(Settings s, string dir) {
         Loc.SetLang(s.Lang); Theme.Apply(s.Theme, s.Accent, s.SysFont);
         MainWindow f = new MainWindow(s, dir, false);

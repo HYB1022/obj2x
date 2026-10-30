@@ -16,8 +16,10 @@ public static class Program {
             e.Handled = true;
         };
 
-        // 개발용: --selftest, --shots 폴더, --readme-shots 폴더
+        // 개발용: --selftest, --shots 폴더, --readme-shots 폴더, --page 이름(시작 페이지)
+        string startPage = null;
         for (int i = 0; i < args.Length; i++) {
+            if (i + 1 < args.Length && args[i] == "--page") startPage = args[i + 1];
             if (args[i] == "--selftest" || args[i] == "/selftest") return SelfTest.Run(here);
             if (i + 1 < args.Length && args[i] == "--shots") return Shots.Run(args[i + 1]);
             if (i + 1 < args.Length && args[i] == "--readme-shots") return Shots.Readme(args[i + 1]);
@@ -32,6 +34,7 @@ public static class Program {
         Action openMain = delegate {
             MainWindow mw = new MainWindow(s, here, !firstRun);
             mw.Closed += delegate { s.Save(); app.Shutdown(); };
+            if (startPage != null) mw.Loaded += delegate { mw.VM.Page = startPage; };
             mw.Show();
         };
         if (firstRun) {

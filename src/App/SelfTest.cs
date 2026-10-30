@@ -20,17 +20,6 @@ public static class SelfTest {
         sb.AppendLine(line); Console.WriteLine(line);
     }
 
-    static T2 FindIn<T2>(DependencyObject r) where T2 : DependencyObject {
-        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(r); i++) {
-            DependencyObject c = System.Windows.Media.VisualTreeHelper.GetChild(r, i);
-            UIElement u = c as UIElement;
-            if (u != null && !u.IsVisible) continue;
-            if (c is T2) return (T2)c;
-            T2 x = FindIn<T2>(c); if (x != null) return x;
-        }
-        return null;
-    }
-
     public static int Run(string here) {
         Motion.Off = true;
         string root = Path.Combine(Path.GetTempPath(), "obj2x_selftest_cs");
@@ -147,6 +136,7 @@ public static class SelfTest {
             f.VM.WizNextCmd.Execute(null);
             for (int i = 0; i < 300 && f.VM.Running; i++) Pump.Run(20);
             Pump.Run(100);
+            T("로그: 모아 보낸 줄이 화면 로그에 그대로",  f.LogText.Length > 0 && f.LogText == f.VM.LogContent, f.LogText.Length + " / " + f.VM.LogContent.Length);
             T("마법사: 실행하면 대시보드 결과 표에 60줄", f.VM.Page == "dashboard" && f.VM.Results.Count == 60 && f.VM.Tab == "res" && !f.VM.Running, f.VM.Results.Count + " " + f.VM.Page);
 
             // 면책 오버레이
@@ -164,11 +154,11 @@ public static class SelfTest {
 
             // 숫자 상자 / 언어 드롭다운
             f.VM.Page = "advanced"; Pump.Run(50);
-            NumBox nb = FindIn<NumBox>(f.Host);
+            NumBox nb = UiTree.Find<NumBox>(f.Host);
             f.VM.Par = 7; Pump.Run(20);
             T("고급: 동시 실행 숫자 상자가 설정과 연결", nb != null && nb.Value == 7, nb == null ? "없음" : nb.Value.ToString());
             f.VM.Page = "settings"; Pump.Run(50);
-            ComboBox lc = FindIn<ComboBox>(f.Host);
+            ComboBox lc = UiTree.Find<ComboBox>(f.Host);
             T("설정: 언어 드롭다운 (" + L.Languages.Length + "개 언어)", lc != null && lc.Items.Count == L.Languages.Length && (string)lc.SelectedValue == "ko", lc == null ? "없음" : lc.Items.Count.ToString());
             if (lc != null) { lc.SelectedValue = "en"; Pump.Run(30); }
             T("설정: 드롭다운으로 언어 전환", L.Lang == "en" && us.Lang == "en", L.Lang);

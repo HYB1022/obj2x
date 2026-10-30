@@ -94,7 +94,7 @@ public partial class MainViewModel : Observable {
         get { return running; }
         private set {
             if (!Set(ref running, value)) return;
-            Raise("NotRunning"); Raise("StopVisible"); Raise("RetryVisible"); RefreshStatus();
+            Raise("NotRunning", "StopVisible", "RetryVisible"); RefreshStatus();
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -113,7 +113,7 @@ public partial class MainViewModel : Observable {
         StatusState = running ? "busy" : (ok ? "ok" : "warn");
         BannerVisible = !ok;
         BannerText = ok ? "" : L.T("m_path_banner", string.Join(", ", missing.ToArray()));
-        Raise("StatusText"); Raise("StatusState"); Raise("BannerVisible"); Raise("BannerText");
+        Raise("StatusText", "StatusState", "BannerVisible", "BannerText");
         WizAvailability();
     }
 

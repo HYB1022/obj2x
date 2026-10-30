@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 
 namespace Obj2x.UI {
@@ -84,7 +88,36 @@ public static class Theme {
     }
     static void Set(ResourceDictionary r, string k, Color c) { r[k] = Brush(c); }
 
-    public static SolidColorBrush Brush(Color c) { SolidColorBrush b = new SolidColorBrush(c); b.Freeze(); return b; }
+    // 같은 색이면 같은 브러시를 다시 쓴다 (직접 그리는 컨트롤이 그릴 때마다 새로 만들지 않게). 화면 스레드에서만 부른다.
+    static readonly Dictionary<Color, SolidColorBrush> brushes = new Dictionary<Color, SolidColorBrush>();
+    public static SolidColorBrush Brush(Color c) {
+        SolidColorBrush b;
+        if (brushes.TryGetValue(c, out b)) return b;
+        if (brushes.Count > 4096) brushes.Clear();   // 애니메이션 중간색이 쌓이지 않게
+        b = new SolidColorBrush(c); b.Freeze();
+        brushes[c] = b;
+        return b;
+    }
+
+    // 테마를 바꿀 때 지금 화면을 찍어 위에 덮고, 새 테마를 적용한 뒤 찍은 화면을 서서히 지운다
+    public static void Crossfade(Panel host, Action apply) {
+        int w = (int)host.ActualWidth, h = (int)host.ActualHeight;
+        if (Motion.Off || w < 1 || h < 1 || !host.IsVisible) { apply(); return; }
+        double sc = 1;
+        PresentationSource ps = PresentationSource.FromVisual(host);
+        if (ps != null && ps.CompositionTarget != null) sc = ps.CompositionTarget.TransformToDevice.M11;
+        RenderTargetBitmap shot = new RenderTargetBitmap((int)Math.Ceiling(w * sc), (int)Math.Ceiling(h * sc), 96 * sc, 96 * sc, PixelFormats.Pbgra32);
+        shot.Render(host);
+        Image img = new Image(); img.Source = shot; img.Stretch = Stretch.Fill; img.IsHitTestVisible = false;
+        img.Width = w; img.Height = h; img.HorizontalAlignment = HorizontalAlignment.Left; img.VerticalAlignment = VerticalAlignment.Top;
+        Panel.SetZIndex(img, 10000);
+        host.Children.Add(img);
+        apply();
+        DoubleAnimation a = new DoubleAnimation(1, 0, Motion.D(0.35));
+        a.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut };
+        a.Completed += delegate { host.Children.Remove(img); img.Source = null; };
+        img.BeginAnimation(UIElement.OpacityProperty, a);
+    }
     public static Color A(Color c, double a) { return Color.FromArgb((byte)Math.Max(0, Math.Min(255, c.A * a)), c.R, c.G, c.B); }
     public static Color Mix(Color a, Color b, double t) {
         return Color.FromRgb((byte)(a.R + (b.R - a.R) * t), (byte)(a.G + (b.G - a.G) * t), (byte)(a.B + (b.B - a.B) * t));

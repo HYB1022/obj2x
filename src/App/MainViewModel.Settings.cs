@@ -107,7 +107,7 @@ public partial class MainViewModel {
             return L.T("about_upd_idle");
         }
     }
-    void RaiseUpdate() { Raise("UpdIsNew"); Raise("UpdVersion"); Raise("UpdBusy"); Raise("UpdNavBadge"); Raise("UpdValue"); }
+    void RaiseUpdate() { Raise("UpdIsNew", "UpdVersion", "UpdBusy", "UpdNavBadge", "UpdValue"); }
 
     // GitHub 최신 릴리스 조회 (백그라운드). 새 버전이 있으면 창을 띄우지 않고 정보 탭의 업데이트 줄과 메뉴의 [업데이트] 표시로만 알린다.
     public void StartUpdateCheck() {

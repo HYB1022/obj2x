@@ -9,6 +9,8 @@ namespace Obj2x.UI {
 
 public partial class MainViewModel {
     readonly StringBuilder logText = new StringBuilder();
+    readonly StringBuilder logPending = new StringBuilder();   // 아직 화면에 안 붙인 줄 (모아서 한 번에)
+    bool logFlushQueued;
     public ObservableCollection<ResItem> Results { get; private set; }
     public ICommand StartWizardCmd { get; private set; }
     public ICommand StopCmd { get; private set; }
@@ -39,7 +41,7 @@ public partial class MainViewModel {
     public double Progress { get { return progress; } set { Set(ref progress, value); } }
 
     string tab = "log";
-    public string Tab { get { return tab; } set { if (Set(ref tab, value)) { Raise("LogTab"); Raise("ResTab"); Raise("LogVisible"); Raise("ResVisible"); } } }
+    public string Tab { get { return tab; } set { if (Set(ref tab, value)) { Raise("LogTab", "ResTab", "LogVisible", "ResVisible"); } } }
     public string LogTab { get { return tab == "res" ? "off" : "on"; } }
     public string ResTab { get { return tab == "res" ? "on" : "off"; } }
     public bool LogVisible { get { return tab != "res"; } }
@@ -51,10 +53,17 @@ public partial class MainViewModel {
     void Say(string t) {
         if (t == null) return;
         logText.Append(t).Append("\r\n");
-        if (LogAppended != null) LogAppended(t);
-        if (t.Length > 0) { lastKey = null; lastText = t.Substring(0, Math.Min(90, t.Length)); Raise("LastText"); }
+        logPending.Append(t).Append("\r\n");
+        if (t.Length > 0) { lastKey = null; lastText = t.Substring(0, Math.Min(90, t.Length)); }
+        if (!logFlushQueued) { logFlushQueued = true; ui.Post(FlushLog); }
     }
-    void ClearLog() { logText.Length = 0; if (LogCleared != null) LogCleared(); }
+    void FlushLog() {
+        logFlushQueued = false;
+        if (logPending.Length > 0 && LogAppended != null) LogAppended(logPending.ToString());
+        logPending.Length = 0;
+        Raise("LastText");
+    }
+    void ClearLog() { logText.Length = 0; logPending.Length = 0; if (LogCleared != null) LogCleared(); }
     public string LogContent { get { return logText.ToString(); } }
 
     void SaveLog() {

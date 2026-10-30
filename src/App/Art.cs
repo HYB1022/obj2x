@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
@@ -39,10 +40,21 @@ public static class Art {
         return w;
     }
 
-    public static Pen RoundPen(Color c, double w) {
-        Pen p = new Pen(Theme.Brush(c), w); p.StartLineCap = PenLineCap.Round; p.EndLineCap = PenLineCap.Round; p.LineJoin = PenLineJoin.Round;
-        p.Freeze(); return p;
+    // 펜도 색/굵기가 같으면 다시 쓴다
+    static readonly Dictionary<long, Pen> pens = new Dictionary<long, Pen>();
+    static Pen CachedPen(Color c, double w, bool round) {
+        long key = ((long)(uint)((c.A << 24) | (c.R << 16) | (c.G << 8) | c.B) << 24) | ((long)Math.Round(w * 100) << 1) | (round ? 1L : 0L);
+        Pen p;
+        if (pens.TryGetValue(key, out p)) return p;
+        if (pens.Count > 4096) pens.Clear();
+        p = new Pen(Theme.Brush(c), w);
+        if (round) { p.StartLineCap = PenLineCap.Round; p.EndLineCap = PenLineCap.Round; p.LineJoin = PenLineJoin.Round; }
+        p.Freeze();
+        pens[key] = p;
+        return p;
     }
+    public static Pen RoundPen(Color c, double w) { return CachedPen(c, w, true); }
+    public static Pen Pen(Color c, double w) { return CachedPen(c, w, false); }
     public static Geometry Poly(bool closed, params Point[] pts) {
         StreamGeometry g = new StreamGeometry();
         using (StreamGeometryContext c = g.Open()) {
@@ -130,8 +142,7 @@ public static class Art {
         LinearGradientBrush gb = new LinearGradientBrush(Theme.Accent, Theme.AccentHov, new Point(0, 0), new Point(1, 1));
         gb.Freeze();
         dc.DrawRoundedRectangle(gb, null, back, 34 * s, 34 * s);
-        Pen fp = new Pen(Theme.Brush(Color.FromArgb(110, 255, 255, 255)), Math.Max(1, 1.5 * s)); fp.Freeze();
-        dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.Accent, 150 / 255.0)), fp, new Rect(x, y, 150 * s, 150 * s), 34 * s, 34 * s);
+        dc.DrawRoundedRectangle(Theme.Brush(Theme.A(Theme.Accent, 150 / 255.0)), Pen(Color.FromArgb(110, 255, 255, 255), Math.Max(1, 1.5 * s)), new Rect(x, y, 150 * s, 150 * s), 34 * s, 34 * s);
         FormattedText t1 = Ft("OBJ", Math.Max(6, 24 * s), true, Colors.White);
         FormattedText t2 = Ft("2X", Math.Max(8, 44 * s), true, Colors.White);
         dc.DrawText(t1, new Point(x + 8 * s + (134 * s - t1.Width) / 2, y + 18 * s + (44 * s - t1.Height) / 2));
@@ -154,7 +165,7 @@ public static class Art {
 
 // 로고 컨트롤 (사이드바, 환영 화면)
 public class LogoArt : FrameworkElement {
-    public LogoArt() { Theme.Changed += InvalidateVisual; }
+    public LogoArt() { Loaded += delegate { Theme.Changed += InvalidateVisual; }; Unloaded += delegate { Theme.Changed -= InvalidateVisual; }; }
     protected override void OnRender(DrawingContext dc) {
         double s = Math.Min(ActualWidth, ActualHeight);
         Art.Logo(dc, 0, 0, s);

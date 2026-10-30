@@ -15,12 +15,13 @@ namespace Obj2x.UI {
 public class Observable : INotifyPropertyChanged {
     public event PropertyChangedEventHandler PropertyChanged;
     protected void Raise(string name) { PropertyChangedEventHandler h = PropertyChanged; if (h != null) h(this, new PropertyChangedEventArgs(name)); }
+    protected void Raise(params string[] names) { foreach (string n in names) Raise(n); }
     protected bool Set<T>(ref T field, T value, [CallerMemberName] string name = null) {
         if (EqualityComparer<T>.Default.Equals(field, value)) return false;
         field = value; Raise(name); return true;
     }
     // 모든 속성을 다시 읽게 한다 (언어를 바꿨을 때)
-    public void RaiseAll() { Raise(null); }
+    public void RaiseAll() { Raise((string)null); }
 }
 
 public class Cmd : ICommand {
@@ -69,6 +70,20 @@ public static class Xaml {
         List<string> r = new List<string>();
         foreach (string n in typeof(Xaml).Assembly.GetManifestResourceNames()) if (n.StartsWith("Obj2x.Views.")) r.Add(n.Substring(12));
         return r.ToArray();
+    }
+}
+
+// 화면 트리에서 보이는 T 하나 찾기 (셀프 테스트/캡처)
+public static class UiTree {
+    public static T Find<T>(DependencyObject root) where T : DependencyObject {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++) {
+            DependencyObject c = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            UIElement u = c as UIElement;
+            if (u != null && !u.IsVisible) continue;
+            if (c is T) return (T)c;
+            T x = Find<T>(c); if (x != null) return x;
+        }
+        return null;
     }
 }
 

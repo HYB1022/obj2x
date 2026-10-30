@@ -5,10 +5,12 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace Obj2x.UI {
 
-// 정보 화면 (흐르는 그라데이션 + 큰 제목 + 새 버전 줄 + 반투명 항목)
+// 정보 화면 앞쪽 (큰 제목 + 새 버전 줄 + 반투명 항목). 뒤쪽 그라데이션은 HeroBackdrop이 따로 그린다.
+// 등장 애니메이션이나 호버가 움직일 때만 다시 그리고, 가만히 있으면 아무 일도 하지 않는다.
 public class AboutHero : Drawn {
     public static readonly DependencyProperty IsNewProperty = Dp("IsNew", typeof(bool), typeof(AboutHero), false);
     public static readonly DependencyProperty NewVersionProperty = Dp("NewVersion", typeof(string), typeof(AboutHero), "");
@@ -25,21 +27,14 @@ public class AboutHero : Drawn {
     public ICommand RepoCommand { get { return (ICommand)GetValue(RepoCommandProperty); } set { SetValue(RepoCommandProperty, value); } }
     public ICommand DisclaimerCommand { get { return (ICommand)GetValue(DisclaimerCommandProperty); } set { SetValue(DisclaimerCommandProperty, value); } }
 
-    WriteableBitmap grad;                      // 작은 그라데이션 (늘려서 그린다)
-    const int GW = 48, GH = 32;
-    int[] px = new int[GW * GH];
-    double clock, intro = 10, acc, last;      // 흐르는 시간, 등장 애니메이션 경과 시간(초)
-    Stopwatch sw = Stopwatch.StartNew();
+    double intro = 10, last;                   // 등장 애니메이션 경과 시간(초)
+    readonly Stopwatch sw = Stopwatch.StartNew();
     bool running;
     int hot = -1;
-    double[] hov = new double[8];
-    List<KeyValuePair<Rect, int>> hits = new List<KeyValuePair<Rect, int>>();
+    readonly double[] hov = new double[8];
+    readonly List<KeyValuePair<Rect, int>> hits = new List<KeyValuePair<Rect, int>>();
 
-    public AboutHero() {
-        grad = new WriteableBitmap(GW, GH, 96, 96, PixelFormats.Bgr32, null);
-        RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
-        IsVisibleChanged += delegate { if (IsVisible) Run(); else Halt(); };
-    }
+    public AboutHero() { IsVisibleChanged += delegate { if (!IsVisible) Halt(); }; }
 
     public void StartIntro() { intro = Motion.Off ? 10 : 0; Run(); InvalidateVisual(); }
     void Run() {
@@ -50,65 +45,16 @@ public class AboutHero : Drawn {
     void Halt() { if (!running) return; running = false; CompositionTarget.Rendering -= Frame; }
     void Frame(object s, EventArgs e) {
         double now = sw.Elapsed.TotalSeconds, dt = Math.Min(0.05, Math.Max(0.001, now - last)); last = now;
-        clock += dt; intro += dt;
-        bool hovMoving = false;
+        intro += dt;
+        bool moving = intro < 1.4;
         for (int i = 0; i < hov.Length; i++) {
             double tg = (i == hot) ? 1 : 0, d = tg - hov[i];
-            if (Math.Abs(d) > 0.01) { hov[i] += d * (1 - Math.Exp(-dt * 14)); hovMoving = true; } else hov[i] = tg;
+            if (Math.Abs(d) > 0.01) { hov[i] += d * (1 - Math.Exp(-dt * 14)); moving = true; } else hov[i] = tg;
         }
-        // 그라데이션은 초당 약 30번, 등장/호버 중에는 매 프레임
-        acc += dt;
-        if (acc >= 0.033 || intro < 1.4 || hovMoving) { acc = 0; InvalidateVisual(); }
+        InvalidateVisual();
+        if (!moving) Halt();
     }
-
-    // ---- 색
-    Color BaseColor() { return Theme.Dark ? Color.FromRgb(14, 15, 38) : Color.FromRgb(250, 244, 252); }
     static Color C(int r, int g, int b) { return Color.FromRgb((byte)r, (byte)g, (byte)b); }
-    Color[] BlobColors() {
-        string a = Theme.AccentName;
-        if (Theme.Dark) {
-            if (a == "teal") return new Color[] { C(8, 92, 104), C(22, 54, 150), C(60, 44, 130), C(10, 70, 90) };
-            if (a == "rose") return new Color[] { C(120, 32, 78), C(72, 34, 128), C(28, 30, 96), C(96, 30, 96) };
-            return new Color[] { C(30, 52, 168), C(96, 40, 146), C(22, 26, 92), C(58, 36, 150) };
-        }
-        if (a == "teal") return new Color[] { C(178, 238, 222), C(186, 220, 255), C(214, 206, 255), C(200, 244, 236) };
-        if (a == "rose") return new Color[] { C(255, 188, 206), C(255, 216, 192), C(226, 198, 252), C(255, 204, 226) };
-        return new Color[] { C(255, 192, 218), C(210, 194, 255), C(188, 214, 255), C(240, 200, 248) };
-    }
-    // X, Y, AX, AY, WX, WY, phase, radius
-    static readonly double[,] P = new double[,] {
-        { 0.25, 0.30, 0.22, 0.18, 0.21, 0.17, 0.0, 0.55 },
-        { 0.80, 0.20, 0.20, 0.20, 0.16, 0.23, 1.7, 0.50 },
-        { 0.70, 0.75, 0.25, 0.18, 0.19, 0.14, 3.1, 0.60 },
-        { 0.20, 0.85, 0.18, 0.22, 0.13, 0.20, 4.4, 0.50 } };
-
-    void RenderGradient() {
-        Color bc = BaseColor(), bg = Theme.Bg;
-        Color[] col = BlobColors();
-        double[] cx = new double[4], cy = new double[4];
-        for (int i = 0; i < 4; i++) {
-            cx[i] = P[i, 0] + P[i, 2] * Math.Sin(clock * P[i, 4] * 2.2 + P[i, 6]);
-            cy[i] = P[i, 1] + P[i, 3] * Math.Cos(clock * P[i, 5] * 2.2 + P[i, 6] * 1.3);
-        }
-        const double aspect = 1.5;
-        for (int y = 0; y < GH; y++) {
-            double fy = y / (double)(GH - 1);
-            for (int x = 0; x < GW; x++) {
-                double fx = x / (double)(GW - 1);
-                double r = bc.R, g = bc.G, b = bc.B;
-                for (int i = 0; i < 4; i++) {
-                    double dx = (fx - cx[i]) * aspect, dy = fy - cy[i];
-                    double w = Math.Exp(-(dx * dx + dy * dy) / (P[i, 7] * P[i, 7] * 0.5)) * 0.9;
-                    r += (col[i].R - r) * w; g += (col[i].G - g) * w; b += (col[i].B - b) * w;
-                }
-                // 아래쪽은 바탕색으로 조금 가라앉힌다 (글자가 잘 보이도록)
-                double f = Math.Max(0, fy - 0.55) / 0.45 * (Theme.Dark ? 0.55 : 0.35);
-                r += (bg.R - r) * f; g += (bg.G - g) * f; b += (bg.B - b) * f;
-                px[y * GW + x] = (255 << 24) | ((int)r << 16) | ((int)g << 8) | (int)b;
-            }
-        }
-        grad.WritePixels(new Int32Rect(0, 0, GW, GH), px, GW * 4, 0);
-    }
 
     // ---- 배치
     double Appear(int i) { return Motion.EaseOut((intro - 0.08 * i) / 0.55); }
@@ -116,8 +62,7 @@ public class AboutHero : Drawn {
     protected override void OnRender(DrawingContext dc) {
         double W = ActualWidth, H = ActualHeight;
         if (W < 10 || H < 10) return;
-        RenderGradient();
-        dc.DrawImage(grad, new Rect(-W / GW, -H / GH, W + 2 * W / GW, H + 2 * H / GH));
+        HitArea(dc);
         hits.Clear();
 
         Color txt = Theme.Dark ? C(236, 238, 255) : C(28, 28, 36);
@@ -201,7 +146,7 @@ public class AboutHero : Drawn {
                     hits.Add(new KeyValuePair<Rect, int>(new Rect(rr.X, ry + k * rh, rr.Width, rh), id));
                 }
                 if (k < groups[gi] - 1)
-                    dc.DrawLine(new Pen(Theme.Brush(Theme.A(Theme.Dark ? Color.FromArgb(30, 255, 255, 255) : Color.FromArgb(22, 0, 0, 40), a)), 1), new Point(rr.X + pad, rr.Bottom), new Point(rr.Right - pad, rr.Bottom));
+                    dc.DrawLine(Art.Pen(Theme.A(Theme.Dark ? Color.FromArgb(30, 255, 255, 255) : Color.FromArgb(22, 0, 0, 40), a), 1), new Point(rr.X + pad, rr.Bottom), new Point(rr.Right - pad, rr.Bottom));
             }
             ry += groups[gi] * rh + gap;
         }
@@ -212,7 +157,7 @@ public class AboutHero : Drawn {
         Color fill, bdr;
         if (Theme.Dark) { fill = Color.FromArgb((byte)(button ? 40 + 22 * h : 30), 255, 255, 255); bdr = Color.FromArgb((byte)(button ? 60 : 26), 255, 255, 255); }
         else { fill = Color.FromArgb((byte)(button ? 175 + 50 * h : 222), 255, 255, 255); bdr = Color.FromArgb((byte)(button ? 230 : 140), 255, 255, 255); }
-        dc.DrawRoundedRectangle(Theme.Brush(Theme.A(fill, a)), new Pen(Theme.Brush(Theme.A(bdr, a)), 1), new Rect(r.X + 0.5, r.Y + 0.5, r.Width - 1, r.Height - 1), rad, rad);
+        dc.DrawRoundedRectangle(Theme.Brush(Theme.A(fill, a)), Art.Pen(Theme.A(bdr, a), 1), new Rect(r.X + 0.5, r.Y + 0.5, r.Width - 1, r.Height - 1), rad, rad);
     }
 
     int HitAt(Point p) { foreach (KeyValuePair<Rect, int> kv in hits) if (kv.Key.Contains(p)) return kv.Value; return -1; }
@@ -228,6 +173,106 @@ public class AboutHero : Drawn {
         if (h == 0 || h == 1) c = UpdateCommand; else if (h == 2) c = RepoCommand; else if (h == 3) c = DisclaimerCommand;
         if (c != null) c.Execute(null);
         base.OnMouseLeftButtonUp(e);
+    }
+}
+
+// 정보 화면 뒤쪽: 흐르는 그라데이션. 48x32 비트맵의 픽셀만 초당 20번 바꾸고,
+// 늘려 그리는 것은 WPF가 알아서 한다 (글자/상자는 다시 그리지 않는다).
+// 아주 느리게 움직여서 20번이면 충분하고, 창이 최소화되었거나 다른 프로그램을 쓰는 중이면 멈춘다.
+public class HeroBackdrop : FrameworkElement {
+    readonly WriteableBitmap grad;
+    const int GW = 48, GH = 32;
+    readonly int[] px = new int[GW * GH];
+    double clock, last;
+    readonly Stopwatch sw = Stopwatch.StartNew();
+    // 화면 프레임마다 깨우는 CompositionTarget.Rendering 대신 초당 20번 타이머 (구독만 해도 WPF가 매 프레임 그리게 된다)
+    readonly DispatcherTimer timer = new DispatcherTimer(DispatcherPriority.Render);
+    Window win;
+
+    public HeroBackdrop() {
+        grad = new WriteableBitmap(GW, GH, 96, 96, PixelFormats.Bgr32, null);
+        RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
+        RenderGradient();
+        timer.Interval = TimeSpan.FromMilliseconds(50);
+        timer.Tick += Tick;
+        IsVisibleChanged += delegate { Wake(); };
+        Loaded += delegate {
+            Theme.Changed += RenderGradient;
+            win = Window.GetWindow(this);
+            if (win != null) { win.Activated += OnWin; win.Deactivated += OnWin; win.StateChanged += OnWin; }
+            Wake();
+        };
+        Unloaded += delegate {
+            Theme.Changed -= RenderGradient;
+            if (win != null) { win.Activated -= OnWin; win.Deactivated -= OnWin; win.StateChanged -= OnWin; win = null; }
+            timer.Stop();
+        };
+    }
+    void OnWin(object s, EventArgs e) { Wake(); }
+    // 보이고, 창이 앞에 있고, 최소화되지 않았을 때만 돈다
+    void Wake() {
+        bool run = !Motion.Off && IsVisible && win != null && win.IsActive && win.WindowState != WindowState.Minimized;
+        if (run && !timer.IsEnabled) { last = sw.Elapsed.TotalSeconds; timer.Start(); }
+        else if (!run && timer.IsEnabled) timer.Stop();
+    }
+    void Tick(object s, EventArgs e) {
+        double now = sw.Elapsed.TotalSeconds;
+        clock += Math.Min(0.2, now - last); last = now;
+        RenderGradient();
+    }
+    protected override void OnRender(DrawingContext dc) {
+        double W = ActualWidth, H = ActualHeight;
+        // 가장자리가 어두워지지 않게 한 칸씩 바깥까지 늘려 그린다
+        dc.DrawImage(grad, new Rect(-W / GW, -H / GH, W + 2 * W / GW, H + 2 * H / GH));
+    }
+
+    static Color C(int r, int g, int b) { return Color.FromRgb((byte)r, (byte)g, (byte)b); }
+    // ---- 색
+    Color BaseColor() { return Theme.Dark ? Color.FromRgb(14, 15, 38) : Color.FromRgb(250, 244, 252); }
+    Color[] BlobColors() {
+        string a = Theme.AccentName;
+        if (Theme.Dark) {
+            if (a == "teal") return new Color[] { C(8, 92, 104), C(22, 54, 150), C(60, 44, 130), C(10, 70, 90) };
+            if (a == "rose") return new Color[] { C(120, 32, 78), C(72, 34, 128), C(28, 30, 96), C(96, 30, 96) };
+            return new Color[] { C(30, 52, 168), C(96, 40, 146), C(22, 26, 92), C(58, 36, 150) };
+        }
+        if (a == "teal") return new Color[] { C(178, 238, 222), C(186, 220, 255), C(214, 206, 255), C(200, 244, 236) };
+        if (a == "rose") return new Color[] { C(255, 188, 206), C(255, 216, 192), C(226, 198, 252), C(255, 204, 226) };
+        return new Color[] { C(255, 192, 218), C(210, 194, 255), C(188, 214, 255), C(240, 200, 248) };
+    }
+    // X, Y, AX, AY, WX, WY, phase, radius
+    static readonly double[,] P = new double[,] {
+        { 0.25, 0.30, 0.22, 0.18, 0.21, 0.17, 0.0, 0.55 },
+        { 0.80, 0.20, 0.20, 0.20, 0.16, 0.23, 1.7, 0.50 },
+        { 0.70, 0.75, 0.25, 0.18, 0.19, 0.14, 3.1, 0.60 },
+        { 0.20, 0.85, 0.18, 0.22, 0.13, 0.20, 4.4, 0.50 } };
+
+    void RenderGradient() {
+        Color bc = BaseColor(), bg = Theme.Bg;
+        Color[] col = BlobColors();
+        double[] cx = new double[4], cy = new double[4];
+        for (int i = 0; i < 4; i++) {
+            cx[i] = P[i, 0] + P[i, 2] * Math.Sin(clock * P[i, 4] * 2.2 + P[i, 6]);
+            cy[i] = P[i, 1] + P[i, 3] * Math.Cos(clock * P[i, 5] * 2.2 + P[i, 6] * 1.3);
+        }
+        const double aspect = 1.5;
+        for (int y = 0; y < GH; y++) {
+            double fy = y / (double)(GH - 1);
+            for (int x = 0; x < GW; x++) {
+                double fx = x / (double)(GW - 1);
+                double r = bc.R, g = bc.G, b = bc.B;
+                for (int i = 0; i < 4; i++) {
+                    double dx = (fx - cx[i]) * aspect, dy = fy - cy[i];
+                    double w = Math.Exp(-(dx * dx + dy * dy) / (P[i, 7] * P[i, 7] * 0.5)) * 0.9;
+                    r += (col[i].R - r) * w; g += (col[i].G - g) * w; b += (col[i].B - b) * w;
+                }
+                // 아래쪽은 바탕색으로 조금 가라앉힌다 (글자가 잘 보이도록)
+                double f = Math.Max(0, fy - 0.55) / 0.45 * (Theme.Dark ? 0.55 : 0.35);
+                r += (bg.R - r) * f; g += (bg.G - g) * f; b += (bg.B - b) * f;
+                px[y * GW + x] = (255 << 24) | ((int)r << 16) | ((int)g << 8) | (int)b;
+            }
+        }
+        grad.WritePixels(new Int32Rect(0, 0, GW, GH), px, GW * 4, 0);
     }
 }
 }

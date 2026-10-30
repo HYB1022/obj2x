@@ -13,10 +13,12 @@ namespace Obj2x.UI {
 // 직접 그리는 컨트롤의 공통 부분: 테마/언어가 바뀌면 다시 그리고, 값을 부드럽게 움직인다
 public class Drawn : FrameworkElement {
     public Drawn() {
-        Theme.Changed += InvalidateVisual;
-        Loc.Changed += delegate { InvalidateMeasure(); InvalidateVisual(); };
+        Loaded += delegate { if (hooked) return; hooked = true; Theme.Changed += OnLook; Loc.Changed += OnLook; };
+        Unloaded += delegate { if (!hooked) return; hooked = false; Theme.Changed -= OnLook; Loc.Changed -= OnLook; };
         IsEnabledChanged += delegate { InvalidateVisual(); };
     }
+    bool hooked;
+    void OnLook() { InvalidateMeasure(); InvalidateVisual(); }
     protected static DependencyProperty Dp(string name, Type t, Type owner, object def) {
         return DependencyProperty.Register(name, t, owner, new FrameworkPropertyMetadata(def, FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.AffectsMeasure));
     }
@@ -79,13 +81,13 @@ public class Stepper : Drawn {
     public Stepper() { Height = 58; }
     protected override void OnRender(DrawingContext dc) {
         double W = ActualWidth, cy = 18, r = 12;
-        dc.DrawLine(new Pen(Theme.Brush(Theme.Divider), 2), new Point(40, cy), new Point(W - 40, cy));
+        dc.DrawLine(Art.Pen(Theme.Divider, 2), new Point(40, cy), new Point(W - 40, cy));
         double usable = Math.Max(240, W - 96), span = usable / 3;
         for (int i = 0; i < 4; i++) {
             double cx = 48 + i * span;
             bool done = (i + 1 < Step), active = (i + 1 == Step);
             Color fill = (active || done) ? Theme.Accent : Theme.Card;
-            dc.DrawEllipse(Theme.Brush(fill), new Pen(Theme.Brush((active || done) ? Theme.Accent : Theme.Divider), 2), new Point(cx, cy), r, r);
+            dc.DrawEllipse(Theme.Brush(fill), Art.Pen((active || done) ? Theme.Accent : Theme.Divider, 2), new Point(cx, cy), r, r);
             FormattedText num = Art.Ft(done ? "✓" : (i + 1).ToString(), 12, true, (active || done) ? Colors.White : Theme.Muted);
             dc.DrawText(num, new Point(cx - num.Width / 2, cy - num.Height / 2));
             FormattedText t = Art.Ft(L.T(keys[i]), Art.Pt(8.5), false, active ? Theme.Text : Theme.Muted);
@@ -124,10 +126,10 @@ public class RadioCard : Drawn {
         double s = Math.Max(0, Math.Min(1, (double)GetValue(SelProperty)));
         double h = IsEnabled ? Math.Max(0, Math.Min(1, (double)GetValue(HoverProperty))) : 0;
         Color bdr = Theme.Mix(Theme.Mix(Theme.CardBdr, Theme.Muted, h), Theme.Accent, s);
-        dc.DrawRoundedRectangle(Theme.Brush(Theme.Mix(Theme.Card, Theme.NavPill, s)), new Pen(Theme.Brush(bdr), 1 + s), new Rect(1, 1, W - 2, H - 2), 10 * k, 10 * k);
+        dc.DrawRoundedRectangle(Theme.Brush(Theme.Mix(Theme.Card, Theme.NavPill, s)), Art.Pen(bdr, 1 + s), new Rect(1, 1, W - 2, H - 2), 10 * k, 10 * k);
         Color tc = IsEnabled ? Theme.Text : Theme.DisText, sc = IsEnabled ? Theme.Muted : Theme.DisText;
         Color rc = Selected ? Theme.Accent : (IsEnabled ? Theme.Muted : Theme.DisText);
-        dc.DrawEllipse(null, new Pen(Theme.Brush(rc), 2), new Point(27 * k, H / 2), 9 * k, 9 * k);
+        dc.DrawEllipse(null, Art.Pen(rc, 2), new Point(27 * k, H / 2), 9 * k, 9 * k);
         if (s > 0.02) dc.DrawEllipse(Theme.Brush(Theme.Accent), null, new Point(27 * k, H / 2), 4 * k * s, 4 * k * s);
         double tx = 54 * k;
         FormattedText title = Art.Ft(L.T(TitleKey), 12, true, tc);
@@ -146,7 +148,7 @@ public class RadioCard : Drawn {
 }
 
 // ---------------------------------------------------------------- 세그먼트 버튼 (선택 막대가 미끄러져 움직인다)
-// Items: "값=문구키;값=문구키". 문구키 앞에 !를 붙이면 번역하지 않고 그대로 쓴다 (예: ko=!한국어)
+// Items: "값=문구키;값=문구키" (예: light=theme_light;dark=theme_dark)
 public class Segmented : Drawn {
     public static readonly DependencyProperty ItemsProperty = Dp("Items", typeof(string), typeof(Segmented), "");
     public static readonly DependencyProperty ValueProperty = DependencyProperty.Register("Value", typeof(string), typeof(Segmented),
@@ -157,20 +159,18 @@ public class Segmented : Drawn {
     public string Items { get { return (string)GetValue(ItemsProperty); } set { SetValue(ItemsProperty, value); } }
     public string Value { get { return (string)GetValue(ValueProperty); } set { SetValue(ValueProperty, value); } }
 
-    class Item { public string Value, Key; public bool Raw; public double W; }
+    class Item { public string Value, Key; public double W; }
     List<Item> list = new List<Item>();
     bool placed;
 
     public Segmented() { Height = 32; Cursor = Cursors.Hand; Loaded += delegate { MovePill(false); }; }
-    string Label(Item it) { return it.Raw ? it.Key : L.T(it.Key); }
 
     void Parse() {
         list.Clear();
         foreach (string part in (Items ?? "").Split(';')) {
             int i = part.IndexOf('='); if (i <= 0) continue;
             Item it = new Item(); it.Value = part.Substring(0, i); it.Key = part.Substring(i + 1);
-            if (it.Key.StartsWith("!")) { it.Raw = true; it.Key = it.Key.Substring(1); }
-            it.W = (it.Raw ? Art.W(it.Key, 12, true) : Art.MaxW(it.Key, 12, true)) + 28;
+            it.W = Art.MaxW(it.Key, 12, true) + 28;
             list.Add(it);
         }
     }
@@ -205,7 +205,7 @@ public class Segmented : Drawn {
         double x = 2;
         foreach (Item it in list) {
             bool on = it.Value == Value && Math.Abs(px - x) < it.W / 2;
-            FormattedText t = Art.Ft(Label(it), 12, on, on ? Colors.White : Theme.Text);
+            FormattedText t = Art.Ft(L.T(it.Key), 12, on, on ? Colors.White : Theme.Text);
             dc.DrawText(t, new Point(x + (it.W - t.Width) / 2, (H - t.Height) / 2));
             x += it.W;
         }

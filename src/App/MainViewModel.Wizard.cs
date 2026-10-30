@@ -33,7 +33,7 @@ public partial class MainViewModel {
     public int WizStep {
         get { return wizStep; }
         set {
-            if (Set(ref wizStep, Math.Max(1, Math.Min(4, value)))) { Raise("BackVisible"); Raise("NextText"); }
+            if (Set(ref wizStep, Math.Max(1, Math.Min(4, value)))) { Raise("BackVisible", "NextText"); }
             if (wizStep == 2) RecentRefresh();
             if (wizStep == 4) Raise("Summary");
         }
@@ -54,15 +54,14 @@ public partial class MainViewModel {
     void SetMode(string m, bool persist) {
         wizMode = m;
         if (persist) { S.Fast = (m == "fast"); S.DoConv = (m == "std"); }
-        Raise("WizMode"); Raise("IsStd"); Raise("IsX"); Raise("IsFast");
-        Raise("OutLocked"); Raise("OutEnabled"); Raise("OutPath"); Raise("ParEnabled"); Raise("Summary");
+        Raise("WizMode", "IsStd", "IsX", "IsFast", "OutLocked", "OutEnabled", "OutPath", "ParEnabled", "Summary");
     }
 
     // 도구가 없으면 해당 방식을 잠근다
     void WizAvailability() {
         bool hb = Conversion.BlenderOk(S), hc = Conversion.ConvOk(S);
         stdEnabled = hb && hc; xEnabled = hb;
-        Raise("StdEnabled"); Raise("XEnabled");
+        Raise("StdEnabled", "XEnabled");
         if (!stdEnabled && wizMode == "std") SetMode("fast", false);
         if (!xEnabled && wizMode == "x") SetMode("fast", false);
         List<string> missing = Conversion.MissingTools(S);
@@ -77,17 +76,17 @@ public partial class MainViewModel {
 
     // 마법사에 들어올 때 저장된 설정으로 다시 채운다
     void WizEnter() {
-        wizStep = 1; Raise("WizStep"); Raise("BackVisible"); Raise("NextText");
+        wizStep = 1; Raise("WizStep", "BackVisible", "NextText");
         SetMode(S.Fast ? "fast" : (S.DoConv ? "std" : "x"), false);
         WizAvailability();
-        Raise("InPath"); Raise("OutPath"); Raise("SameDir"); Raise("Inc"); Raise("Sub"); Raise("Par");
+        Raise("InPath", "OutPath", "SameDir", "Inc", "Sub", "Par");
         RecentRefresh();
     }
 
     // ---- 2단계: 경로
-    public string InPath { get { return S.Inp; } set { S.Inp = value ?? ""; Raise("InPath"); if (OutLocked) Raise("OutPath"); Raise("Summary"); } }
-    public string OutPath { get { return OutLocked ? S.Inp : S.Out; } set { if (!OutLocked) { S.Out = value ?? ""; Raise("OutPath"); Raise("Summary"); } } }
-    public bool SameDir { get { return S.SameDir; } set { S.SameDir = value; Raise("SameDir"); Raise("OutLocked"); Raise("OutEnabled"); Raise("OutPath"); } }
+    public string InPath { get { return S.Inp; } set { S.Inp = value ?? ""; Raise("InPath"); if (OutLocked) Raise("OutPath", "Summary"); } }
+    public string OutPath { get { return OutLocked ? S.Inp : S.Out; } set { if (!OutLocked) { S.Out = value ?? ""; Raise("OutPath", "Summary"); } } }
+    public bool SameDir { get { return S.SameDir; } set { S.SameDir = value; Raise("SameDir", "OutLocked", "OutEnabled", "OutPath"); } }
     public bool OutLocked { get { return S.SameDir || wizMode == "fast"; } }
     public bool OutEnabled { get { return !OutLocked; } }
     public bool RecentEmpty { get { return Recent.Count == 0; } }
