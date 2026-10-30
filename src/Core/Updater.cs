@@ -84,17 +84,40 @@ public static class Updater {
         try { string old = exePath + ".old"; if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
     }
 
-    static void CopyTree(string src, string dst) {
+    // 실행 중인 앱이 fonts 폴더의 글꼴 파일을 열고 있어서 덮어쓰지 못할 수 있다.
+    // 내용이 같으면 건너뛰고, 글꼴처럼 앱 실행에 꼭 필요하지 않은 하위 폴더 파일은 못 바꿔도 업데이트를 계속한다.
+    static void CopyTree(string src, string dst) { CopyTree(src, dst, true); }
+    static void CopyTree(string src, string dst, bool top) {
         foreach (string f in Directory.GetFiles(src)) {
             string name = Path.GetFileName(f);
             if (string.Equals(name, "obj2x.ini", StringComparison.OrdinalIgnoreCase)) continue;
-            File.Copy(f, Path.Combine(dst, name), true);
+            string to = Path.Combine(dst, name);
+            if (SameFile(f, to)) continue;
+            try { File.Copy(f, to, true); }
+            catch (IOException) { if (top) throw; }
+            catch (UnauthorizedAccessException) { if (top) throw; }
         }
         foreach (string d in Directory.GetDirectories(src)) {
             string nd = Path.Combine(dst, Path.GetFileName(d));
             if (!Directory.Exists(nd)) Directory.CreateDirectory(nd);
-            CopyTree(d, nd);
+            CopyTree(d, nd, false);
         }
+    }
+    static bool SameFile(string a, string b) {
+        try {
+            FileInfo fa = new FileInfo(a), fb = new FileInfo(b);
+            if (!fb.Exists || fa.Length != fb.Length) return false;
+            using (FileStream x = new FileStream(a, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (FileStream y = new FileStream(b, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete)) {
+                byte[] bx = new byte[65536], by = new byte[65536];
+                while (true) {
+                    int nx = x.Read(bx, 0, bx.Length), ny = y.Read(by, 0, by.Length);
+                    if (nx != ny) return false;
+                    if (nx == 0) return true;
+                    for (int i = 0; i < nx; i++) if (bx[i] != by[i]) return false;
+                }
+            }
+        } catch (Exception) { return false; }
     }
 
     public static void OpenUrl(string url) { try { Process.Start(url); } catch (Exception) { } }

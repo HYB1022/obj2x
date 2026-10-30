@@ -64,6 +64,6 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 ## 릴리스
 
 - 버전은 `src/Core/AppInfo.cs`의 `Version`에서 바꾸고, README의 변경 내역에도 적는다.
-- 자동 업데이트는 최신 릴리스의 `.zip` 첨부 파일을 받아 exe를 교체한다. 릴리스 zip `obj2x.zip`에는 `obj2x.exe`, `obj2x.bat`, `obj2x.py`, `obj2x_gui.ps1`, `LICENSE`, `fonts\`를 같은 폴더(최상위)에 넣는다. `lang` 폴더는 넣지 않는다(사용자가 만든 언어 파일을 덮어쓰지 않게). GPL-3.0이라 바이너리와 함께 라이선스 원문을 배포해야 한다.
+- 자동 업데이트는 최신 릴리스의 `.zip` 첨부 파일을 받아 exe를 교체한다. 릴리스 zip `obj2x.zip`에는 `obj2x.exe`, `obj2x.bat`, `obj2x.py`, `obj2x_gui.ps1`, `LICENSE`, `fonts\`(나눔스퀘어 네오, Noto Sans KR, OFL.txt만. **MiSans는 절대 넣지 않는다** — 라이선스가 재배포를 막는다. 저장소에서도 `.gitignore`로 뺀다)를 같은 폴더(최상위)에 넣는다. zip 안 경로는 `/`로 쓴다. `lang` 폴더는 넣지 않는다(사용자가 만든 언어 파일을 덮어쓰지 않게). GPL-3.0이라 바이너리와 함께 라이선스 원문을 배포해야 한다.
   - C# 업데이터는 zip 안의 `obj2x.exe`를, v2.0 이하의 PowerShell 업데이터는 `obj2x_gui.ps1`을 찾아 그 폴더를 덮어쓴 뒤 `obj2x.bat`을 실행한다. `obj2x_gui.ps1`(exe 런처)을 빼면 v2.0 사용자의 업데이트가 실패한다.
 - `obj2x.exe`와 `obj2x.ini`는 저장소에 넣지 않는다(`.gitignore`). exe는 릴리스 zip으로만 배포한다.
