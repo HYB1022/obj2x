@@ -81,11 +81,11 @@ public class Settings {
                 if (p.Length == 2 && s.Copt.ContainsKey(p[0]) && int.TryParse(p[1], out n)) s.Copt[p[0]] = (n != 0) ? 1 : 0;
             }
         }
-        // 언어: ini에 없으면 시스템 UI 언어가 한국어가 아닐 때 영어
-        if (s.Lang != "ko" && s.Lang != "en") {
+        // 언어: ini에 없거나 모르는 값이면 Windows 표시 언어를 따르고, 지원하지 않는 언어면 영어
+        if (!L.Supported(s.Lang)) {
             string cn = "";
-            try { cn = System.Globalization.CultureInfo.CurrentUICulture.Name; } catch (Exception) { }
-            s.Lang = cn.StartsWith("ko", StringComparison.OrdinalIgnoreCase) ? "ko" : "en";
+            try { cn = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName; } catch (Exception) { }
+            s.Lang = L.Supported(cn) ? cn : "en";
         }
         return s;
     }

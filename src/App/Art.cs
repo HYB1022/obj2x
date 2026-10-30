@@ -32,10 +32,10 @@ public static class Art {
         dc.DrawText(f, new Point(r.X, r.Y + (r.Height - f.Height) / 2));
     }
     public static double W(string s, double px, bool bold) { return Ft(s, px, bold, Colors.Black).WidthIncludingTrailingWhitespace; }
-    // 한국어/영어 중 더 긴 쪽 폭 (언어를 바꿔도 잘리지 않게)
+    // 모든 언어 중 가장 긴 문구의 폭 (언어를 바꿔도 잘리지 않게)
     public static double MaxW(string key, double px, bool bold) {
         string save = L.Lang; double w = 0;
-        try { L.Lang = "ko"; w = Math.Max(w, W(L.T(key), px, bold)); L.Lang = "en"; w = Math.Max(w, W(L.T(key), px, bold)); }
+        try { foreach (string[] l in L.Languages) { L.Lang = l[0]; w = Math.Max(w, W(L.T(key), px, bold)); } }
         finally { L.Lang = save; }
         return w;
     }

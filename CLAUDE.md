@@ -40,7 +40,7 @@ OMSI용 일괄 변환 도구. Blender에서 내보낸 `.obj`를 `.x`(Blender 2.7
 | `Conversion.cs` | 변환 전 검사와 준비: 도구 경로 확인, 옵션 만들기, 대상 obj 고르기 |
 | `Updater.cs` | GitHub 최신 릴리스 확인, zip 받아서 exe 교체 |
 | `Settings.cs` | `obj2x.ini` 읽기/쓰기 |
-| `Strings.cs`, `StringsData.cs` | 한국어/영어 문구표 `L.T("키")`. 새 문구는 ko/en 둘 다 추가한다 |
+| `Strings.cs`, `StringsData.cs`, `StringsDe.cs` | 문구표 `L.T("키")` (한국어/영어/독일어). 새 문구는 모든 언어에 추가한다(`--selftest`가 빠진 키와 `{0}` 불일치를 잡는다). 언어를 늘리려면 `L.Languages`에 한 줄, `Fill<언어>` 표, `FillExtra`의 `X(...)`와 `TrFast`에 그 언어를 넣는다 |
 | `Win32.cs` | OmsiXConv 창 찾기/조작 P/Invoke |
 
 ### `src/App` (네임스페이스 `Obj2x.UI`) — WPF 화면

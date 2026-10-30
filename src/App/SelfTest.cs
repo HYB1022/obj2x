@@ -28,11 +28,16 @@ public static class SelfTest {
 
         // 1. 문구표
         string par = L.Parity();
-        T("문구표: ko/en 키 일치", par.Length == 0, par);
+        T("문구표: 모든 언어 키 일치", par.Length == 0, par);
         T("문구표: 키 개수", L.Count > 150, L.Count.ToString());
         L.Lang = "ko"; string k1 = L.T("m_fast_done", 3, 5, "1.5");
         L.Lang = "en"; string k2 = L.T("m_fast_done", 3, 5, "1.5");
         T("문구표: 서식 채우기", k1.Contains("3") && k2.Contains("3") && k1 != k2, k1 + " | " + k2);
+        string ph = L.PlaceholderParity();
+        T("문구표: 모든 언어의 {0} 자리 표시가 같음", ph.Length == 0, ph);
+        L.Lang = "de"; string g1 = L.T("m_fast_done", 3, 5, "1.5");
+        T("문구표: 독일어", g1.StartsWith("Fertig") && L.T("nav_settings") == "Einstellungen" && L.TrFast("mtl 파일 없음") == "mtl-Datei nicht gefunden", g1);
+        L.Lang = "ko";
         T("문구표: {0} 안 남음", !L.T("lbl_cores", 8).Contains("{0}") && !L.T("m_retry", "a", "b").Contains("{"), "");
         L.Lang = "ko";
 

@@ -22,7 +22,7 @@ public class WelcomeWindow : Window {
     readonly DispatcherTimer tm = new DispatcherTimer();
     int tick;
     bool finished;
-    static readonly string[] Greetings = new string[] { "안녕하세요", "Hello" };
+    static readonly string[] Greetings = new string[] { "안녕하세요", "Hello", "Hallo" };
     public DialogHost LastDialog;
 
     public WelcomeWindow(Settings s) {
