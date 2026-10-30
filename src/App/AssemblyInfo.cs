@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("OBJ to DirectX .X to OMSI .O3D batch converter (Blender 2.79b + OmsiXConv)")]
 [assembly: AssemblyProduct("Bus Depot")]
 [assembly: AssemblyCompany("HYB1022")]
-[assembly: AssemblyCopyright("Copyright (C) HYB1022. GPL-3.0-or-later. https://github.com/HYB1022/obj2x")]
+[assembly: AssemblyCopyright("Copyright (C) 2026 Hyunwoo Bang (HYB1022), Junyoung. GPL-3.0-or-later. https://github.com/HYB1022/obj2x")]
 [assembly: AssemblyVersion(Obj2x.AppInfo.Version)]
 [assembly: AssemblyFileVersion(Obj2x.AppInfo.Version)]
 [assembly: AssemblyInformationalVersion(Obj2x.AppInfo.Version)]

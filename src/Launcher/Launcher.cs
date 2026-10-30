@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("Starts BusDepot.exe. Kept so that shortcuts and the auto-update of obj2x v2.7.2 and older keep working.")]
 [assembly: AssemblyProduct("Bus Depot")]
 [assembly: AssemblyCompany("HYB1022")]
-[assembly: AssemblyCopyright("Copyright (C) HYB1022. GPL-3.0-or-later.")]
+[assembly: AssemblyCopyright("Copyright (C) 2026 Hyunwoo Bang (HYB1022), Junyoung. GPL-3.0-or-later.")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: ComVisible(false)]
 
