@@ -137,7 +137,7 @@ public partial class MainViewModel {
     void SplChanged(params string[] names) {
         splVersion++;
         S.Spl = spl.Pack();
-        Raise(names); Raise("SplVersion", "SplSummary", "SplError", "SplWalkOn", "SplRoadTexText", "SplWalkTexText");
+        Raise(names); Raise("SplVersion", "SplSummary", "SplError", "SplWalkOn", "SplRoadTexText", "SplWalkTexText", "SplOdd");
     }
     string NumText(string key, double v) { string t; return splText.TryGetValue(key, out t) ? t : Omsi_N(v); }
     static string Omsi_N(double v) { return v.ToString("0.###", CultureInfo.InvariantCulture); }
@@ -155,6 +155,8 @@ public partial class MainViewModel {
     public string SplRoadRepeat { get { return NumText("rrep", spl.RoadRepeat); } set { double v; if (ParseNum("rrep", value, out v)) spl.RoadRepeat = v; SplChanged(); } }
     public string SplWalkRepeat { get { return NumText("wrep", spl.WalkRepeat); } set { double v; if (ParseNum("wrep", value, out v)) spl.WalkRepeat = v; SplChanged(); } }
     public string SplDir { get { return spl.OneWay ? "one" : "two"; } set { spl.OneWay = value == "one"; SplChanged("SplDir"); } }
+    public string SplExtra { get { return spl.ExtraRight ? "right" : "left"; } set { spl.ExtraRight = value != "left"; SplChanged("SplExtra"); } }
+    public bool SplOdd { get { return !spl.OneWay && spl.Lanes % 2 == 1; } }
     public string SplTexFit { get { return spl.PerLane ? "lane" : "road"; } set { spl.PerLane = value == "lane"; SplChanged("SplTexFit"); } }
     public bool SplWalkOn { get { return spl.WalkL > 0 || spl.WalkR > 0; } }
     public string SplRoadTexText { get { return spl.RoadTex.Length > 0 ? Path.GetFileName(spl.RoadTex) : L.T("spl_tex_default"); } }

@@ -410,5 +410,14 @@
   "view_blender_none": "No Blender found. Use Browse to choose blender.exe.",
   "view_saved_with": "Saved with Blender {0}.",
   "view_blender_old": "Files saved with Blender 2.79 show no textures and use the old screen layout when opened in Blender 2.8 or later. Install a newer Blender and it will be used automatically.",
-  "btn_auto": "Auto"
+  "btn_auto": "Auto",
+  "spl_extra": "Extra lane",
+  "spl_extra_sub": "With an odd lane count, the side that gets one more lane (right = direction of travel)",
+  "spl_extra_left": "Left",
+  "spl_extra_right": "Right",
+  "view_paint": "Repaint",
+  "view_paint_sub": "Uses the textures and options ([setvar]) of the repaint file (.cti)",
+  "view_paint_none": "(Base textures)",
+  "view_both": "Show back faces",
+  "view_both_sub": "Off: front faces only, like OMSI (faces with flipped normals are hidden)"
 }

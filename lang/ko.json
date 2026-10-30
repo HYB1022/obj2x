@@ -410,5 +410,14 @@
   "view_blender_none": "Blender를 찾지 못했습니다. 찾아보기로 blender.exe를 지정하세요.",
   "view_saved_with": "Blender {0}로 저장했습니다.",
   "view_blender_old": "Blender 2.79로 저장한 파일은 Blender 2.8 이상에서 열면 텍스처가 보이지 않고 화면 배치도 예전 모양으로 열립니다. 새 Blender를 설치하면 자동으로 그것을 씁니다.",
-  "btn_auto": "자동"
+  "btn_auto": "자동",
+  "spl_extra": "남는 차선",
+  "spl_extra_sub": "차선 수가 홀수일 때 한 차선을 더 줄 쪽 (오른쪽 = 진행 방향)",
+  "spl_extra_left": "왼쪽",
+  "spl_extra_right": "오른쪽",
+  "view_paint": "도색",
+  "view_paint_sub": "도색 파일(.cti)의 텍스처와 옵션([setvar])으로 부품을 맞춥니다",
+  "view_paint_none": "(기본 텍스처)",
+  "view_both": "뒷면도 보기",
+  "view_both_sub": "끄면 OMSI처럼 앞면만 그립니다 (노멀이 뒤집힌 면은 보이지 않음)"
 }

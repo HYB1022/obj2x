@@ -1,6 +1,6 @@
 # README 맨 위 움직이는 그림 만들기 (개발용, Pillow 필요)
 #   obj2x.exe --welcome-frames <프레임 폴더> [light|dark]
-#   python tools/mkwebp.py <프레임 폴더> docs/images/welcome-light.webp 960 80 1.2
+#   python tools/mkwebp.py <프레임 폴더> docs/images/welcome-light.webp 1280 92 1.2   (프레임은 2배 해상도로 찍힌다)
 # 인수: 프레임 폴더, 출력 파일, 가로 픽셀, 품질(0~100), 시작 시각(초, 첫 장에 인사말이 보이게)
 import sys, os
 from PIL import Image

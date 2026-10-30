@@ -17,7 +17,7 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 - README 화면: `BusDepot.exe --readme-shots <폴더>`로 찍어서 `docs/images/`에 넣는다. 사용자 경로가 보이는 화면은 찍지 않는다.
 - 모델 보기 확인: `BusDepot.exe --view-shot <model.cfg> <png> [light|dark] [ext|int|all]`(화면 캡처), `--save-model <model.cfg> <out.blend|.obj> [blender.exe]`(저장하기를 대화 상자 없이).
 - 소개 영상: `python tools/video/make_video.py --exe <BusDepot.exe> --out <폴더> [--model <cfg>] [--split]`. 대본은 `tools/video/narration.json`(장면 id = `--video-frames` 장면 이름). 음성은 edge-tts(Microsoft 온라인 음성), 언어마다 오디오/자막 트랙이 따로 들어간 MP4 하나를 만든다. 화면은 영어 UI, 작업 폴더는 사용자 경로가 안 보이게 드라이브 바로 아래 `obj2x_demo`.
-- README 맨 위 움직이는 그림: `BusDepot.exe --welcome-frames <폴더> [light|dark]`로 환영 화면을 한 바퀴(13초) 초당 25장 찍고, `tools/mkwebp.py`(Pillow)로 처음과 끝을 섞어 이음매 없이 반복되는 WebP(`docs/images/welcome-light.webp`/`welcome-dark.webp`)로 만든다.
+- README 맨 위 움직이는 그림: `BusDepot.exe --welcome-frames <폴더> [light|dark]`(2배 해상도)로 환영 화면을 한 바퀴(13초) 초당 25장 찍고, `tools/mkwebp.py`(Pillow)로 처음과 끝을 섞어 이음매 없이 반복되는 WebP(`docs/images/welcome-light.webp`/`welcome-dark.webp`)로 만든다.
 
 ## 제약
 
@@ -49,7 +49,7 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 | `Settings.cs` | `BusDepot.ini` 읽기/쓰기 (처음 실행할 때 `obj2x.ini`가 있으면 복사해 온다 — `Program.cs`) |
 | `Strings.cs` | 문구표 `L.T("키")`와 작은 JSON 읽기/쓰기. 문구는 저장소의 `lang/<코드>.json`(ko/en/de/ja/zh)에 있고 빌드 때 exe에 들어간다. exe 옆 `lang` 폴더의 `<코드>.json`이 그 위에 덮어쓴다(새 언어 추가/일부 수정). 새 문구는 `lang/*.json` 모두에 넣는다(`--selftest`가 빠진 키와 `{0}` 불일치를 잡는다) |
 | `Win32.cs` | OmsiXConv 창 찾기/조작 P/Invoke |
-| `O3d.cs` | o3d 읽기(버전 1/3/5/7, 32비트 번호. 키가 `0xFFFFFFFF`가 아니면 암호화로 보고 거부 — 공식 차량은 암호화돼 있고 풀지 않는다), `ModelCfg`(model.cfg/.sco의 `[mesh]`·`[LOD]`·`[visible]`·`[viewpoint]`·`[matl_alpha]`·`[CTC]`), `ObjExport`(FastO3D의 반대: z 뒤집기, 면 방향 반대, v 뒤집기 → Blender에서 원래 방향) |
+| `O3d.cs` | o3d 읽기(버전 1/3/5/7, 32비트 번호. 키가 `0xFFFFFFFF`가 아니면 암호화로 보고 거부 — 공식 차량은 암호화돼 있고 풀지 않는다), `ModelCfg`(model.cfg/.sco의 `[mesh]`·`[LOD]`·`[visible]`·`[viewpoint]`·`[matl_alpha]`·`[CTC]`·`[CTCTexture]`), `Repaint`(.cti: `[item]` 도색/자리/파일, `[setvar]` 변수/값 → `VisOn`), `ObjExport`(FastO3D의 반대: z 뒤집기, 면 방향 반대, v 뒤집기 → Blender에서 원래 방향) |
 | `Omsi.cs` | OMSI 2: 설치 폴더 찾기(Steam), o3d(버전 1)/mtl에서 텍스처 이름 읽기, 알파 판별, 변환 전 텍스처 검사, `ScoMaker`(.sco + model/texture 복사), `SplineSpec`(.sli 프로필/경로/기본 텍스처 BMP). 형식은 OMSI 설치 폴더의 실제 파일들을 보고 맞췄다 |
 
 ### `src/App` (네임스페이스 `Obj2x.UI`) — WPF 화면

@@ -33,6 +33,22 @@
     <TextBlock Text="{ui:Tr view_sec_parts}" Style="{StaticResource DevCaption}"/>
     <Border Style="{StaticResource DevCard}">
       <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}" Visibility="{Binding PaintsVisible, Converter={StaticResource Vis}}">
+          <DockPanel>
+            <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="240" VerticalAlignment="Center" Margin="16,0,0,0"
+                      ItemsSource="{Binding Paints}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding ViewPaint}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_paint}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr view_paint_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding ViewBothSides}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr view_both}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr view_both_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
         <ContentControl Style="{StaticResource DevStatic}">
           <DockPanel>
             <ui:Segmented DockPanel.Dock="Right" Items="ext=view_ext;int=view_int;all=view_all" Value="{Binding ViewPreset}" VerticalAlignment="Center" Margin="16,0,0,0"/>

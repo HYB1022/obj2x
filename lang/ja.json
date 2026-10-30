@@ -410,5 +410,14 @@
   "view_blender_none": "Blender が見つかりません。参照から blender.exe を指定してください。",
   "view_saved_with": "Blender {0} で保存しました。",
   "view_blender_old": "Blender 2.79 で保存したファイルは、Blender 2.8 以降で開くとテクスチャが表示されず、画面配置も古い形になります。新しい Blender をインストールすると自動でそちらを使います。",
-  "btn_auto": "自動"
+  "btn_auto": "自動",
+  "spl_extra": "余る車線",
+  "spl_extra_sub": "車線数が奇数のとき 1 車線多くする側（右 = 進行方向）",
+  "spl_extra_left": "左",
+  "spl_extra_right": "右",
+  "view_paint": "塗装",
+  "view_paint_sub": "塗装ファイル（.cti）のテクスチャとオプション（[setvar]）で部品を合わせます",
+  "view_paint_none": "（基本テクスチャ）",
+  "view_both": "裏面も表示",
+  "view_both_sub": "オフにすると OMSI と同じく表面だけを描きます（法線が反転した面は見えません）"
 }

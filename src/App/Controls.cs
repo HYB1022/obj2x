@@ -449,7 +449,7 @@ public class SplinePreview : Drawn {
         dc.DrawLine(edge, new Point(xr0 + 3, top), new Point(xr0 + 3, bot));
         dc.DrawLine(edge, new Point(xr1 - 3, top), new Point(xr1 - 3, bot));
         List<SplineSpec.PathDef> paths = sp.Paths();
-        int back = sp.OneWay ? 0 : sp.Lanes / 2;
+        int back = sp.BackLanes;
         for (int i = 1; i < sp.Lanes; i++) {
             double lx = xr0 + i * sp.LaneW * k;
             if (i == back) {   // 마주 오는 차선 사이: 노란 겹선

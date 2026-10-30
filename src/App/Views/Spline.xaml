@@ -44,6 +44,15 @@
             </StackPanel>
           </DockPanel>
         </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}" Visibility="{Binding SplOdd, Converter={StaticResource Vis}}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="left=spl_extra_left;right=spl_extra_right" Value="{Binding SplExtra}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr spl_extra}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr spl_extra_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
         <ContentControl Style="{StaticResource DevStatic}">
           <DockPanel>
             <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Command="{Binding PickRoadTexCmd}" Margin="8,0,0,0"/>

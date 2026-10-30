@@ -41,6 +41,15 @@ def to_blend(obj, out):
         bpy.ops.import_scene.obj(filepath=obj, split_mode="ON")
     n = len(bpy.data.objects)
     print("imported objects:", n)
+    # OMSI는 뒷면을 그리지 않는다: 재질마다 뒷면 감추기를 켜서 노멀이 뒤집힌 면이 게임처럼 안 보이게
+    for m in bpy.data.materials:
+        try:
+            m.use_backface_culling = True          # 2.8 이상
+        except Exception:
+            try:
+                m.game_settings.use_backface_culling = True   # 2.79
+            except Exception:
+                pass
     # OMSI는 [matl_alpha]가 있을 때만 알파를 투명으로 쓴다 (obj2x가 그때만 map_d를 넣음).
     # 그 밖의 재질은 텍스처의 알파(반사 마스크 등)를 무시해야 색이 하얗게 바래지 않는다 (2.79 Blender Internal)
     for m in bpy.data.materials:

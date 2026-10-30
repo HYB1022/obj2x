@@ -137,7 +137,8 @@ public class PartItem : Observable {
 
 public static class ModelScene {
     // 부품 하나를 3D 모델로. o3d 좌표(왼손, y 위, z 앞)를 WPF(오른손, y 위)로: z를 뒤집는다. 양면으로 그려서 면 방향은 신경 쓰지 않는다
-    public static PartItem Build(ModelCfg cfg, CfgMesh cm, Dictionary<string, Material> cache, List<string> missing) {
+    // twoSided=false면 OMSI처럼 앞면만 그린다 (노멀이 뒤집힌 면은 보이지 않음)
+    public static PartItem Build(ModelCfg cfg, CfgMesh cm, Dictionary<string, Material> cache, List<string> missing, bool twoSided) {
         PartItem it = new PartItem(); it.Mesh = cm; it.Name = cm.File;
         O3dModel m;
         try { m = O3dModel.Load(cm.Path); }
@@ -150,7 +151,8 @@ public static class ModelScene {
             Dictionary<int, int> remap = new Dictionary<int, int>();
             for (int t = 0; t < m.TCount; t++) {
                 if (m.Mats.Count > 0 && m.T[t * 4 + 3] != mi) continue;
-                for (int k = 0; k < 3; k++) {
+                for (int kk = 0; kk < 3; kk++) {
+                    int k = kk == 0 ? 0 : 3 - kk;   // 0, 2, 1: z를 뒤집어 거울상이 됐으니 감기는 방향을 되돌린다
                     int v = m.T[t * 4 + k], r;
                     if (!remap.TryGetValue(v, out r)) {
                         r = pos.Count; remap[v] = r;
@@ -168,7 +170,7 @@ public static class ModelScene {
             geo.Positions = pos; geo.Normals = nor; geo.TextureCoordinates = uv; geo.TriangleIndices = idx;
             geo.Freeze();
             Material mat = MaterialFor(cfg, cm, mi < m.Mats.Count ? m.Mats[mi] : new O3dMaterial(), cache, missing);
-            GeometryModel3D gm = new GeometryModel3D(geo, mat); gm.BackMaterial = mat;
+            GeometryModel3D gm = new GeometryModel3D(geo, mat); if (twoSided) gm.BackMaterial = mat;
             gm.Freeze();
             g.Children.Add(gm);
         }

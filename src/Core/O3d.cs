@@ -151,6 +151,9 @@ public class ModelCfg {
                 case "[matl_alpha]":
                     if (cur != null && curTex != null) { int v; if (int.TryParse(arg(1), out v)) cur.Alpha[curTex] = v; }
                     break;
+                case "[ctctexture]":   // 도색이 바꾸는 텍스처 자리: 자리 이름 → 원래 텍스처 파일
+                    if (arg(1).Length > 0 && arg(2).Length > 0) c.CtcSlots[arg(1)] = arg(2);
+                    break;
                 case "[ctc]": {   // 도색(리페인트) 폴더: 차량 폴더 기준. 기본 텍스처 대신 그 안의 '<이름>_<도색>' 파일을 쓴다
                     string d = System.IO.Path.Combine(c.VehicleDir, arg(2));
                     if (Directory.Exists(d)) c.CtcDir = d;
@@ -162,6 +165,19 @@ public class ModelCfg {
     }
 
     public string CtcDir;              // [CTC] 도색 폴더 (없으면 null)
+    public Dictionary<string, string> CtcSlots = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // [CTCTexture] 자리 이름 → 원래 텍스처
+    public Repaint Paint;              // 고른 도색 (null이면 기본 텍스처, 도색 파일이 없을 때는 이름 규칙으로 찾음)
+
+    // 도색 폴더의 .cti 목록 (이름순)
+    public List<Repaint> Repaints() {
+        List<Repaint> r = new List<Repaint>();
+        if (CtcDir == null) return r;
+        string[] files;
+        try { files = Directory.GetFiles(CtcDir, "*.cti"); } catch (Exception) { return r; }
+        Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+        foreach (string f in files) { Repaint p = Repaint.Load(f); if (p != null) r.Add(p); }
+        return r;
+    }
     public string VehicleDir;          // 차량 폴더 (.bus/.ovh가 있는 곳, 못 찾으면 cfg 폴더의 위)
     public List<string> Bases = new List<string>();   // [mesh] 경로를 찾아볼 기준 폴더들 (앞에서부터)
 
@@ -188,12 +204,12 @@ public class ModelCfg {
 
     public string FindTex(string tex, CfgMesh m) {
         if (string.IsNullOrEmpty(tex)) return null;
-        string r = Repaint(tex);
+        string r = Paint != null ? Paint.TexFor(tex, CtcSlots) : (CtcHasCti ? null : RepaintByName(tex));
         return r ?? Omsi.FindTexture(tex, TexDir, System.IO.Path.GetDirectoryName(m.Path), BaseDir, System.IO.Path.GetDirectoryName(CfgPath), VehicleDir);
     }
 
     // 도색 폴더에서 '<텍스처 이름>_*' 중 이름순 첫 번째 (예: SD77_01.tga → Werbung_SD77\SD77_01_BFB.dds)
-    string Repaint(string tex) {
+    string RepaintByName(string tex) {
         if (CtcDir == null) return null;
         if (ctcFiles == null) {
             try { ctcFiles = Directory.GetFiles(CtcDir); Array.Sort(ctcFiles, StringComparer.OrdinalIgnoreCase); } catch (Exception) { ctcFiles = new string[0]; }
@@ -210,7 +226,48 @@ public class ModelCfg {
     public bool DefaultOn(CfgMesh m) {
         return (m.Lod == 0 || m.Lod == BestLod) && m.Exterior && VisOn(m);
     }
-    public bool VisOn(CfgMesh m) { string v; return m.VisVar == null || (FirstVis.TryGetValue(m.VisVar, out v) && v == m.VisVal); }
+    // 조건부 부품: 고른 도색의 [setvar] 값이 있으면 그것, 없으면 변수마다 처음 나온 값 하나만
+    public bool VisOn(CfgMesh m) {
+        if (m.VisVar == null) return true;
+        string v;
+        if (Paint != null && Paint.Vars.TryGetValue(m.VisVar, out v)) return v == m.VisVal;
+        return FirstVis.TryGetValue(m.VisVar, out v) && v == m.VisVal;
+    }
+    bool CtcHasCti { get { if (ctcHasCti == null) ctcHasCti = Repaints().Count > 0; return ctcHasCti.Value; } }
+    bool? ctcHasCti;
+}
+
+// ---------------------------------------------------------------- 도색 파일(.cti): [item] 도색 이름/텍스처 자리/파일, [setvar] 변수/값
+public class Repaint {
+    public string File, Name;
+    public Dictionary<string, string> Items = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // 자리 이름 → 파일 전체 경로
+    public Dictionary<string, string> Vars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+    public static Repaint Load(string path) {
+        string[] lines;
+        try { lines = System.IO.File.ReadAllLines(path, Encoding.Default); } catch (Exception) { return null; }
+        Repaint r = new Repaint(); r.File = path; r.Name = System.IO.Path.GetFileNameWithoutExtension(path);
+        string dir = System.IO.Path.GetDirectoryName(path);
+        for (int i = 0; i < lines.Length; i++) {
+            string k = lines[i].Trim().ToLowerInvariant();
+            string a1 = i + 1 < lines.Length ? lines[i + 1].Trim() : "", a2 = i + 2 < lines.Length ? lines[i + 2].Trim() : "", a3 = i + 3 < lines.Length ? lines[i + 3].Trim() : "";
+            if (k == "[item]" && a2.Length > 0 && a3.Length > 0) r.Items[a2] = System.IO.Path.Combine(dir, a3);
+            else if (k == "[setvar]" && a1.Length > 0) r.Vars[a1] = a2;
+        }
+        return r;
+    }
+
+    // 텍스처 이름이 [CTCTexture]의 원래 텍스처이고 이 도색에 그 자리가 있으면 도색 파일
+    public string TexFor(string tex, Dictionary<string, string> slots) {
+        string bn = System.IO.Path.GetFileName(tex.Replace('/', '\\'));
+        foreach (KeyValuePair<string, string> kv in slots) {
+            if (!string.Equals(System.IO.Path.GetFileName(kv.Value.Replace('/', '\\')), bn, StringComparison.OrdinalIgnoreCase)) continue;
+            string f;
+            if (Items.TryGetValue(kv.Key, out f) && System.IO.File.Exists(f)) return f;
+        }
+        return null;
+    }
+    public override string ToString() { return Name; }
 }
 
 // ---------------------------------------------------------------- obj + mtl로 내보내기 (Blender에서 원래 방향 그대로 열리게: FastO3D의 반대)

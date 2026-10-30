@@ -52,11 +52,13 @@ public static class FrameMeter {
 // 화면을 복사하지 않고 창 내용을 직접 그려서 저장하므로, 다른 창에 가려져도 같은 결과가 나온다.
 public static class Shots {
     static void Save(MainWindow f, string path) { Save(f, f.Host, path); }
+    static double RenderScale;   // 0이면 화면 배율, 아니면 이 배율로 그린다 (README 움직이는 그림은 2배로 찍어 선명하게)
     static void Save(Window f, FrameworkElement c, string path, int pump = 300) {
         Pump.Run(pump);
         double sc = 1;
         PresentationSource ps = PresentationSource.FromVisual(f);
         if (ps != null && ps.CompositionTarget != null) sc = ps.CompositionTarget.TransformToDevice.M11;
+        if (RenderScale > 0) sc = RenderScale;
         RenderTargetBitmap b = new RenderTargetBitmap((int)Math.Round(c.ActualWidth * sc), (int)Math.Round(c.ActualHeight * sc), 96 * sc, 96 * sc, PixelFormats.Pbgra32);
         b.Render(c);
         PngBitmapEncoder enc = new PngBitmapEncoder(); enc.Frames.Add(BitmapFrame.Create(b));
@@ -215,6 +217,7 @@ public static class Shots {
         w.WindowState = WindowState.Normal; w.Width = 1000; w.Height = 640; w.Left = 0; w.Top = 0;
         w.Show(); Pump.Run(800);
         int n = (int)Math.Round((w.Period + Blend) * Fps);
+        RenderScale = 2;
         for (int i = 0; i < n; i++) {
             w.Seek(-Blend + i / (double)Fps);
             Save(w, (FrameworkElement)w.Content, Path.Combine(dir, "f_" + i.ToString("0000") + ".png"), 15);

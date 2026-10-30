@@ -207,6 +207,11 @@ public static class SelfTest {
             && sli2.Contains("[profilepnt]\r\n-4.875\r\n0\r\n0\r\n0.2"), sli2);
         SplineSpec sp2 = SplineSpec.Unpack(sp1.Pack());
         T("OMSI: 스플라인 값 저장/복원", sp2.Lanes == 3 && sp2.OneWay && sp2.PerLane && sp2.WalkL == 0 && sp2.Pack() == sp1.Pack() && SplineSpec.Unpack("x|y").Lanes == 2, sp1.Pack());
+        SplineSpec sp4 = new SplineSpec(); sp4.Lanes = 3;
+        int backR = sp4.BackLanes; sp4.ExtraRight = false; int backL = sp4.BackLanes;
+        SplineSpec sp5 = SplineSpec.Unpack(sp4.Pack());
+        T("스플라인: 홀수 차선은 남는 차선을 왼쪽/오른쪽으로 (저장/복원 포함)", backR == 1 && backL == 2 && sp4.Paths()[1].Dir == 1 && sp4.Paths()[2].Dir == 0 && !sp5.ExtraRight
+            && SplineSpec.Unpack("2|3.25|0|0|2|2|0.15|5|2||").ExtraRight, backR + "/" + backL);
         string sdir = Path.Combine(root, "omsi", "Splines", "BusDepot");
         sp1.WalkL = 2;
         string sf = sp1.Save(sdir, "Test Road");
@@ -259,6 +264,22 @@ public static class SelfTest {
         ModelCfg mn = ModelCfg.Load(Path.Combine(bm2, "cfg", "nested.cfg"));
         T("cfg 읽기: Model\\cfg\\ 안의 cfg도 차량 폴더를 찾아 부품/텍스처를 찾음", mn.VehicleDir == bus && mn.Meshes[0].Exists && mn.Meshes[1].Exists && !mn.Meshes[2].Exists
             && mn.FindTex("glass.tga", mn.Meshes[0]) != null && mn.FindTex("glass.tga", mn.Meshes[0]).EndsWith(Path.Combine("Texture", "glass.tga")), mn.VehicleDir + " | " + mn.Meshes[0].Path);
+        // 도색(.cti): [CTCTexture] 자리 → 도색 파일, [setvar] → [visible]
+        File.WriteAllText(Path.Combine(bm2, "paint.cfg"), "[CTC]\r\nColorscheme\r\nTexture\\Werbung\r\n0\r\n[CTCTexture]\r\nBody\r\nwall.bmp\r\n" +
+            "[mesh]\r\nparts\\body.o3d\r\n[mesh]\r\nparts\\wheel.o3d\r\n[visible]\r\nwheel_type\r\n1\r\n[mesh]\r\nparts\\wheel.o3d\r\n[visible]\r\nwheel_type\r\n2\r\n", Encoding.ASCII);
+        Directory.CreateDirectory(Path.Combine(bw2, "blue"));
+        File.WriteAllBytes(Path.Combine(bw2, "blue", "body_blue.bmp"), new byte[] { 0x42, 0x4D });
+        File.WriteAllText(Path.Combine(bw2, "Blue.cti"), "***\r\nBlue\r\n***\r\n[item]\r\nBlue\r\nBody\r\nblue\\body_blue.bmp\r\n\r\n[setvar]\r\nwheel_type\r\n2\r\n", Encoding.ASCII);
+        ModelCfg mp = ModelCfg.Load(Path.Combine(bm2, "paint.cfg"));
+        List<Repaint> rps = mp.Repaints();
+        bool noPaintFirst = mp.DefaultOn(mp.Meshes[1]) && !mp.DefaultOn(mp.Meshes[2]);
+        mp.Paint = rps.Count > 0 ? rps[0] : null;
+        string pt = mp.FindTex("wall.bmp", mp.Meshes[0]);
+        T("도색: cti의 텍스처로 바꾸고 [setvar]로 조건부 부품을 고름", rps.Count == 1 && rps[0].Name == "Blue" && pt != null && pt.EndsWith("body_blue.bmp")
+            && noPaintFirst && !mp.DefaultOn(mp.Meshes[1]) && mp.DefaultOn(mp.Meshes[2]), rps.Count + " " + pt);
+        mp.Paint = null;
+        T("도색: 기본 텍스처로 돌리면 원래 텍스처 (cti가 있으면 이름 규칙으로 찾지 않음)", mp.FindTex("wall.bmp", mp.Meshes[0]).EndsWith(Path.Combine("Texture", "wall.bmp")), mp.FindTex("wall.bmp", mp.Meshes[0]));
+
         string sco3 = Path.Combine(so, "house.sco");
         ModelCfg ms = ModelCfg.Load(sco3);
         T("cfg 읽기: 오브젝트 .sco (model\\, texture\\ 기준)", ms.Meshes.Count == 1 && ms.Meshes[0].Exists && ms.FindTex("glass.tga", ms.Meshes[0]) != null, ms.Meshes.Count.ToString());

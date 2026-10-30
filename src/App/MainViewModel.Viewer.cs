@@ -78,10 +78,35 @@ public partial class MainViewModel {
     public string ViewStatus { get { return viewStatus; } }
 
     // 부품을 다른 스레드에서 읽고(텍스처 포함) 다 되면 한꺼번에 화면에 넘긴다
-    public void LoadModel(string path) {
+    public void LoadModel(string path) { LoadModel(path, null); }
+
+    // 도색 목록 (맨 앞은 '기본 텍스처'). 고르면 그 도색의 텍스처와 [setvar] 값으로 다시 읽는다
+    public System.Collections.ObjectModel.ObservableCollection<TrItem> Paints { get; private set; }
+    string viewPaint = "";
+    public string ViewPaint {
+        get { return viewPaint; }
+        set { if ((value ?? "") == viewPaint || viewBusy) return; viewPaint = value ?? ""; Raise("ViewPaint"); if (viewPath.Length > 0) LoadModel(viewPath, viewPaint); }
+    }
+    public bool PaintsVisible { get { return Paints != null && Paints.Count > 1; } }
+    bool viewBoth;
+    public bool ViewBothSides { get { return viewBoth; } set { viewBoth = value; Raise("ViewBothSides"); if (viewPath.Length > 0 && !viewBusy) LoadModel(viewPath, viewPaint); } }
+
+    // paint: 도색 이름 ("" = 기본 텍스처, null = 처음 여는 것: 첫 번째 도색)
+    public void LoadModel(string path, string paint) {
         ModelCfg cfg;
         try { cfg = ModelCfg.Load(path); } catch (Exception ex) { ui.Msg(ex.Message); return; }
         if (cfg.Meshes.Count == 0) { ui.Msg(L.T("view_err_nomesh")); return; }
+        List<Repaint> paints = cfg.Repaints();
+        if (paint == null || !string.Equals(path, viewPath, StringComparison.OrdinalIgnoreCase) && paint.Length > 0 && !paints.Exists(delegate(Repaint p) { return p.Name == paint; }))
+            paint = paints.Count > 0 ? paints[0].Name : "";
+        cfg.Paint = paints.Find(delegate(Repaint p) { return p.Name == paint; });
+        if (Paints == null) Paints = new System.Collections.ObjectModel.ObservableCollection<TrItem>();
+        Paints.Clear();
+        Paints.Add(new TrItem("", delegate { return L.T("view_paint_none"); }));
+        foreach (Repaint p in paints) { string n = p.Name; Paints.Add(new TrItem(n, delegate { return n; })); }
+        viewPaint = cfg.Paint != null ? cfg.Paint.Name : "";
+        Raise("Paints", "ViewPaint", "PaintsVisible");
+        bool both = viewBoth;
         int gen = ++loadGen;
         viewPath = path; viewCfg = null; viewBusy = true;
         Parts.Clear(); viewScene++;
@@ -94,7 +119,7 @@ public partial class MainViewModel {
             Dictionary<string, System.Windows.Media.Media3D.Material> cache = new Dictionary<string, System.Windows.Media.Media3D.Material>();
             for (int i = 0; i < cfg.Meshes.Count; i++) {
                 if (gen != loadGen) return;
-                PartItem it = ModelScene.Build(cfg, cfg.Meshes[i], cache, missing);
+                PartItem it = ModelScene.Build(cfg, cfg.Meshes[i], cache, missing, both);
                 it.Checked = it.Model != null && cfg.DefaultOn(cfg.Meshes[i]);
                 items.Add(it);
                 if (i % 8 == 0) { int n = i; ui.Post(delegate { if (gen == loadGen) { viewStatus = L.T("view_loading", n, cfg.Meshes.Count); Raise("ViewStatus"); } }); }

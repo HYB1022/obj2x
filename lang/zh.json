@@ -410,5 +410,14 @@
   "view_blender_none": "未找到 Blender。请用浏览指定 blender.exe。",
   "view_saved_with": "已使用 Blender {0} 保存。",
   "view_blender_old": "用 Blender 2.79 保存的文件在 Blender 2.8 及以上打开时不显示贴图,界面布局也是旧样式。安装新版 Blender 后会自动使用新版。",
-  "btn_auto": "自动"
+  "btn_auto": "自动",
+  "spl_extra": "多出的车道",
+  "spl_extra_sub": "车道数为奇数时多分一条车道的一侧（右 = 行驶方向）",
+  "spl_extra_left": "左",
+  "spl_extra_right": "右",
+  "view_paint": "涂装",
+  "view_paint_sub": "按涂装文件（.cti）的贴图和选项（[setvar]）显示部件",
+  "view_paint_none": "（基础贴图）",
+  "view_both": "显示背面",
+  "view_both_sub": "关闭时与 OMSI 一样只绘制正面（法线翻转的面不可见）"
 }

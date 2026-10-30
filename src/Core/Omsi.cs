@@ -283,6 +283,9 @@ public class SplineSpec {
     public double LaneW = 3.25;
     public bool OneWay;
     public bool PerLane;              // 노면 텍스처를 차선마다 한 번씩 (아니면 도로 전체에 한 번)
+    public bool ExtraRight = true;    // 양방향 + 홀수 차선일 때 남는 한 차선을 오른쪽(정방향)에 둘지, 왼쪽(역방향)에 둘지
+    // 역방향(왼쪽) 차선 수
+    public int BackLanes { get { return OneWay ? 0 : (Lanes % 2 == 1 && !ExtraRight ? Lanes / 2 + 1 : Lanes / 2); } }
     public double WalkL = 2, WalkR = 2, Curb = 0.15;
     public double RoadRepeat = 5, WalkRepeat = 2;   // 텍스처 한 장이 덮는 길이(m)
     public string RoadTex = "", WalkTex = "";       // 비우면 기본 텍스처를 만든다
@@ -290,7 +293,7 @@ public class SplineSpec {
     // 설정 파일에 한 줄로 (텍스처 경로는 |가 들어갈 수 없으니 구분자로 쓴다)
     public string Pack() {
         return string.Join("|", new string[] { Lanes.ToString(), Omsi.N(LaneW), OneWay ? "1" : "0", PerLane ? "1" : "0", Omsi.N(WalkL), Omsi.N(WalkR),
-                                                Omsi.N(Curb), Omsi.N(RoadRepeat), Omsi.N(WalkRepeat), RoadTex ?? "", WalkTex ?? "" });
+                                                Omsi.N(Curb), Omsi.N(RoadRepeat), Omsi.N(WalkRepeat), RoadTex ?? "", WalkTex ?? "", ExtraRight ? "1" : "0" });
     }
     public static SplineSpec Unpack(string s) {
         SplineSpec r = new SplineSpec();
@@ -301,6 +304,7 @@ public class SplineSpec {
             r.Lanes = int.Parse(a[0]); r.LaneW = double.Parse(a[1], c); r.OneWay = a[2] == "1"; r.PerLane = a[3] == "1";
             r.WalkL = double.Parse(a[4], c); r.WalkR = double.Parse(a[5], c); r.Curb = double.Parse(a[6], c);
             r.RoadRepeat = double.Parse(a[7], c); r.WalkRepeat = double.Parse(a[8], c); r.RoadTex = a[9]; r.WalkTex = a[10];
+            if (a.Length > 11) r.ExtraRight = a[11] != "0";
         } catch (Exception) { return new SplineSpec(); }
         string err;
         return r.Valid(out err) ? r : new SplineSpec();
@@ -360,7 +364,7 @@ public class SplineSpec {
     public List<PathDef> Paths() {
         List<PathDef> r = new List<PathDef>();
         double h = RoadW / 2;
-        int back = OneWay ? 0 : Lanes / 2;
+        int back = BackLanes;
         for (int i = 0; i < Lanes; i++) {
             PathDef p = new PathDef(); p.Kind = 0; p.X = -h + (i + 0.5) * LaneW; p.Y = 0; p.W = LaneW; p.Dir = i < back ? 1 : 0;
             r.Add(p);
