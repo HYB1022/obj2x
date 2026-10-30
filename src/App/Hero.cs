@@ -35,6 +35,13 @@ public class AboutHero : Drawn {
 
     double intro = 10, last;                   // 등장 애니메이션 경과 시간(초)
     double valIn = 1;                          // 업데이트 줄 글자가 올라오는 정도 (0 → 1)
+    double btnIn;                              // 가운데 [업데이트] 버튼이 나타난 정도 (0 → 1). 제목 묶음이 그만큼 위로 올라간다
+    double BtnTarget { get { return IsNew ? 1 : 0; } }
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e) {
+        base.OnPropertyChanged(e);
+        if (e.Property != IsNewProperty) return;
+        if (!IsLoaded || Motion.Disabled) btnIn = BtnTarget; else Run();
+    }
     readonly Stopwatch sw = Stopwatch.StartNew();
     bool running;
     int hot = -1;
@@ -55,7 +62,9 @@ public class AboutHero : Drawn {
         double now = sw.Elapsed.TotalSeconds, dt = Math.Min(0.05, Math.Max(0.001, now - last)); last = now;
         intro += dt / Math.Max(0.05, Motion.Scale);   // 개발자 옵션 애니메이션 배율
         valIn = Math.Min(1, valIn + dt / (0.45 * Math.Max(0.05, Motion.Scale)));
-        bool moving = intro < 1.4 || valIn < 1;
+        double bt = BtnTarget, bstep = dt / (0.6 * Math.Max(0.05, Motion.Scale));
+        btnIn = bt > btnIn ? Math.Min(bt, btnIn + bstep) : Math.Max(bt, btnIn - bstep);
+        bool moving = intro < 1.4 || valIn < 1 || btnIn != bt;
         for (int i = 0; i < hov.Length; i++) {
             double tg = (i == hot) ? 1 : 0, d = tg - hov[i];
             if (Math.Abs(d) > 0.01) { hov[i] += d * (1 - Math.Exp(-dt * 14 / Math.Max(0.05, Motion.Scale))); moving = true; } else hov[i] = tg;
@@ -87,7 +96,10 @@ public class AboutHero : Drawn {
         double fT = Art.Pt(40), fV = Art.Pt(10), fB = Art.Pt(10.5), fR = Art.Pt(10.5), fRv = Art.Pt(9.5);
         double tH = Art.Ft("Ag", fT, true, txt).Height, vH = Art.Ft("Ag", fV, false, txt).Height;
         double blockH = tH + 6 + vH + 10 + vH;
-        double y = Math.Max(28, (heroH - blockH) / 2 - 6);
+        // HyperOS '휴대전화 정보'처럼: 새 버전이 있으면 제목 묶음이 부드럽게 위로 올라가고 그 아래에 [업데이트] 버튼이 생긴다
+        if (Motion.Disabled) btnIn = BtnTarget;
+        double be = Motion.EaseInOut(btnIn), bH = 56, bGap = 34;
+        double y = Math.Max(28, (heroH - blockH - be * (bGap + bH)) / 2 - 6);
         double a, off;
 
         a = Appear(0); off = (1 - a) * 22;
@@ -97,7 +109,16 @@ public class AboutHero : Drawn {
         Art.Text(dc, Art.Ft("v" + AppInfo.Version, fV, false, Theme.A(sub, a)), new Rect(0, y + off, W, vH), TextAlignment.Center);
         y += vH + 10;
         Art.Text(dc, Art.Ft(L.T("about_desc"), fV, false, Theme.A(sub, a)), new Rect(x0, y + off, cw, vH), TextAlignment.Center);
-        y += vH + 32;
+        y += vH;
+        if (btnIn > 0.001) {
+            double ba = a * Motion.EaseOut(btnIn), bw = Math.Min(340, cw), rise = (1 - be) * 18;
+            Rect br = new Rect((W - bw) / 2, y + bGap + rise, bw, bH);
+            Glass(dc, br, 18, ba, hov[5], true);
+            if (fx.Active) { dc.PushClip(new RectangleGeometry(br, 18, 18)); fx.Draw(dc, RippleFx.Tint(txt), 5); dc.Pop(); }
+            Art.Text(dc, Art.Ft(Busy ? L.T("about_upd_installing") : L.T("about_pill_update"), fB, true, Theme.A(txt, ba)), br, TextAlignment.Center);
+            if (btnIn > 0.5) hits.Add(new KeyValuePair<Rect, int>(br, 5));
+        }
+        y += 32;
 
         // 항목들
         string[][] rows = new string[][] {
@@ -185,7 +206,7 @@ public class AboutHero : Drawn {
         fx.Release();
         int h = HitAt(e.GetPosition(this));
         ICommand c = null;
-        if (h == 0 || h == 1) c = UpdateCommand; else if (h == 2) c = RepoCommand; else if (h == 3) c = DisclaimerCommand; else if (h == 4) c = VersionCommand;
+        if (h == 0 || h == 1 || h == 5) c = UpdateCommand; else if (h == 2) c = RepoCommand; else if (h == 3) c = DisclaimerCommand; else if (h == 4) c = VersionCommand;
         if (c != null) c.Execute(null);
         base.OnMouseLeftButtonUp(e);
     }

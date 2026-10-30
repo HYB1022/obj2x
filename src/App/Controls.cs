@@ -211,6 +211,8 @@ public class Segmented : Drawn {
     }
     protected override Size MeasureOverride(Size avail) {
         Parse();
+        // 언어/글꼴이 바뀌면 칸 폭이 달라진다. 알약도 새 폭에 맞춰 바로 옮긴다 (측정 중에는 값을 바꾸지 않고 다음 순간에)
+        if (placed) Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, new Action(delegate { MovePill(false); }));
         double w = 4; foreach (Item it in list) w += it.W;
         return new Size(w, 32);
     }
@@ -224,6 +226,17 @@ public class Segmented : Drawn {
                 return;
             }
             x += it.W;
+        }
+    }
+    // 셀프 테스트용: 알약이 지금 값의 칸에 정확히 있는지
+    public bool PillAligned {
+        get {
+            double x = 2;
+            foreach (Item it in list) {
+                if (it.Value == Value) return Math.Abs((double)GetValue(PillXProperty) - x) < 0.5 && Math.Abs((double)GetValue(PillWProperty) - it.W) < 0.5;
+                x += it.W;
+            }
+            return false;
         }
     }
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) {

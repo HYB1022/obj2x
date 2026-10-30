@@ -2,87 +2,94 @@
               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
               xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x"
               VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-  <!-- 설정: 모양, 동작, 파일 -->
-  <StackPanel Margin="24,20,24,24">
-    <TextBlock Text="{ui:Tr nav_settings}" Style="{StaticResource TTitle}"/>
+  <!-- 설정 (HyperOS 설정 화면 모양, 개발자 옵션과 같은 줄 스타일): 모양, 동작, 파일 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="820">
+    <TextBlock Text="{ui:Tr nav_settings}" Style="{StaticResource PageTitle}" Margin="8,4,0,6"/>
 
-    <Border Style="{StaticResource CardBox}" Margin="0,16,0,0">
-      <StackPanel Margin="20,14,20,8">
-        <TextBlock Text="{ui:Tr sec_appearance}" Style="{StaticResource TBold}"/>
-        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
-        <DockPanel Height="60">
-          <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="180" VerticalAlignment="Center"
-                    ItemsSource="{Binding Languages}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding Lang}"/>
-          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_lang_folder}" Style="{StaticResource BtnNormal}" Height="32" VerticalAlignment="Center"
-                  Command="{Binding LangFolderCmd}" Margin="0,0,10,0"/>
-          <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{ui:Tr lbl_language}"/>
-            <TextBlock Text="{ui:Tr lbl_language_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
-          </StackPanel>
-        </DockPanel>
-        <DockPanel Height="56">
-          <ui:Segmented DockPanel.Dock="Right" Items="system=theme_system;light=theme_light;dark=theme_dark" Value="{Binding ThemeName}"/>
-          <TextBlock Text="{ui:Tr lbl_theme}" VerticalAlignment="Center"/>
-        </DockPanel>
-        <DockPanel Height="56">
-          <ui:Segmented DockPanel.Dock="Right" Items="indigo=accent_indigo;teal=accent_teal;rose=accent_rose" Value="{Binding AccentName}"/>
-          <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{ui:Tr lbl_accent}"/>
-            <TextBlock Text="{ui:Tr lbl_accent_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
-          </StackPanel>
-        </DockPanel>
-        <DockPanel Height="60">
-          <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="210" VerticalAlignment="Center"
-                    ItemsSource="{Binding Fonts}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FontName}"/>
-          <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{ui:Tr lbl_font}"/>
-            <TextBlock Text="{ui:Tr lbl_font_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
-          </StackPanel>
-        </DockPanel>
+    <TextBlock Text="{ui:Tr sec_appearance}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="180" VerticalAlignment="Center"
+                      ItemsSource="{Binding Languages}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding Lang}"/>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr btn_lang_folder}" Style="{StaticResource BtnNormal}" Height="32" VerticalAlignment="Center"
+                    Command="{Binding LangFolderCmd}" Margin="16,0,10,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_language}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr lbl_language_sub}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="system=theme_system;light=theme_light;dark=theme_dark" Value="{Binding ThemeName}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <TextBlock Text="{ui:Tr lbl_theme}" Style="{StaticResource DevTitle}" VerticalAlignment="Center"/>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="indigo=accent_indigo;teal=accent_teal;rose=accent_rose" Value="{Binding AccentName}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_accent}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr lbl_accent_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="210" VerticalAlignment="Center" Margin="16,0,0,0"
+                      ItemsSource="{Binding Fonts}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding FontName}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_font}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr lbl_font_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
       </StackPanel>
     </Border>
 
-    <Border Style="{StaticResource CardBox}" Margin="0,12,0,0">
-      <StackPanel Margin="20,14,20,4">
-        <TextBlock Text="{ui:Tr sec_behavior}" Style="{StaticResource TBold}"/>
-        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
-        <DockPanel Height="60">
-          <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding UpdCheck}"/>
-          <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{ui:Tr lbl_updcheck}"/>
-            <TextBlock Text="{ui:Tr lbl_updcheck_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
+    <TextBlock Text="{ui:Tr sec_behavior}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding UpdCheck}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr lbl_updcheck}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr lbl_updcheck_sub}" Style="{StaticResource DevSub}"/>
           </StackPanel>
-        </DockPanel>
-        <Rectangle Style="{StaticResource Div}"/>
-        <DockPanel Height="60">
-          <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding DelX}"/>
-          <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{ui:Tr lbl_delx}"/>
-            <TextBlock Text="{ui:Tr lbl_delx_sub}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
+        </CheckBox>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding DelX}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr lbl_delx}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr lbl_delx_sub}" Style="{StaticResource DevSub}"/>
           </StackPanel>
-        </DockPanel>
+        </CheckBox>
       </StackPanel>
     </Border>
 
-    <Border Style="{StaticResource CardBox}" Margin="0,12,0,0">
-      <StackPanel Margin="20,14,20,4">
-        <TextBlock Text="{ui:Tr sec_files}" Style="{StaticResource TBold}"/>
-        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
-        <DockPanel Height="64">
-          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_open_folder}" Style="{StaticResource BtnNormal}" Height="30" Command="{Binding OpenBackupCmd}" Margin="16,0,0,0"/>
-          <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{ui:Tr lbl_backup}"/>
-            <TextBlock Text="{Binding BackupPath}" Style="{StaticResource TSub}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
-          </StackPanel>
-        </DockPanel>
-        <Rectangle Style="{StaticResource Div}"/>
-        <DockPanel Height="64">
-          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_clean}" Style="{StaticResource BtnNormal}" Height="30" Command="{Binding CleanTempCmd}" Margin="16,0,0,0"/>
-          <StackPanel VerticalAlignment="Center">
-            <TextBlock Text="{ui:Tr lbl_temp}"/>
-            <TextBlock Text="{Binding TempText}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
-          </StackPanel>
-        </DockPanel>
+    <TextBlock Text="{ui:Tr sec_files}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Style="{StaticResource DevRow}" Command="{Binding OpenBackupCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <TextBlock DockPanel.Dock="Right" Text="{ui:Tr btn_open_folder}" Style="{StaticResource DevValue}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_backup}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding BackupPath}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+        <Button Style="{StaticResource DevRow}" Command="{Binding CleanTempCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <TextBlock DockPanel.Dock="Right" Text="{ui:Tr btn_clean}" Style="{StaticResource DevValue}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_temp}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding TempText}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
       </StackPanel>
     </Border>
   </StackPanel>

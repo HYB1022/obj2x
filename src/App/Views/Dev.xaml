@@ -4,7 +4,7 @@
               VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
   <!-- 개발자 옵션 (HyperOS 설정 화면 모양). 정보 화면의 버전을 7번 누르면 메뉴에 나타난다 -->
   <StackPanel Margin="24,20,24,28" MaxWidth="820">
-    <TextBlock Text="{ui:Tr nav_dev}" FontSize="30" FontWeight="Bold" Margin="8,4,0,18"/>
+    <TextBlock Text="{ui:Tr nav_dev}" Style="{StaticResource PageTitle}" Margin="8,4,0,18"/>
     <!-- 전체 스위치: 끄면 메뉴가 사라지고 정보 화면으로 돌아간다 -->
     <Border Style="{StaticResource DevCard}">
       <StackPanel>
@@ -122,30 +122,38 @@
       <TextBlock Text="{ui:Tr dev_grp_info}" Style="{StaticResource DevCaption}"/>
       <Border Style="{StaticResource DevCard}">
         <StackPanel>
-          <DockPanel Margin="24,18">
-            <TextBlock DockPanel.Dock="Right" Text="{Binding InfoRuntime}" Style="{StaticResource DevValue}" MaxWidth="380"/>
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="{ui:Tr dev_runtime}" Style="{StaticResource DevTitle}"/>
-            </StackPanel>
-          </DockPanel>
-          <DockPanel Margin="24,18">
-            <TextBlock DockPanel.Dock="Right" Text="{Binding InfoRender}" Style="{StaticResource DevValue}" MaxWidth="380"/>
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="{ui:Tr dev_render}" Style="{StaticResource DevTitle}"/>
-            </StackPanel>
-          </DockPanel>
-          <DockPanel Margin="24,18">
-            <TextBlock DockPanel.Dock="Right" Text="{Binding InfoScale}" Style="{StaticResource DevValue}" MaxWidth="380"/>
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="{ui:Tr dev_scale}" Style="{StaticResource DevTitle}"/>
-            </StackPanel>
-          </DockPanel>
-          <DockPanel Margin="24,18">
-            <TextBlock DockPanel.Dock="Right" Text="{Binding InfoPath}" Style="{StaticResource DevValue}" MaxWidth="380"/>
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock Text="{ui:Tr dev_path}" Style="{StaticResource DevTitle}"/>
-            </StackPanel>
-          </DockPanel>
+          <ContentControl Style="{StaticResource DevStatic}">
+            <DockPanel Margin="0,1">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding InfoRuntime}" Style="{StaticResource DevValue}" MaxWidth="380"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_runtime}" Style="{StaticResource DevTitle}"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
+          <ContentControl Style="{StaticResource DevStatic}">
+            <DockPanel Margin="0,1">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding InfoRender}" Style="{StaticResource DevValue}" MaxWidth="380"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_render}" Style="{StaticResource DevTitle}"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
+          <ContentControl Style="{StaticResource DevStatic}">
+            <DockPanel Margin="0,1">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding InfoScale}" Style="{StaticResource DevValue}" MaxWidth="380"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_scale}" Style="{StaticResource DevTitle}"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
+          <ContentControl Style="{StaticResource DevStatic}">
+            <DockPanel Margin="0,1">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding InfoPath}" Style="{StaticResource DevValue}" MaxWidth="380"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_path}" Style="{StaticResource DevTitle}"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
         </StackPanel>
       </Border>
     </StackPanel>

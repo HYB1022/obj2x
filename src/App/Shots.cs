@@ -109,6 +109,11 @@ public static class Shots {
             f.VM.Page = "settings"; Save(f, Path.Combine(dir, tag + "_set.png"));
             SaveDrop(f, Path.Combine(dir, tag + "_set_lang.png"));
             f.VM.Page = "about"; Save(f, Path.Combine(dir, tag + "_about.png"));
+            if (tag == "light_ko") {                 // 업데이트 버튼이 올라오는 중간 모습 (애니메이션 0.6초 중 약 0.25초)
+                Motion.Off = false; f.VM.FakeUpdate("9.9");
+                Save(f, f.Host, Path.Combine(dir, tag + "_about_upd_mid.png"), 250);
+                Motion.Off = true;
+            }
             f.VM.FakeUpdate("9.9"); Save(f, Path.Combine(dir, tag + "_about_upd.png"));
             f.VM.DevMode = true; f.VM.Page = "dev"; Save(f, Path.Combine(dir, tag + "_dev.png"));
             foreach (ScrollViewer sv in UiTreeAll<ScrollViewer>(f.Host)) if (sv.IsVisible) sv.ScrollToEnd();

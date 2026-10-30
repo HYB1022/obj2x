@@ -2,53 +2,68 @@
               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
               xmlns:ui="clr-namespace:Obj2x.UI;assembly=obj2x"
               VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-  <!-- 고급: OmsiXConv 세부 옵션, Blender 내보내기 추가 옵션, 실행 프로그램 경로 -->
-  <StackPanel Margin="24,20,24,24">
-    <TextBlock Text="{ui:Tr nav_advanced}" Style="{StaticResource TTitle}"/>
+  <!-- 고급 (HyperOS 설정 화면 모양, 개발자 옵션과 같은 줄 스타일): OmsiXConv 세부 옵션, Blender 내보내기 추가 옵션, 실행 프로그램 경로 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="820">
+    <TextBlock Text="{ui:Tr nav_advanced}" Style="{StaticResource PageTitle}" Margin="8,4,0,6"/>
 
-    <Border Style="{StaticResource CardBox}" Margin="0,16,0,0">
-      <StackPanel Margin="20,14,20,16">
-        <TextBlock Text="{ui:Tr sec_adv_omsi}" Style="{StaticResource TBold}"/>
-        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
-        <TextBlock Text="{ui:Tr sec_adv_omsi_sub}" Style="{StaticResource TSub}" Margin="0,4,0,8"/>
+    <TextBlock Text="{ui:Tr sec_adv_omsi}" Style="{StaticResource DevCaption}" Margin="24,18,0,2"/>
+    <TextBlock Text="{ui:Tr sec_adv_omsi_sub}" Style="{StaticResource DevSub}" Margin="24,0,0,8"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <!-- OmsiXConv 체크박스 하나가 스위치 줄 하나 -->
         <ItemsControl ItemsSource="{Binding Copts}">
-          <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
-            <DataTemplate><CheckBox Style="{StaticResource Chk}" Content="{Binding Name}" IsChecked="{Binding Checked}" Margin="0,2" HorizontalAlignment="Left"/></DataTemplate>
+            <DataTemplate>
+              <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding Checked}">
+                <TextBlock Text="{Binding Name}" Style="{StaticResource DevTitle}"/>
+              </CheckBox>
+            </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-          <TextBlock Text="{ui:Tr lbl_par}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-          <ui:NumBox Value="{Binding Par}" Minimum="1" Maximum="20"/>
-          <TextBlock Text="{Binding CoresText}" Style="{StaticResource TSub}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:NumBox DockPanel.Dock="Right" Value="{Binding Par}" Minimum="1" Maximum="20" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_par}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding CoresText}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+
+    <TextBlock Text="{ui:Tr sec_adv_rna}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <ContentControl Style="{StaticResource DevStatic}">
+        <StackPanel>
+          <TextBlock Text="{ui:Tr sec_adv_rna_sub}" Style="{StaticResource DevSub}" Margin="0,0,0,10"/>
+          <TextBox Text="{Binding ExOpt, UpdateSourceTrigger=PropertyChanged}" Height="80" AcceptsReturn="True" TextWrapping="Wrap"
+                   VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" Padding="4"/>
         </StackPanel>
-      </StackPanel>
+      </ContentControl>
     </Border>
 
-    <Border Style="{StaticResource CardBox}" Margin="0,12,0,0">
-      <StackPanel Margin="20,14,20,18">
-        <TextBlock Text="{ui:Tr sec_adv_rna}" Style="{StaticResource TBold}"/>
-        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
-        <TextBlock Text="{ui:Tr sec_adv_rna_sub}" Style="{StaticResource TSub}" Margin="0,6,0,10" TextWrapping="Wrap"/>
-        <TextBox Text="{Binding ExOpt, UpdateSourceTrigger=PropertyChanged}" Height="80" AcceptsReturn="True" TextWrapping="Wrap"
-                 VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" Padding="4"/>
-      </StackPanel>
-    </Border>
-
-    <Border Style="{StaticResource CardBox}" Margin="0,12,0,0">
-      <StackPanel Margin="20,14,20,18">
-        <TextBlock Text="{ui:Tr sec_adv_paths}" Style="{StaticResource TBold}"/>
-        <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
-        <TextBlock Text="{ui:Tr lbl_blender_path}" Margin="0,10,0,6"/>
-        <DockPanel>
-          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseBlenderCmd}" Margin="10,0,0,0"/>
-          <TextBox Text="{Binding BlenderPath}"/>
-        </DockPanel>
-        <TextBlock Text="{ui:Tr lbl_conv_path}" Margin="0,12,0,6"/>
-        <DockPanel>
-          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseConvCmd}" Margin="10,0,0,0"/>
-          <TextBox Text="{Binding ConvPath}"/>
-        </DockPanel>
+    <TextBlock Text="{ui:Tr sec_adv_paths}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr lbl_blender_path}" Style="{StaticResource DevTitle}" Margin="0,0,0,8"/>
+            <DockPanel>
+              <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseBlenderCmd}" Margin="10,0,0,0"/>
+              <TextBox Text="{Binding BlenderPath}"/>
+            </DockPanel>
+          </StackPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr lbl_conv_path}" Style="{StaticResource DevTitle}" Margin="0,0,0,8"/>
+            <DockPanel>
+              <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseConvCmd}" Margin="10,0,0,0"/>
+              <TextBox Text="{Binding ConvPath}"/>
+            </DockPanel>
+          </StackPanel>
+        </ContentControl>
       </StackPanel>
     </Border>
   </StackPanel>

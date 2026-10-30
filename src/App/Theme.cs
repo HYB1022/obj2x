@@ -205,6 +205,7 @@ public static class Motion {
     public static double Scale = 1;  // 개발자 옵션 '애니메이션 배율' (0 = 끔)
     public static bool Disabled { get { return Off || Scale <= 0; } }
     public static Duration D(double sec) { return new Duration(TimeSpan.FromSeconds(Disabled ? 0 : sec * Scale)); }
+    public static double EaseInOut(double t) { if (t <= 0) return 0; if (t >= 1) return 1; return t < 0.5 ? 4 * t * t * t : 1 - Math.Pow(-2 * t + 2, 3) / 2; }
     public static double EaseOut(double t) { if (t <= 0) return 0; if (t >= 1) return 1; double u = 1 - t; return 1 - u * u * u; }
 }
 }

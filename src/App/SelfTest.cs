@@ -267,6 +267,12 @@ public static class SelfTest {
             string fcEn = fc == null ? null : fc.SelectedItem as TrItem == null ? null : ((TrItem)fc.SelectedItem).Name;
             f.VM.Lang = "ko"; Pump.Run(60);
             string fcKo = fc == null ? null : fc.SelectedItem as TrItem == null ? null : ((TrItem)fc.SelectedItem).Name;
+            f.VM.Lang = "ja"; Pump.Run(80);
+            bool aligned = true; int segs = 0;
+            foreach (Segmented sg in FindAll<Segmented>(f.Host)) if (sg.IsVisible) { segs++; if (!sg.PillAligned) aligned = false; }
+            f.VM.Lang = "ko"; Pump.Run(80);
+            foreach (Segmented sg in FindAll<Segmented>(f.Host)) if (sg.IsVisible && !sg.PillAligned) aligned = false;
+            T("설정: 언어를 바꿔도 테마/강조 색 선택 표시가 칸에 맞음", segs == 2 && aligned, segs + " " + aligned);
             T("설정: 언어를 바꿔도 글꼴 드롭다운이 비지 않음", fc != null && (string)fc.SelectedValue == "nanum" && fcEn == "NanumSquare Neo" && fcKo == "나눔스퀘어 네오",
                 (fc == null ? "없음" : fc.SelectedValue + "") + " / " + fcEn + " / " + fcKo);
 

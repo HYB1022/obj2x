@@ -388,6 +388,29 @@
       </Setter.Value>
     </Setter>
   </Style>
+  <!-- 누르는 기능은 없지만 마우스를 올리면 옅게 칠해지는 줄 (앱 정보, 오른쪽에 컨트롤이 있는 줄) -->
+  <Style x:Key="DevStatic" TargetType="ContentControl">
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContentControl">
+          <Grid Background="Transparent">
+            <Border x:Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+            <ContentPresenter Margin="24,17"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hov" Property="ui:Anim.Opacity" Value="0.6"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <!-- 페이지 큰 제목 (HyperOS 설정 화면) -->
+  <Style x:Key="PageTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="30"/><Setter Property="FontWeight" Value="Bold"/><Setter Property="Margin" Value="8,4,0,4"/>
+  </Style>
+
   <!-- 스위치 줄 (CheckBox): 줄 어디를 눌러도 켜고 끈다. 내용 = 왼쪽 제목/설명 -->
   <Style x:Key="DevToggle" TargetType="CheckBox">
     <Setter Property="Cursor" Value="Hand"/>
