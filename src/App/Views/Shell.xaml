@@ -10,24 +10,18 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel x:Name="NavList" Margin="16,18,8,16">
-        <TextBlock Text="Bus Depot" FontSize="28" FontWeight="Bold" Margin="10,0,0,14"/>
-
-        <!-- 앱 카드 (휴대전화의 계정 카드 자리): 로고, 이름, 버전, 상태 -->
-        <Border Style="{StaticResource DevCard}" Padding="14,14,14,12">
-          <StackPanel>
-            <DockPanel>
-              <ui:LogoArt Width="44" Height="44" DockPanel.Dock="Left" Margin="0,0,12,0"/>
-              <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="Bus Depot" FontSize="15" FontWeight="Bold"/>
-                <TextBlock Text="{Binding VersionText}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>
-              </StackPanel>
-            </DockPanel>
-            <DockPanel Margin="2,12,0,0">
-              <Ellipse Style="{StaticResource Dot}" DockPanel.Dock="Left"/>
-              <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Muted}" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
-            </DockPanel>
+        <!-- 맨 위: 로고 + 이름, 그 아래 버전과 상태 -->
+        <DockPanel Margin="8,0,0,4">
+          <ui:LogoArt Width="50" Height="50" DockPanel.Dock="Left" Margin="0,0,12,0" VerticalAlignment="Center"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="Bus Depot" FontSize="26" FontWeight="Bold"/>
+            <TextBlock Text="{Binding VersionText}" Style="{StaticResource TSub}" Margin="1,2,0,0"/>
           </StackPanel>
-        </Border>
+        </DockPanel>
+        <DockPanel Margin="12,6,0,0">
+          <Ellipse Style="{StaticResource Dot}" DockPanel.Dock="Left"/>
+          <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Muted}" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
 
         <!-- 메뉴 묶음: 선택된 줄은 카드 안에서 강조색으로 옅게 칠해진다 -->
         <Border Style="{StaticResource DevCard}" Padding="6" Margin="0,14,0,0">
@@ -40,7 +34,7 @@
           <StackPanel>
             <ui:NavItem x:Name="Nav_object" Page="object" Key="nav_object" Current="{Binding Page}" Command="{Binding NavCmd}"/>
             <ui:NavItem x:Name="Nav_spline" Page="spline" Key="nav_spline" Current="{Binding Page}" Command="{Binding NavCmd}"/>
-            <ui:NavItem x:Name="Nav_viewer" Page="viewer" Key="nav_viewer" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+            <ui:NavItem x:Name="Nav_bus" Page="bus" Key="nav_bus" Current="{Binding Page}" Command="{Binding NavCmd}"/>
           </StackPanel>
         </Border>
         <Border Style="{StaticResource DevCard}" Padding="6" Margin="0,14,0,0">

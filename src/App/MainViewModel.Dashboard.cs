@@ -28,7 +28,7 @@ public partial class MainViewModel {
         ClearCmd = new Cmd(delegate { ClearLog(); Results.Clear(); });
         SaveLogCmd = new Cmd(delegate { SaveLog(); });
         TabCmd = new Cmd(delegate(object p) { Tab = (string)p; });
-        SetPathsCmd = new Cmd(delegate { Page = "advanced"; });
+        SetPathsCmd = new Cmd(delegate { Page = "advanced"; ui.ScrollToEnd("advanced"); });
     }
 
     // 상태 카드 아래 줄 / 진행 막대 아래 줄: 문구 키면 언어를 바꿀 때 다시 번역한다
@@ -162,7 +162,7 @@ public partial class MainViewModel {
         string dir = Directory.Exists(path) ? path : (File.Exists(path) ? Path.GetDirectoryName(path) : null);
         if (dir == null) return;
         string ext = File.Exists(path) ? Path.GetExtension(path).ToLowerInvariant() : "";
-        if (ext == ".cfg" || ext == ".sco") { Page = "viewer"; LoadModel(path); return; }
+        if (ext == ".cfg" || ext == ".sco" || ext == ".bus" || ext == ".ovh") { Page = "bus"; LoadModel(path); return; }
         if (page == "object" || ext == ".o3d") { Page = "object"; ObjModels = dir; ui.Toast(L.T("toast_drop_obj")); return; }
         if (page == "spline" && File.Exists(path) && IsImage(ext)) { DropTexture(path); return; }
         if (running) { ui.Toast(L.T("toast_drop_busy")); return; }

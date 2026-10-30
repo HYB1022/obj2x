@@ -78,7 +78,7 @@ public static class Art {
             case "view": return Color.FromRgb(255, 45, 85);
             case "object": return Color.FromRgb(0, 178, 190);
             case "spline": return Color.FromRgb(52, 168, 108);
-            case "viewer": return Color.FromRgb(255, 69, 58);
+            case "bus": return Color.FromRgb(255, 69, 58);
             default: return Theme.Accent;
         }
     }
@@ -169,7 +169,7 @@ public static class Art {
                 dc.DrawLine(dash, new Point(x + 12 * k, y + 15.8 * k), new Point(x + 12 * k, y + 18.3 * k));
                 break;
             }
-            case "viewer": {    // 버스 옆모습 (모델 보기)
+            case "bus": {       // 버스 옆모습 (버스 탭)
                 dc.DrawRoundedRectangle(null, p, new Rect(x + 4.5 * k, y + 7 * k, 15 * k, 8.5 * k), 1.8 * k, 1.8 * k);
                 Pen thin = RoundPen(wc, Math.Max(1.0, 1.3 * k));
                 dc.DrawLine(thin, new Point(x + 4.8 * k, y + 11 * k), new Point(x + 19.2 * k, y + 11 * k));

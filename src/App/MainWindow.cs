@@ -24,7 +24,7 @@ public class MainWindow : Window, IUi {
     readonly ScaleTransform zoom = new ScaleTransform(1, 1);
     string shown = "dashboard";
     public DialogHost LastDialog;
-    public static readonly string[] PageNames = new string[] { "dashboard", "wizard", "object", "spline", "viewer", "advanced", "settings", "dev", "about" };
+    public static readonly string[] PageNames = new string[] { "dashboard", "wizard", "object", "spline", "bus", "advanced", "settings", "dev", "about" };
     // 개발자 옵션: 알림(토스트), 새로 고침 빈도 표시, 레이아웃 경계 표시
     readonly Grid toastLayer = new Grid();
     readonly TextBlock fpsText = new TextBlock();
@@ -220,6 +220,23 @@ public class MainWindow : Window, IUi {
 
     public void Exit() { Close(); }
 
+    // 페이지를 맨 아래로 부드럽게 스크롤 (페이지 전환 뒤 레이아웃이 끝난 다음에)
+    public void ScrollToEnd(string page) {
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(delegate {
+            ScrollViewer sv = Page(page) as ScrollViewer; if (sv == null) return;
+            double from = sv.VerticalOffset, to = sv.ScrollableHeight;
+            if (Motion.Disabled) { sv.ScrollToVerticalOffset(to); return; }
+            DateTime t0 = DateTime.Now; double dur = Motion.D(0.45).TimeSpan.TotalSeconds;
+            EventHandler tick = null;
+            tick = delegate {
+                double t = Math.Min(1, (DateTime.Now - t0).TotalSeconds / Math.Max(0.01, dur));
+                sv.ScrollToVerticalOffset(from + (to - from) * Motion.EaseInOut(t));
+                if (t >= 1) CompositionTarget.Rendering -= tick;
+            };
+            CompositionTarget.Rendering += tick;
+        }));
+    }
+
     public void Confirm(string title, string body, string okText, Action<bool> done) { LastDialog = Dialogs.Confirm(overlay, title, body, okText, done); }
 
     public void OpenFolder(string path) {
@@ -273,7 +290,7 @@ public class MainWindow : Window, IUi {
     public void DropPreview(bool on) { ShowDrop(on); }   // 개발용(소개 영상)
     void ShowDrop(bool on) {
         if (on == (dropLayer.Visibility == Visibility.Visible)) return;
-        ((TextBlock)dropLayer.Child).Text = L.T(VM.Page == "object" ? "drop_hint_obj" : VM.Page == "spline" ? "drop_hint_tex" : VM.Page == "viewer" ? "drop_hint_view" : "drop_hint");
+        ((TextBlock)dropLayer.Child).Text = L.T(VM.Page == "object" ? "drop_hint_obj" : VM.Page == "spline" ? "drop_hint_tex" : VM.Page == "bus" ? "drop_hint_bus" : "drop_hint");
         dropLayer.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         if (on && !Motion.Disabled) dropLayer.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, Motion.D(0.15)));
     }

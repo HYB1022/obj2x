@@ -15,6 +15,23 @@ namespace Obj2x.UI {
 //   <Setter TargetName="hov" Property="ui:Anim.Opacity" Value="1"/>   → Opacity를 1로 (값을 지우면 0으로)
 //   ui:Anim.X → RenderTransform의 TranslateTransform.X,  ui:Anim.Angle → RenderTransform의 RotateTransform.Angle
 // 화면에 붙기 전(처음 그릴 때)에는 움직이지 않고 바로 그 값이 된다.
+// 둥근 Border 안의 내용을 모서리 반지름대로 잘라 낸다 (카드의 첫/마지막 줄 호버가 네모로 보이지 않게)
+public static class RoundClip {
+    public static readonly DependencyProperty OnProperty = DependencyProperty.RegisterAttached("On", typeof(bool), typeof(RoundClip),
+        new PropertyMetadata(false, delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            Border b = d as Border; if (b == null) return;
+            if ((bool)e.NewValue) { b.SizeChanged += Update; Apply(b); } else { b.SizeChanged -= Update; b.Clip = null; }
+        }));
+    public static bool GetOn(DependencyObject d) { return (bool)d.GetValue(OnProperty); }
+    public static void SetOn(DependencyObject d, bool v) { d.SetValue(OnProperty, v); }
+    static void Update(object s, SizeChangedEventArgs e) { Apply((Border)s); }
+    static void Apply(Border b) {
+        double r = b.CornerRadius.TopLeft;
+        RectangleGeometry g = new RectangleGeometry(new Rect(0, 0, b.ActualWidth, b.ActualHeight), r, r); g.Freeze();
+        b.Clip = g;
+    }
+}
+
 public static class Anim {
     public const double Time = 0.18;
 

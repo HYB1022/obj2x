@@ -40,6 +40,7 @@ public static class Program {
         // 설정: BusDepot.ini. 이름을 바꾸기 전(obj2x.ini)에서 올라왔으면 한 번 옮겨 온다 (원래 파일은 남겨 둠)
         string ini = Path.Combine(here, AppInfo.Exe + ".ini"), oldIni = Path.Combine(here, "obj2x.ini");
         try { if (!File.Exists(ini) && File.Exists(oldIni)) File.Copy(oldIni, ini); } catch (Exception) { }
+        Updater.CleanupObj2x(here);
         Settings s = Settings.Load(ini);
         Loc.SetLang(s.Lang);
         Theme.Apply(s.Theme, s.Accent, s.Font);

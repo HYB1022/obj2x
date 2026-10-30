@@ -22,6 +22,7 @@ public class O3dModel {
     public int[] T = new int[0];       // 삼각형마다 4개: 정점 3, 재질
     public int TCount;
     public List<O3dMaterial> Mats = new List<O3dMaterial>();
+    public float[] Matrix;             // 끝의 변환 행렬 (origin_from_mesh의 기준점/축)
 
     public static O3dModel Load(string path) {
         O3dModel m = new O3dModel();
@@ -71,7 +72,10 @@ public class O3dModel {
                     int c = longCount ? BitConverter.ToInt32(d, p) : BitConverter.ToUInt16(d, p); p += longCount ? 4 : 2;
                     p += c * ((longIdx ? 4 : 2) + 4);
                 }
-            } else if (sec == 0x79) { p += 64; }
+            } else if (sec == 0x79) {
+                if (p + 64 <= d.Length) { m.Matrix = new float[16]; Buffer.BlockCopy(d, p, m.Matrix, 0, 64); }
+                p += 64;
+            }
             else break;
         }
         // 잘못된 정점 번호가 있으면 버린다 (깨진 파일에서 화면이 죽지 않게)
@@ -90,6 +94,9 @@ public class CfgMesh {
     public string VisVar, VisVal;      // [visible] 조건 (없으면 null)
     public Dictionary<string, int> Alpha = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);   // 텍스처 → [matl_alpha]
     public bool Exists { get { return System.IO.File.Exists(Path); } }
+    public List<AnimBlock> Anims = new List<AnimBlock>();   // [newanim] 블록들 (적힌 순서)
+    public double[] MeshOrigin, MeshAxis;                    // o3d 행렬의 기준점과 x축 (cfg 좌표, origin_from_mesh용)
+    public bool Animated { get { return Anims.Exists(delegate(AnimBlock b) { return b.Moves; }); } }
     public bool UsesAlpha(string tex) { int a; return Alpha.TryGetValue(tex ?? "", out a) && a > 0; }
     public bool Exterior { get { return ViewPoint == 0 || (ViewPoint & 1) != 0; } }
 }
@@ -101,9 +108,12 @@ public class ModelCfg {
     public Dictionary<string, string> FirstVis = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // [visible] 변수마다 처음 나온 값
     public Dictionary<string, List<string>> VisValues = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);   // [visible] 변수마다 나온 값들
 
+    public CfgDoc Doc;                 // 편집해서 저장할 때 쓰는 원문 줄들
+
     public static ModelCfg Load(string path) {
         ModelCfg c = new ModelCfg();
         c.CfgPath = path;
+        c.Doc = CfgDoc.Load(path);
         string dir = System.IO.Path.GetDirectoryName(path);
         bool sco = path.EndsWith(".sco", StringComparison.OrdinalIgnoreCase);
         // 오브젝트(.sco)는 model\, texture\ 아래.
@@ -121,7 +131,7 @@ public class ModelCfg {
             if (Directory.Exists(vm) && !c.Bases.Exists(delegate(string b) { return string.Equals(b.TrimEnd('\\'), vm, StringComparison.OrdinalIgnoreCase); })) c.Bases.Insert(1, vm);
         }
         c.TexDir = sco ? System.IO.Path.Combine(dir, "texture") : System.IO.Path.Combine(c.VehicleDir, "Texture");
-        string[] lines = Omsi.AnsiLines(path);
+        string[] lines = c.Doc.Lines.ToArray();
         CfgMesh cur = null; string curTex = null;
         int lod = 0; double lodVal = 0, bestVal = double.MinValue;
         for (int i = 0; i < lines.Length; i++) {
@@ -133,6 +143,9 @@ public class ModelCfg {
                     cur = new CfgMesh(); cur.File = arg(1); cur.Path = c.Resolve(cur.File);
                     cur.Lod = lod; cur.LodValue = lodVal; curTex = null;
                     c.Meshes.Add(cur); i++;
+                    break;
+                case "[newanim]":
+                    if (cur != null) cur.Anims.Add(AnimBlock.Parse(c.Doc.Lines, i));
                     break;
                 case "[viewpoint]":
                     if (cur != null) { int v; if (int.TryParse(arg(1), out v)) cur.ViewPoint = v; }

@@ -22,6 +22,7 @@ public interface IUi {
     void Confirm(string title, string body, string okText, Action<bool> done);   // 확인/취소 대화 상자
     void OpenFolder(string path);     // 탐색기로 폴더 열기
     void Finished(bool failed);       // 변환이 끝남 (창이 비활성이면 작업 표시줄 단추를 깜빡인다)
+    void ScrollToEnd(string page);    // 그 페이지를 맨 아래로 (부드럽게)
 }
 
 // 결과 표 한 줄

@@ -1,0 +1,373 @@
+<ScrollViewer xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI;assembly=BusDepot"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- 버스: .bus(또는 model.cfg/.sco)를 열어 3D로 보고, 도색·애니메이션(newanim)·부품 블록·사람 길(paths)·좌석(passengercabin)을 보고 고쳐 저장한다 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="980">
+    <TextBlock Text="{ui:Tr nav_bus}" Style="{StaticResource PageTitle}" Margin="8,4,0,4"/>
+    <TextBlock Text="{ui:Tr bus_intro}" Style="{StaticResource DevSub}" Margin="8,0,8,6"/>
+    <TextBlock Text="{ui:Tr view_sec_file}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Style="{StaticResource DevRow}" Command="{Binding BrowseCfgCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr bus_file}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding ViewPath}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+        <ContentControl Style="{StaticResource DevStatic}" Visibility="{Binding HasBusTitle, Converter={StaticResource Vis}}">
+          <DockPanel>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{Binding BusTitle}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding BusFiles}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+    <Border Style="{StaticResource DevCard}" Margin="0,14,0,0" Padding="10">
+      <Grid Height="480">
+        <ui:ModelView x:Name="View3D" Parts="{Binding Parts}" Scene="{Binding ViewScene}" Show="{Binding ViewShow}" Overlay="{Binding BusOverlay}" PickCommand="{Binding PickPartCmd}"/>
+        <TextBlock Text="{ui:Tr bus_empty}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   TextAlignment="Center" Margin="40,0" Visibility="{Binding ViewEmpty, Converter={StaticResource Vis}}"/>
+        <TextBlock Text="{Binding ViewStatus}" Style="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   Visibility="{Binding ViewBusy, Converter={StaticResource Vis}}"/>
+      </Grid>
+    </Border>
+    <TextBlock Text="{Binding ViewStatus}" Style="{StaticResource DevSub}" Margin="24,8,24,0"/>
+    <TextBlock Text="{ui:Tr bus_controls}" Style="{StaticResource DevSub}" Margin="24,2,24,0"/>
+    <TextBlock Text="{ui:Tr bus_sec_show}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}" Visibility="{Binding PaintsVisible, Converter={StaticResource Vis}}">
+          <DockPanel>
+            <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="240" VerticalAlignment="Center" Margin="16,0,0,0"
+                      ItemsSource="{Binding Paints}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding ViewPaint}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_paint}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr view_paint_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="ext=view_ext;int=view_int;all=view_all" Value="{Binding ViewPreset}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_preset}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr view_preset_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding ViewBothSides}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr view_both}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr view_both_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding ShowPaths}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr bus_show_paths}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr bus_show_paths_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding ShowSeats}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr bus_show_seats}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr bus_show_seats_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding ShowPivots}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr bus_show_pivots}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr bus_show_pivots_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr bus_sec_anim}" Style="{StaticResource DevCaption}" Visibility="{Binding HasVars, Converter={StaticResource Vis}}"/>
+    <Border Style="{StaticResource DevCard}" Visibility="{Binding HasVars, Converter={StaticResource Vis}}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="inner=bus_order_inner;outer=bus_order_outer" Value="{Binding AnimOrder}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr bus_order}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr bus_order_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding AnimFlip}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr bus_flip}" Style="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr bus_flip_sub}" Style="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding Vars}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <ContentControl Style="{StaticResource DevStatic}">
+                  <StackPanel>
+                    <DockPanel>
+                      <Button DockPanel.Dock="Right" Content="{Binding PlayText}" Style="{StaticResource BtnSmall}" Command="{Binding PlayCmd}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                      <TextBox DockPanel.Dock="Right" Text="{Binding ValueText, UpdateSourceTrigger=PropertyChanged}" Width="80" TextAlignment="Right" VerticalAlignment="Center" Margin="16,0,0,0"/>
+                      <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" Style="{StaticResource DevTitle}"/>
+                        <TextBlock Text="{Binding Info}" Style="{StaticResource DevSub}"/>
+                      </StackPanel>
+                    </DockPanel>
+                    <Slider Minimum="{Binding Min}" Maximum="{Binding Max}" Value="{Binding Value}" Margin="0,8,0,0"/>
+                  </StackPanel>
+                </ContentControl>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <Button Content="{ui:Tr bus_reset_vars}" Style="{StaticResource BtnSmall}" Command="{Binding ResetVarsCmd}" Margin="0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr bus_vars_hint}" Style="{StaticResource DevTitle}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr bus_sec_part}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <Button Content="{ui:Tr bus_save_cfg}" Style="{StaticResource BtnPrimary}" Command="{Binding SaveCfgCmd}" Margin="0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr bus_part}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding SelPartText}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ItemsControl ItemsSource="{Binding Blocks}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <ContentControl Style="{StaticResource DevStatic}">
+                <StackPanel>
+                  <TextBlock Text="{Binding Title}" Style="{StaticResource DevTitle}" FontWeight="Bold" Margin="0,0,0,6"/>
+                  <DockPanel Margin="0,2">
+                    <TextBlock Text="{ui:Tr bus_pivot}" Style="{StaticResource DevSub}" Width="90" VerticalAlignment="Center" Margin="0"/>
+                    <ItemsControl ItemsSource="{Binding Pivot}">
+                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <StackPanel Orientation="Horizontal" Margin="0,2,12,2">
+                            <TextBlock Text="{Binding Label}" Style="{StaticResource DevSub}" Margin="0,0,6,0" VerticalAlignment="Center" TextWrapping="NoWrap"/>
+                            <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Width="78" IsEnabled="{Binding Enabled}" TextAlignment="Right"/>
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </DockPanel>
+                  <DockPanel Margin="0,2">
+                    <TextBlock Text="{ui:Tr bus_rot}" Style="{StaticResource DevSub}" Width="90" VerticalAlignment="Center" Margin="0"/>
+                    <ItemsControl ItemsSource="{Binding Rot}">
+                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <StackPanel Orientation="Horizontal" Margin="0,2,12,2">
+                            <TextBlock Text="{Binding Label}" Style="{StaticResource DevSub}" Margin="0,0,6,0" VerticalAlignment="Center" TextWrapping="NoWrap"/>
+                            <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Width="78" IsEnabled="{Binding Enabled}" TextAlignment="Right"/>
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </DockPanel>
+                  <DockPanel Margin="0,2">
+                    <TextBlock Text="{ui:Tr bus_factor}" Style="{StaticResource DevSub}" Width="90" VerticalAlignment="Top" Margin="0,4,0,0"/>
+                    <ItemsControl ItemsSource="{Binding Factors}">
+                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <StackPanel Orientation="Horizontal" Margin="0,2,12,2">
+                            <TextBlock Text="{Binding Label}" Style="{StaticResource DevSub}" Margin="0,0,6,0" VerticalAlignment="Center" TextWrapping="NoWrap"/>
+                            <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Width="78" IsEnabled="{Binding Enabled}" TextAlignment="Right"/>
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </DockPanel>
+                  <TextBlock Text="{Binding Note}" Style="{StaticResource DevSub}"/>
+                </StackPanel>
+              </ContentControl>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr view_sec_parts}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ScrollViewer MaxHeight="400" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl x:Name="PartList" ItemsSource="{Binding Parts}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <CheckBox Style="{StaticResource DevToggle}" IsChecked="{Binding Checked}">
+                  <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="{ui:Tr bus_edit}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Margin="12,0,0,0"
+                            Command="{Binding DataContext.PickPartCmd, ElementName=PartList}" CommandParameter="{Binding}"/>
+                    <StackPanel>
+                      <TextBlock Text="{Binding Name}" Style="{StaticResource DevTitle}"/>
+                      <TextBlock Text="{Binding Sub}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                  </DockPanel>
+                </CheckBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr bus_sec_paths}" Style="{StaticResource DevCaption}" Visibility="{Binding HasPaths, Converter={StaticResource Vis}}"/>
+    <Border Style="{StaticResource DevCard}" Visibility="{Binding HasPaths, Converter={StaticResource Vis}}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button Content="{ui:Tr bus_add_point}" Style="{StaticResource BtnSmall}" Command="{Binding AddPointCmd}" Margin="0,0,10,0"/>
+              <Button Content="{ui:Tr bus_save}" Style="{StaticResource BtnPrimary}" Command="{Binding SavePathsCmd}" Margin="0"/>
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr bus_paths}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding PathsText}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding PathRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <DockPanel Margin="24,4,24,4">
+                  <Button DockPanel.Dock="Right" Content="{ui:Tr bus_remove}" Style="{StaticResource BtnSmall}" Command="{Binding RemoveCmd}" VerticalAlignment="Center"
+                          Visibility="{Binding CanRemove, Converter={StaticResource Vis}}" Margin="8,0,0,0"/>
+                  <TextBlock Text="{Binding Title}" Style="{StaticResource DevSub}" Width="120" VerticalAlignment="Center" Margin="0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                  <ItemsControl ItemsSource="{Binding Nums}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="0,2,12,2">
+                          <TextBlock Text="{Binding Label}" Style="{StaticResource DevSub}" Margin="0,0,6,0" VerticalAlignment="Center" TextWrapping="NoWrap"/>
+                          <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Width="78" IsEnabled="{Binding Enabled}" TextAlignment="Right"/>
+                        </StackPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </DockPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <ui:NumBox Value="{Binding NewLinkA}" Minimum="0" Maximum="9999"/>
+              <TextBlock Text="→" VerticalAlignment="Center" Margin="8,0"/>
+              <ui:NumBox Value="{Binding NewLinkB}" Minimum="0" Maximum="9999"/>
+              <Button Content="{ui:Tr bus_add_link}" Style="{StaticResource BtnSmall}" Command="{Binding AddLinkCmd}" Margin="10,0,0,0"/>
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr bus_links}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr bus_links_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ItemsControl ItemsSource="{Binding LinkRows}" Margin="24,4,24,8">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Background="{DynamicResource Btn}" CornerRadius="10" Padding="10,3,4,3" Margin="0,0,6,6">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                  <Button Content="✕" Style="{StaticResource BtnSmall}" Command="{Binding RemoveCmd}" Padding="6,0" Height="22"/>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr bus_sec_cabin}" Style="{StaticResource DevCaption}" Visibility="{Binding HasCabin, Converter={StaticResource Vis}}"/>
+    <Border Style="{StaticResource DevCard}" Visibility="{Binding HasCabin, Converter={StaticResource Vis}}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button Content="{ui:Tr bus_add_seat}" Style="{StaticResource BtnSmall}" Command="{Binding AddSeatCmd}" Margin="0,0,10,0"/>
+              <Button Content="{ui:Tr bus_save}" Style="{StaticResource BtnPrimary}" Command="{Binding SaveCabinCmd}" Margin="0"/>
+            </StackPanel>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr bus_cabin}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding CabinText}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding SeatRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <DockPanel Margin="24,4,24,4">
+                  <Button DockPanel.Dock="Right" Content="{ui:Tr bus_remove}" Style="{StaticResource BtnSmall}" Command="{Binding RemoveCmd}" VerticalAlignment="Center"
+                          Visibility="{Binding CanRemove, Converter={StaticResource Vis}}" Margin="8,0,0,0"/>
+                  <TextBlock Text="{Binding Title}" Style="{StaticResource DevSub}" Width="90" VerticalAlignment="Center" Margin="0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                  <ItemsControl ItemsSource="{Binding Nums}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="0,2,12,2">
+                          <TextBlock Text="{Binding Label}" Style="{StaticResource DevSub}" Margin="0,0,6,0" VerticalAlignment="Center" TextWrapping="NoWrap"/>
+                          <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Width="78" IsEnabled="{Binding Enabled}" TextAlignment="Right"/>
+                        </StackPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </DockPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr view_sec_export}" Style="{StaticResource DevCaption}"/>
+    <Border Style="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Style="{StaticResource DevStatic}">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Command="{Binding PickBlendExeCmd}" Margin="8,0,0,0"/>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr btn_auto}" Style="{StaticResource BtnSmall}" VerticalAlignment="Center" Command="{Binding AutoBlendExeCmd}" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_blender}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding BlendExeText}" Style="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <Button Style="{StaticResource DevRow}" Command="{Binding SaveBlendCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_blend}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr view_blend_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+        <Button Style="{StaticResource DevRow}" Command="{Binding SaveObjCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Style="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr view_obj}" Style="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr view_obj_sub}" Style="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</ScrollViewer>

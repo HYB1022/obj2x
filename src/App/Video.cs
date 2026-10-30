@@ -66,7 +66,7 @@ public static class Video {
                 case "dash": Dash(f, sd, n); break;
                 case "object": ObjectScene(f, sd, n); break;
                 case "spline": SplineScene(f, sd, n); break;
-                case "viewer": ViewerScene(f, sd, n, model); break;
+                case "bus": ViewerScene(f, sd, n, model); break;
                 case "langs": Langs(f, sd, n); break;
                 case "outro": Outro(sd, n); break;
             }
@@ -207,7 +207,7 @@ public static class Video {
     }
 
     static void ViewerScene(MainWindow f, string sd, int n, string model) {
-        f.VM.Page = "viewer";
+        f.VM.Page = "bus";
         f.VM.LoadModel(model);
         for (int i = 0; i < 600 && f.VM.ViewBusy; i++) Pump.Run(50);
         Pump.Run(300);

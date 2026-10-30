@@ -88,6 +88,15 @@ public static class Updater {
         try { string old = Path.Combine(Path.GetDirectoryName(exePath), "obj2x.exe.old"); if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
     }
 
+    // obj2x(v2.7.2 이하)에서 올라온 뒤 남은 파일 정리: 설정은 BusDepot.ini로 옮긴 다음이고, 예전 바로 가기용 obj2x.exe(런처)만 남긴다
+    static readonly string[] Obj2xLeftovers = { "obj2x.ini", "obj2x.bat", "obj2x_gui.ps1", "obj2x.py", "obj2x_selftest.txt", "obj2x_fps.txt" };
+    public static void CleanupObj2x(string here) {
+        if (!File.Exists(Path.Combine(here, AppInfo.Exe + ".exe"))) return;    // 개발 폴더 등 BusDepot.exe 옆이 아니면 건드리지 않는다
+        if (File.Exists(Path.Combine(here, "obj2x.ini")) && !File.Exists(Path.Combine(here, AppInfo.Exe + ".ini"))) return;   // 아직 못 옮겼으면 남긴다
+        foreach (string n in Obj2xLeftovers) { try { string p = Path.Combine(here, n); if (File.Exists(p)) File.Delete(p); } catch (Exception) { } }
+        try { string b = Path.Combine(here, "obj2x_backup"); if (Directory.Exists(b)) Directory.Delete(b, true); } catch (Exception) { }
+    }
+
     // 실행 중인 앱이 fonts 폴더의 글꼴 파일을 열고 있어서 덮어쓰지 못할 수 있다.
     // 내용이 같으면 건너뛰고, 글꼴처럼 앱 실행에 꼭 필요하지 않은 하위 폴더 파일은 못 바꿔도 업데이트를 계속한다.
     static void CopyTree(string src, string dst) { CopyTree(src, dst, true); }
@@ -95,6 +104,9 @@ public static class Updater {
         foreach (string f in Directory.GetFiles(src)) {
             string name = Path.GetFileName(f);
             if (string.Equals(name, "obj2x.ini", StringComparison.OrdinalIgnoreCase) || string.Equals(name, AppInfo.Exe + ".ini", StringComparison.OrdinalIgnoreCase)) continue;
+            // 예전 버전 업데이터용 파일(zip 최상위)은 새 업데이터가 설치할 때는 다시 깔지 않는다. obj2x.exe 런처는 이미 있을 때(바로 가기용)만 바꾼다
+            if (top && (string.Equals(name, "obj2x.bat", StringComparison.OrdinalIgnoreCase) || string.Equals(name, "obj2x_gui.ps1", StringComparison.OrdinalIgnoreCase))) continue;
+            if (top && string.Equals(name, "obj2x.exe", StringComparison.OrdinalIgnoreCase) && !File.Exists(Path.Combine(dst, name))) continue;
             string to = Path.Combine(dst, name);
             if (SameFile(f, to)) continue;
             try { File.Copy(f, to, true); }

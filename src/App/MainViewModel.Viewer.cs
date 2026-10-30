@@ -27,9 +27,10 @@ public partial class MainViewModel {
 
     void InitViewer() {
         Parts = new ObservableCollection<PartItem>();
+        InitBus();
         BrowseCfgCmd = new Cmd(delegate {
             string start = viewPath.Length > 0 ? viewPath : (OmsiOk ? Path.Combine(Path.Combine(S.OmsiDir, "Vehicles"), "x") : "");
-            string f = ui.PickFile(L.T("view_file"), "OMSI model (*.cfg;*.sco)|*.cfg;*.sco", start);
+            string f = ui.PickFile(L.T("view_file"), "OMSI (*.bus;*.ovh;*.cfg;*.sco)|*.bus;*.ovh;*.cfg;*.sco", start);
             if (f != null) LoadModel(f);
         });
         SaveBlendCmd = new Cmd(delegate { Export(true); }, delegate(object p) { return viewCfg != null && !viewBusy; });
@@ -40,7 +41,7 @@ public partial class MainViewModel {
             S.BlendExe = f; S.Save(); blenders = null; FindBlendersAsync();
         });
         AutoBlendExeCmd = new Cmd(delegate { S.BlendExe = ""; S.Save(); Raise("BlendExeText"); });
-        PageChanged += delegate(string p) { if (p == "viewer") FindBlendersAsync(); };
+        PageChanged += delegate(string p) { if (p == "bus") FindBlendersAsync(); };
     }
 
     // .blend 저장에 쓸 Blender: 직접 고른 것, 아니면 찾은 것 중 가장 새 버전 (2.79는 2.8 이상에서 텍스처가 안 보여서 마지막 수단)
@@ -83,9 +84,10 @@ public partial class MainViewModel {
     // 도색 목록 (맨 앞은 '기본 텍스처'). 고르면 그 도색의 텍스처와 [setvar] 값으로 다시 읽는다
     public System.Collections.ObjectModel.ObservableCollection<TrItem> Paints { get; private set; }
     string viewPaint = "";
+    bool paintsFilling;   // 목록을 다시 채우는 동안 드롭다운이 SelectedValue를 비우며 되돌려 쓰는 값은 무시 (안 그러면 두 번 불러 목록이 두 번 채워진다)
     public string ViewPaint {
         get { return viewPaint; }
-        set { if ((value ?? "") == viewPaint || viewBusy) return; viewPaint = value ?? ""; Raise("ViewPaint"); if (viewPath.Length > 0) LoadModel(viewPath, viewPaint); }
+        set { if (paintsFilling || (value ?? "") == viewPaint || viewBusy) return; viewPaint = value ?? ""; Raise("ViewPaint"); if (viewPath.Length > 0) LoadModel(viewPath, viewPaint); }
     }
     public bool PaintsVisible { get { return Paints != null && Paints.Count > 1; } }
     bool viewBoth;
@@ -94,18 +96,23 @@ public partial class MainViewModel {
     // paint: 도색 이름 ("" = 기본 텍스처, null = 처음 여는 것: 첫 번째 도색)
     public void LoadModel(string path, string paint) {
         ModelCfg cfg;
-        try { cfg = ModelCfg.Load(path); } catch (Exception ex) { ui.Msg(ex.Message); return; }
+        string modelPath = BusModelPath(path);
+        if (modelPath == null) return;
+        if (!File.Exists(modelPath)) { ui.Msg(L.T("bus_err_model", modelPath)); return; }
+        try { cfg = ModelCfg.Load(modelPath); } catch (Exception ex) { ui.Msg(ex.Message); return; }
         if (cfg.Meshes.Count == 0) { ui.Msg(L.T("view_err_nomesh")); return; }
         List<Repaint> paints = cfg.Repaints();
         if (paint == null || !string.Equals(path, viewPath, StringComparison.OrdinalIgnoreCase) && paint.Length > 0 && !paints.Exists(delegate(Repaint p) { return p.Id == paint; }))
             paint = paints.Count > 0 ? paints[0].Id : "";
         cfg.Paint = paints.Find(delegate(Repaint p) { return p.Id == paint; });
         if (Paints == null) Paints = new System.Collections.ObjectModel.ObservableCollection<TrItem>();
+        paintsFilling = true;
         Paints.Clear();
         Paints.Add(new TrItem("", delegate { return L.T("view_paint_none"); }));
         foreach (Repaint p in paints) { string label = p.Label; Paints.Add(new TrItem(p.Id, delegate { return label; })); }
         viewPaint = cfg.Paint != null ? cfg.Paint.Id : "";
         Raise("Paints", "ViewPaint", "PaintsVisible");
+        paintsFilling = false;
         bool both = viewBoth;
         int gen = ++loadGen;
         viewPath = path; viewCfg = null; viewBusy = true;
@@ -129,6 +136,7 @@ public partial class MainViewModel {
                 if (gen != loadGen) return;
                 viewCfg = cfg; viewBusy = false; viewMissing = missing;
                 foreach (PartItem it in items) { it.PropertyChanged += delegate { viewShow++; Raise("ViewShow"); ViewStat(); }; Parts.Add(it); }
+                BusLoaded();
                 viewScene++; viewPreset = "ext";
                 Raise("ViewScene", "ViewEmpty", "ViewBusy", "ViewPreset");
                 ViewStat();

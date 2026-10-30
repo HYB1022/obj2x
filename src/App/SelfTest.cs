@@ -312,6 +312,43 @@ public static class SelfTest {
         bool nw = !ms2.DefaultOn(ms2.Meshes[0]) && ms2.DefaultOn(ms2.Meshes[1]);
         T("차량 스크립트: 도색 값으로 스크립트를 돌려 [visible] 변수를 정함 (연식별 앞문)", ms2.HasScript && sp2s.Count == 2 && old && nw, ms2.HasScript + " " + sp2s.Count + " old=" + old + " new=" + nw + " none=" + noPaint);
 
+        // 버스 파일: .bus → model/paths/passengercabin, [newanim] 계산, 값만 바꿔 저장
+        string vb = Path.Combine(root, "AnimBus"), vbm = Path.Combine(vb, "model");
+        Directory.CreateDirectory(vbm);
+        File.Copy(Path.Combine(md, "house.o3d"), Path.Combine(vbm, "door.o3d"), true);
+        File.WriteAllText(Path.Combine(vb, "a.bus"), "[friendlyname]\r\nMaker\r\nCity 12\r\n[model]\r\nmodel\\m.cfg\r\n[paths]\r\nmodel\\p.cfg\r\n[passengercabin]\r\nmodel\\c.cfg\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(vbm, "m.cfg"), "' door\r\n[mesh]\r\ndoor.o3d\r\n[newanim]\r\norigin_trans\r\n1\r\n0\r\n0\r\norigin_rot_x\r\n0\r\norigin_rot_y\r\n-90\r\norigin_rot_z\r\n0\r\nanim_rot\r\ndoor_0\r\n90\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(vbm, "p.cfg"), "comment\r\n[pathpnt]\r\n0\r\n0\r\n0.5\r\n[pathpnt]\r\n0\r\n-2\r\n0.5\r\n[pathlink]\r\n0\r\n1\r\n", Encoding.ASCII);
+        File.WriteAllText(Path.Combine(vbm, "c.cfg"), "[passpos]\r\n0.5\r\n1\r\n1.2\r\n0.4\r\n0\r\n[drivpos]\r\n-0.7\r\n3\r\n1.2\r\n0.4\r\n0\r\n[entry]\r\n0\r\n[exit]\r\n1\r\n", Encoding.ASCII);
+        BusFile bf = BusFile.Load(Path.Combine(vb, "a.bus"));
+        ModelCfg am = ModelCfg.Load(bf.Model);
+        AnimBlock ab = am.Meshes[0].Anims.Count == 1 ? am.Meshes[0].Anims[0] : null;
+        T("버스: .bus 읽기 + [newanim] 블록 (피벗, 회전, 변수, 줄 번호)", bf.Name == "Maker City 12" && File.Exists(bf.Paths) && File.Exists(bf.Cabin) && ab != null && ab.HasTrans && ab.Trans[0] == 1
+            && ab.Rot[1] == -90 && ab.Entries.Count == 1 && ab.Entries[0].Var == "door_0" && ab.Entries[0].Factor == 90 && am.Meshes[0].Animated, bf.Name);
+        // 회전축 = origin_rot (y -90)로 돌린 x축 = z축(위). 값 1 × 90도 → 피벗(1,0,0) 둘레로 90도: 점 (2,0,0) → (1,1,0)
+        double[] M = AnimMath.Chain(am.Meshes[0], delegate(string v) { return v == "door_0" ? 1 : 0; }, -1);
+        double px = M[0] * 2 + M[3], py = M[4] * 2 + M[7], pz = M[8] * 2 + M[11];
+        T("버스: 애니메이션 계산 (피벗 둘레 회전축으로 값 × factor 도)", Math.Abs(px - 1) < 1e-6 && Math.Abs(Math.Abs(py) - 1) < 1e-6 && Math.Abs(pz) < 1e-6, px + "," + py + "," + pz);
+        am.Doc.Set(ab.Entries[0].Line, 45.5); am.Doc.Save();
+        ModelCfg am2 = ModelCfg.Load(bf.Model);
+        T("버스: cfg 값만 바꿔 저장 (.bak 백업, 주석 유지)", am2.Meshes[0].Anims[0].Entries[0].Factor == 45.5 && File.Exists(bf.Model + ".bak") && File.ReadAllText(bf.Model).StartsWith("' door"), "");
+        PathsCfg pc = PathsCfg.Load(bf.Paths);
+        bool pOk = pc.Points.Count == 2 && pc.Links.Count == 1 && pc.Points[1].P[1] == -2;
+        pc.SetPoint(pc.Points[1], 1, -2.5); pc.AddPoint(0, -3, 0.5); pc.AddLink(1, 2); pc.RemoveLink(pc.Links[0]); pc.Doc.Save();
+        PathsCfg pc2 = PathsCfg.Load(bf.Paths);
+        T("버스: paths.cfg 점 고치기/추가, 연결 추가/삭제", pOk && pc2.Points.Count == 3 && pc2.Points[1].P[1] == -2.5 && pc2.Links.Count == 1 && pc2.Links[0].A == 1 && pc2.Links[0].B == 2 && File.ReadAllText(bf.Paths).StartsWith("comment"), pc2.Points.Count + " " + pc2.Links.Count);
+        CabinCfg cc = CabinCfg.Load(bf.Cabin);
+        bool cOk = cc.Seats.Count == 2 && cc.Seats[1].Driver && cc.Entries[0] == 0 && cc.Exits[0] == 1;
+        cc.AddSeat(0.5, 0, 1.2); cc.SetSeat(cc.Seats[0], 4, 180); cc.RemoveSeat(cc.Seats[2]); cc.Doc.Save();
+        CabinCfg cc2 = CabinCfg.Load(bf.Cabin);
+        T("버스: passengercabin.cfg 좌석 고치기/추가/삭제", cOk && cc2.Seats.Count == 2 && cc2.Seats[0].V[4] == 180, cc2.Seats.Count.ToString());
+        // obj2x에서 올라온 폴더 정리
+        string up = Path.Combine(root, "upgraded"); Directory.CreateDirectory(Path.Combine(up, "obj2x_backup"));
+        foreach (string n in new string[] { "BusDepot.exe", "BusDepot.ini", "obj2x.exe", "obj2x.ini", "obj2x.bat", "obj2x_gui.ps1", "obj2x.py" }) File.WriteAllText(Path.Combine(up, n), "");
+        Updater.CleanupObj2x(up);
+        T("업데이트: obj2x에서 올라온 찌꺼기 정리 (obj2x.exe 런처와 BusDepot 파일은 남김)", File.Exists(Path.Combine(up, "obj2x.exe")) && File.Exists(Path.Combine(up, "BusDepot.ini")) && !File.Exists(Path.Combine(up, "obj2x.ini"))
+            && !File.Exists(Path.Combine(up, "obj2x.bat")) && !File.Exists(Path.Combine(up, "obj2x_gui.ps1")) && !File.Exists(Path.Combine(up, "obj2x.py")) && !Directory.Exists(Path.Combine(up, "obj2x_backup")), "");
+
         mp.Paint = null;
         T("도색: 기본 텍스처로 돌리면 원래 텍스처 (cti가 있으면 이름 규칙으로 찾지 않음)", mp.FindTex("wall.bmp", mp.Meshes[0]).EndsWith(Path.Combine("Texture", "wall.bmp")), mp.FindTex("wall.bmp", mp.Meshes[0]));
 
@@ -390,7 +427,7 @@ public static class SelfTest {
             Loc.SetLang("ko"); Theme.Apply("light", "indigo", "nanum");
             MainWindow f = new MainWindow(us, root, false);
             f.FixClientSize(1040, 686); f.Show(); Pump.Run(200);
-            foreach (string pg in new string[] { "wizard", "object", "spline", "viewer", "advanced", "settings", "about", "dashboard" }) { f.VM.Page = pg; Pump.Run(50); }
+            foreach (string pg in new string[] { "wizard", "object", "spline", "bus", "advanced", "settings", "about", "dashboard" }) { f.VM.Page = pg; Pump.Run(50); }
             T("화면: 모든 페이지 전환", f.VM.Page == "dashboard", f.VM.Page);
             T("작업 표시줄: 진행률 표시 준비", f.TaskbarItemInfo != null, "");
             // 끌어다 놓기: obj 폴더는 마법사 경로 단계로, o3d 파일은 오브젝트 만들기로
@@ -414,7 +451,7 @@ public static class SelfTest {
             Pump.Run(100);
             ModelView mv3 = FindAll<ModelView>(f.Host).Find(delegate(ModelView q) { return q.IsVisible; });
             int onParts = 0; foreach (PartItem pi in f.VM.Parts) if (pi.Checked) onParts++;
-            T("모델 보기: cfg를 끌어다 놓으면 열림 + 3D에 부품 표시", f.VM.Page == "viewer" && f.VM.Parts.Count == 5 && onParts == 2 && mv3 != null && mv3.Visible == 2 && f.VM.ViewStatus.Contains("2 / 5"),
+            T("모델 보기: cfg를 끌어다 놓으면 열림 + 3D에 부품 표시", f.VM.Page == "bus" && f.VM.Parts.Count == 5 && onParts == 2 && mv3 != null && mv3.Visible == 2 && f.VM.ViewStatus.Contains("2 / 5"),
                 f.VM.Page + " parts=" + f.VM.Parts.Count + " on=" + onParts + " vis=" + (mv3 == null ? -1 : mv3.Visible) + " " + f.VM.ViewStatus);
             f.VM.ViewPreset = "all"; Pump.Run(50);
             T("모델 보기: '전체'는 자세한 LOD의 조건부 부품까지", mv3 != null && mv3.Visible == 3, mv3 == null ? "없음" : mv3.Visible.ToString());

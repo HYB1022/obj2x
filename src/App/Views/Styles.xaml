@@ -330,6 +330,7 @@
   <Style x:Key="DevCard" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Card}"/>
     <Setter Property="CornerRadius" Value="20"/>
+    <Setter Property="ui:RoundClip.On" Value="True"/>
   </Style>
   <Style x:Key="DevCaption" TargetType="TextBlock">
     <Setter Property="FontSize" Value="12"/>

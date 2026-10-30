@@ -128,6 +128,7 @@ public class PartItem : Observable {
     bool chk;
     public CfgMesh Mesh;
     public Model3D Model;          // 다른 스레드에서 만들어 굳힌(Freeze) 것
+    public Model3DGroup Visual;    // 화면에 넣는 껍데기 (애니메이션 변환을 여기에 건다, 화면 스레드에서 만든다)
     public Rect3D Bounds = Rect3D.Empty;
     public int Tris;
     public string Name { get; set; }
@@ -176,6 +177,11 @@ public static class ModelScene {
         }
         g.Freeze();
         it.Model = g; it.Bounds = g.Bounds;
+        // origin_from_mesh용: o3d 행렬의 기준점과 x축 (o3d (x, y위, z앞) → cfg (x, z, y))
+        if (m.Matrix != null) {
+            cm.MeshOrigin = new double[] { m.Matrix[12], m.Matrix[14], m.Matrix[13] };
+            cm.MeshAxis = new double[] { m.Matrix[0], m.Matrix[2], m.Matrix[1] };
+        }
         it.Sub = L.T("view_part_sub", it.Tris.ToString("N0"), m.Mats.Count) + (cm.VisVar != null ? " · [visible] " + cm.VisVar + " = " + cm.VisVal : "")
             + (cm.Lod > 0 ? " · LOD " + cm.LodValue.ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
         return it;
@@ -217,6 +223,15 @@ public class ModelView : Border {
         new FrameworkPropertyMetadata(0, delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) { ((ModelView)d).Rebuild(true); }));
     public static readonly DependencyProperty ShowProperty = DependencyProperty.Register("Show", typeof(int), typeof(ModelView),
         new FrameworkPropertyMetadata(0, delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) { ((ModelView)d).Rebuild(false); }));
+    // 사람 길, 좌석, 피벗 같은 덧그림 (VM이 만든다)
+    public static readonly DependencyProperty OverlayProperty = DependencyProperty.Register("Overlay", typeof(Model3D), typeof(ModelView),
+        new FrameworkPropertyMetadata(null, delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) { ((ModelView)d).overlay.Content = e.NewValue as Model3D; }));
+    // 부품을 누르면 그 PartItem으로 실행 (끌어서 돌린 것은 제외)
+    public static readonly DependencyProperty PickCommandProperty = DependencyProperty.Register("PickCommand", typeof(ICommand), typeof(ModelView));
+    public Model3D Overlay { get { return (Model3D)GetValue(OverlayProperty); } set { SetValue(OverlayProperty, value); } }
+    public ICommand PickCommand { get { return (ICommand)GetValue(PickCommandProperty); } set { SetValue(PickCommandProperty, value); } }
+    readonly ModelVisual3D overlay = new ModelVisual3D();
+    Point downAt;
     public IEnumerable<PartItem> Parts { get { return (IEnumerable<PartItem>)GetValue(PartsProperty); } set { SetValue(PartsProperty, value); } }
     public int Scene { get { return (int)GetValue(SceneProperty); } set { SetValue(SceneProperty, value); } }
     public int Show { get { return (int)GetValue(ShowProperty); } set { SetValue(ShowProperty, value); } }
@@ -241,6 +256,7 @@ public class ModelView : Border {
         lights.Children.Add(new DirectionalLight(Color.FromRgb(70, 70, 70), new Vector3D(0.4, -1, 0.3)));
         ModelVisual3D lv = new ModelVisual3D(); lv.Content = lights; vp.Children.Add(lv);
         ModelVisual3D mv = new ModelVisual3D(); mv.Content = content; vp.Children.Add(mv);
+        vp.Children.Add(overlay);
         Child = vp;
         Cursor = Cursors.SizeAll;
         SizeChanged += delegate { Clip = new RectangleGeometry(new Rect(0, 0, ActualWidth, ActualHeight), 16, 16); };
@@ -254,7 +270,7 @@ public class ModelView : Border {
         int total = 0;
         if (Parts != null) foreach (PartItem p in Parts) {
             if (!p.Checked || p.Model == null) continue;
-            content.Children.Add(p.Model);
+            content.Children.Add(p.Visual != null ? (Model3D)p.Visual : p.Model);
             on.Add(p); total += p.Tris;
         }
         if (!refit) return;
@@ -288,11 +304,29 @@ public class ModelView : Border {
     protected override void OnMouseDown(MouseButtonEventArgs e) {
         base.OnMouseDown(e);
         if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2) { Rebuild(true); return; }
-        last = e.GetPosition(this);
+        last = e.GetPosition(this); downAt = last;
         rot = e.ChangedButton == MouseButton.Left; pan = e.ChangedButton == MouseButton.Right || e.ChangedButton == MouseButton.Middle;
         CaptureMouse(); e.Handled = true;
     }
-    protected override void OnMouseUp(MouseButtonEventArgs e) { base.OnMouseUp(e); rot = pan = false; ReleaseMouseCapture(); e.Handled = true; }
+    protected override void OnMouseUp(MouseButtonEventArgs e) {
+        base.OnMouseUp(e);
+        bool click = rot && (e.GetPosition(this) - downAt).Length < 4;
+        rot = pan = false; ReleaseMouseCapture(); e.Handled = true;
+        if (click && PickCommand != null) Pick(e.GetPosition(vp));
+    }
+    void Pick(Point pt) {
+        PartItem hit = null;
+        VisualTreeHelper.HitTest(vp, null, delegate(HitTestResult r) {
+            RayMeshGeometry3DHitTestResult m = r as RayMeshGeometry3DHitTestResult;
+            if (m == null || Parts == null) return HitTestResultBehavior.Continue;
+            foreach (PartItem p in Parts) {
+                Model3DGroup g = p.Model as Model3DGroup;
+                if (p.Checked && g != null && g.Children.Contains(m.ModelHit)) { hit = p; return HitTestResultBehavior.Stop; }
+            }
+            return HitTestResultBehavior.Continue;
+        }, new PointHitTestParameters(pt));
+        if (hit != null && PickCommand.CanExecute(hit)) PickCommand.Execute(hit);
+    }
     protected override void OnMouseMove(MouseEventArgs e) {
         base.OnMouseMove(e);
         if (!rot && !pan) return;

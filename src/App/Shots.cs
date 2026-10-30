@@ -80,12 +80,21 @@ public static class Shots {
         string dir = Path.GetDirectoryName(Path.GetFullPath(png));
         Settings s = new Settings(); s.Path = Path.Combine(dir, "shot.ini"); s.Theme = theme; s.Lang = "ko"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
         MainWindow f = Open(s, dir);
-        f.VM.Page = "viewer"; Pump.Run(100);
+        f.VM.Page = "bus"; Pump.Run(100);
         f.VM.LoadModel(cfg);
         for (int i = 0; i < 600 && f.VM.ViewBusy; i++) Pump.Run(50);
-        if (preset != "ext") f.VM.ViewPreset = preset;
+        // pose: 변수를 최대의 70%로 놓고 첫 번째 움직이는 부품을 골라 피벗까지 보이게 + 아래 카드들도 찍는다
+        if (preset == "pose") {
+            foreach (VarItem v in f.VM.Vars) v.Value = v.Min + (v.Max - v.Min) * 0.85;
+            foreach (PartItem p in f.VM.Parts) if (p.Checked && p.Mesh.Animated) { f.VM.PickPartCmd.Execute(p); break; }
+        } else if (preset != "ext") f.VM.ViewPreset = preset;
         Pump.Run(300);
         Save(f, png);
+        if (preset == "pose") {
+            ScrollViewer sv = null;
+            foreach (ScrollViewer x in UiTreeAll<ScrollViewer>(f.Host)) if (x.IsVisible && x.ActualWidth > 500) { sv = x; break; }
+            if (sv != null) for (int k = 1; k <= 4; k++) { sv.ScrollToVerticalOffset(k * 640); Pump.Run(100); Save(f, Path.Combine(Path.GetDirectoryName(png), Path.GetFileNameWithoutExtension(png) + "_" + k + ".png")); }
+        }
         List<string> pn = new List<string>(); if (f.VM.Paints != null) foreach (TrItem p in f.VM.Paints) pn.Add(p.Name);
         File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.ViewStatus + "\r\n" + string.Join(", ", pn.ToArray()), new UTF8Encoding(true));
         f.Close();
@@ -99,7 +108,7 @@ public static class Shots {
         Settings s = new Settings(); s.Path = Path.Combine(dir, "shot.ini"); s.Lang = "ko"; s.UpdCheck = false; s.Agreed = true; s.AgreedVer = AppInfo.Version;
         if (blender != null) s.BlendExe = blender;
         MainWindow f = Open(s, AppDomain.CurrentDomain.BaseDirectory);
-        f.VM.Page = "viewer"; f.VM.LoadModel(cfg);
+        f.VM.Page = "bus"; f.VM.LoadModel(cfg);
         for (int i = 0; i < 1200 && f.VM.ViewBusy; i++) Pump.Run(50);
         f.VM.ExportTo(outFile.EndsWith(".blend", StringComparison.OrdinalIgnoreCase), Path.GetFullPath(outFile), null);
         for (int i = 0; i < 12000 && f.VM.ViewBusy; i++) Pump.Run(50);
@@ -112,8 +121,9 @@ public static class Shots {
         Loc.SetLang(s.Lang); Theme.Apply(s.Theme, s.Accent, s.Font);
         MainWindow f = new MainWindow(s, dir, false);
         f.FixClientSize(1040, 686);
-        f.Left = 0; f.Top = 0;
-        f.Show(); f.Activate(); Pump.Run(300);
+        // 화면 밖에 띄운다 (마우스가 올라가 있던 줄이 칠해진 채로 찍히지 않게)
+        f.ShowInTaskbar = false; f.ShowActivated = false; f.Left = -6000; f.Top = 0;
+        f.Show(); Pump.Run(300);
         return f;
     }
 
@@ -215,7 +225,8 @@ public static class Shots {
         Settings s = new Settings(); s.Path = Path.Combine(dir, "wf.ini"); s.Lang = "ko"; s.Theme = theme == "dark" ? "dark" : "light"; s.Accent = "indigo";
         Loc.SetLang(s.Lang); Theme.Apply(s.Theme, s.Accent, s.Font);
         WelcomeWindow w = new WelcomeWindow(s);
-        w.WindowState = WindowState.Normal; w.Width = 1000; w.Height = 640; w.Left = 0; w.Top = 0;
+        w.WindowState = WindowState.Normal; w.Width = 1000; w.Height = 640; w.Left = -6000; w.Top = 0; w.ShowInTaskbar = false; w.ShowActivated = false;
+        ((FrameworkElement)w.Content).IsHitTestVisible = false;   // 마우스가 어디 있든 호버 상태가 생기지 않게
         w.Show(); Pump.Run(800);
         int n = (int)Math.Round((w.Period + Blend) * Fps);
         RenderScale = 2;
