@@ -209,6 +209,8 @@
     <Setter Property="SelectionBrush" Value="{DynamicResource Accent}"/>
     <Setter Property="BorderThickness" Value="1"/>
     <Setter Property="Height" Value="28"/>
+    <!-- 125% 등 배율에서 카드 안 StackPanel이 1px 안쪽으로 잘려 아래 테두리가 사라지는 것을 막는다 -->
+    <Setter Property="Margin" Value="0,0,0,1"/>
     <Setter Property="Padding" Value="4,0"/>
     <Setter Property="VerticalContentAlignment" Value="Center"/>
     <Setter Property="Template">
@@ -237,6 +239,81 @@
     <Setter Property="VerticalContentAlignment" Value="Stretch"/>
     <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
     <Setter Property="Padding" Value="4,4"/>
+  </Style>
+
+  <!-- 드롭다운 (언어 선택 등): 둥근 상자 + 아래로 펼쳐지는 카드, 고른 항목에 체크 표시 -->
+  <Style x:Key="DropItem" TargetType="ComboBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBoxItem">
+          <Border x:Name="bd" Background="Transparent" CornerRadius="6" Padding="10,0" Height="34">
+            <Grid>
+              <ContentPresenter VerticalAlignment="Center" Margin="0,0,24,0"/>
+              <Path x:Name="check" Data="M 0,4.5 L 3.5,8 L 10,1" Stroke="{DynamicResource Accent}" StrokeThickness="1.8" StrokeStartLineCap="Round"
+                    StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"/>
+            </Grid>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="bd" Property="Background" Value="{DynamicResource Btn}"/></Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="check" Property="Visibility" Value="Visible"/>
+              <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+              <Setter Property="FontWeight" Value="Bold"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="Drop" TargetType="ComboBox">
+    <Setter Property="Height" Value="32"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="ItemContainerStyle" Value="{StaticResource DropItem}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBox">
+          <Grid>
+            <ToggleButton Focusable="False" ClickMode="Press" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+              <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                  <Border x:Name="bd" Background="{DynamicResource Input}" BorderBrush="{DynamicResource InputBdr}" BorderThickness="1" CornerRadius="8"/>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource Muted}"/></Trigger>
+                    <Trigger Property="IsChecked" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource Accent}"/></Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
+              </ToggleButton.Template>
+            </ToggleButton>
+            <ContentPresenter IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                              Margin="12,0,34,0" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+            <Path IsHitTestVisible="False" Data="M 0,0 L 4.5,4.5 L 9,0" Stroke="{DynamicResource Muted}" StrokeThickness="1.6"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Right" VerticalAlignment="Center"
+                  Margin="0,0,13,0" RenderTransformOrigin="0.5,0.5">
+              <Path.RenderTransform><RotateTransform x:Name="rot"/></Path.RenderTransform>
+            </Path>
+            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Placement="Bottom" VerticalOffset="4"
+                   PopupAnimation="Fade" Focusable="False">
+              <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBdr}" BorderThickness="1" CornerRadius="10" Padding="4"
+                      Margin="0,0,10,12" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                <Border.Effect><DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Opacity="0.18"/></Border.Effect>
+                <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/></ScrollViewer>
+              </Border>
+            </Popup>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsDropDownOpen" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="rot" Storyboard.TargetProperty="Angle" To="180" Duration="0:0:0.15"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="rot" Storyboard.TargetProperty="Angle" To="0" Duration="0:0:0.15"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
 
   <!-- 얇은 스크롤 막대 (라이트/다크 모두) -->

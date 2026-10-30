@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -209,6 +210,79 @@ public class Segmented : Drawn {
             x += it.W;
         }
     }
+}
+
+// ---------------------------------------------------------------- 숫자 상자 [ − | 20 | + ]
+// 버튼(누르고 있으면 반복), 직접 입력(Enter/포커스 이동 시 적용), 마우스 휠로 바꾼다.
+public class NumBox : Border {
+    public static readonly DependencyProperty ValueProperty = DependencyProperty.Register("Value", typeof(int), typeof(NumBox),
+        new FrameworkPropertyMetadata(1, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+            delegate(DependencyObject d, DependencyPropertyChangedEventArgs e) { ((NumBox)d).ShowValue(); }));
+    public int Value { get { return (int)GetValue(ValueProperty); } set { SetValue(ValueProperty, value); } }
+    public int Minimum { get; set; }
+    public int Maximum { get; set; }
+    readonly TextBox tb = new TextBox();
+
+    // 버튼 모양: 투명 바탕 + 호버 시 연한 회색
+    const string BtnXaml = "<ControlTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' TargetType='RepeatButton'>" +
+        "<Border x:Name='b' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' Background='Transparent' CornerRadius='6' Margin='2'><ContentPresenter HorizontalAlignment='Center' VerticalAlignment='Center'/></Border>" +
+        "<ControlTemplate.Triggers><Trigger Property='IsMouseOver' Value='True'><Setter TargetName='b' Property='Background' Value='{DynamicResource Btn}'/></Trigger>" +
+        "<Trigger Property='IsPressed' Value='True'><Setter TargetName='b' Property='Background' Value='{DynamicResource BtnHov}'/></Trigger></ControlTemplate.Triggers></ControlTemplate>";
+    // 가운데 입력 칸: 테두리/비활성 회색 없이 글자만 (꺼질 때는 상자 전체가 흐려진다)
+    const string TbXaml = "<ControlTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' TargetType='TextBox'>" +
+        "<ScrollViewer x:Name='PART_ContentHost' VerticalAlignment='Center' Focusable='False'/></ControlTemplate>";
+    static ControlTemplate btnTpl, tbTpl;
+
+    public NumBox() {
+        Minimum = 1; Maximum = 20;
+        Height = 30; Width = 116; CornerRadius = new CornerRadius(8); BorderThickness = new Thickness(1);
+        SetResourceReference(BackgroundProperty, "Input"); SetResourceReference(BorderBrushProperty, "InputBdr");
+        if (btnTpl == null) btnTpl = (ControlTemplate)System.Windows.Markup.XamlReader.Parse(BtnXaml);
+        if (tbTpl == null) tbTpl = (ControlTemplate)System.Windows.Markup.XamlReader.Parse(TbXaml);
+        Grid g = new Grid();
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+        g.ColumnDefinitions.Add(new ColumnDefinition());
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+        g.Children.Add(MakeBtn("M 0,5 L 10,5", -1, 0));
+        g.Children.Add(MakeBtn("M 0,5 L 10,5 M 5,0 L 5,10", 1, 2));
+        tb.Template = tbTpl; tb.Background = Brushes.Transparent; tb.Height = double.NaN; tb.Margin = new Thickness(0);
+        tb.HorizontalContentAlignment = HorizontalAlignment.Center; tb.FontWeight = FontWeights.Bold; tb.Padding = new Thickness(0);
+        Grid.SetColumn(tb, 1); g.Children.Add(tb);
+        Child = g;
+        tb.PreviewTextInput += delegate(object s, TextCompositionEventArgs e) { foreach (char c in e.Text) if (!char.IsDigit(c)) e.Handled = true; };
+        DataObject.AddPastingHandler(tb, delegate(object s, DataObjectPastingEventArgs e) { e.CancelCommand(); });
+        tb.KeyDown += delegate(object s, KeyEventArgs e) {
+            if (e.Key == Key.Enter) { Commit(); tb.SelectAll(); }
+            else if (e.Key == Key.Up) { Step(1); e.Handled = true; }
+            else if (e.Key == Key.Down) { Step(-1); e.Handled = true; }
+        };
+        tb.LostKeyboardFocus += delegate { Commit(); SetResourceReference(BorderBrushProperty, "InputBdr"); };
+        tb.GotKeyboardFocus += delegate { SetResourceReference(BorderBrushProperty, "Accent"); };
+        MouseWheel += delegate(object s, MouseWheelEventArgs e) { if (IsEnabled) { Step(e.Delta > 0 ? 1 : -1); e.Handled = true; } };
+        IsEnabledChanged += delegate { Opacity = IsEnabled ? 1 : 0.5; };
+        ShowValue();
+    }
+
+    RepeatButton MakeBtn(string path, int delta, int col) {
+        System.Windows.Shapes.Path p = new System.Windows.Shapes.Path();
+        p.Data = Geometry.Parse(path); p.StrokeThickness = 1.6; p.Width = 10; p.Height = 10;
+        p.StrokeStartLineCap = PenLineCap.Round; p.StrokeEndLineCap = PenLineCap.Round;
+        p.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, "Text");
+        RepeatButton b = new RepeatButton(); b.Template = btnTpl; b.Content = p; b.Focusable = false; b.Cursor = Cursors.Hand;
+        b.Delay = 350; b.Interval = 70;
+        b.Click += delegate { Step(delta); };
+        Grid.SetColumn(b, col);
+        return b;
+    }
+
+    void Step(int d) { Commit(); Value = Clamp(Value + d); }
+    int Clamp(int v) { return Math.Max(Minimum, Math.Min(Maximum, v)); }
+    void Commit() {
+        int v;
+        if (int.TryParse(tb.Text, out v)) Value = Clamp(v);
+        ShowValue();
+    }
+    void ShowValue() { string s = Value.ToString(); if (tb.Text != s) tb.Text = s; }
 }
 
 // ---------------------------------------------------------------- 값이 매개변수와 같으면 보이기 (마법사 단계: ConverterParameter=2)

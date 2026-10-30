@@ -65,7 +65,7 @@ public class WelcomeWindow : Window {
         Loc.SetLang(S.Lang);
         Theme.Apply(S.Theme, S.Accent, S.SysFont);
         Title = L.T("app_title");
-        lblLang.Text = (L.Lang == "en") ? "English" : "한국어";
+        foreach (string[] l in L.Languages) if (l[0] == L.Lang) lblLang.Text = l[1];
         lblView.Text = L.T("wel_view");
         start.Content = L.T("wel_start");
         Theme.TitleBar(this);
@@ -93,7 +93,7 @@ public class WelcomeWindow : Window {
     static void Place(UIElement e, double x, double y) { Canvas.SetLeft(e, x); Canvas.SetTop(e, y); }
 
     void PickLang() {
-        LastDialog = Dialogs.Choose(overlay, L.T("wel_lang"), new string[][] { new string[] { "ko", "한국어" }, new string[] { "en", "English" } }, S.Lang,
+        LastDialog = Dialogs.Choose(overlay, L.T("wel_lang"), L.Languages, S.Lang,
             delegate(string r) { if (r != null && r != S.Lang) { S.Lang = r; ApplyAll(); } });
     }
 

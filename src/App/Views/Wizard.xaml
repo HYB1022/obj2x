@@ -90,11 +90,7 @@
             </DockPanel>
             <Rectangle Style="{StaticResource Div}" Margin="20,0"/>
             <DockPanel Height="64" Margin="20,0" IsEnabled="{Binding ParEnabled}">
-              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="−" Style="{StaticResource BtnSmall}" Width="28" Command="{Binding ParDownCmd}"/>
-                <TextBlock Text="{Binding Par}" Width="40" TextAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
-                <Button Content="+" Style="{StaticResource BtnSmall}" Width="28" Command="{Binding ParUpCmd}"/>
-              </StackPanel>
+              <ui:NumBox DockPanel.Dock="Right" Value="{Binding Par}" Minimum="1" Maximum="20" VerticalAlignment="Center"/>
               <StackPanel VerticalAlignment="Center">
                 <TextBlock Text="{ui:Tr lbl_par}"/>
                 <TextBlock Text="{Binding CoresText}" Style="{StaticResource TSub}" Margin="0,3,0,0"/>

@@ -40,7 +40,8 @@ public class Loc : INotifyPropertyChanged {
     public event PropertyChangedEventHandler PropertyChanged;
     public static event Action Changed;
     public static void SetLang(string lang) {
-        L.Lang = (lang == "en") ? "en" : "ko";
+        L.Lang = "ko";
+        foreach (string[] l in L.Languages) if (l[0] == lang) L.Lang = lang;
         if (I.PropertyChanged != null) I.PropertyChanged(I, new PropertyChangedEventArgs("Item[]"));
         if (Changed != null) Changed();
     }

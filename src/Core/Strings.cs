@@ -6,6 +6,8 @@ namespace Obj2x {
 // 문구표. 한국어/영어 두 벌을 들고 있고, 현재 언어에 맞는 문구를 돌려준다.
 public static partial class L {
     public static string Lang = "ko";
+    // 지원 언어: { 코드, 그 언어로 쓴 이름 }. 언어를 늘리면 여기와 문구표(Fill...)에 함께 넣는다.
+    public static readonly string[][] Languages = new string[][] { new string[] { "ko", "한국어" }, new string[] { "en", "English" } };
     static Dictionary<string, string> ko = new Dictionary<string, string>();
     static Dictionary<string, string> en = new Dictionary<string, string>();
 

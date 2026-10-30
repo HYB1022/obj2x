@@ -22,6 +22,26 @@ public static class Shots {
         using (FileStream fs = File.Create(path)) enc.Save(fs);
     }
 
+    // 언어 드롭다운을 펼친 모습 (팝업은 따로 그린다)
+    static void SaveDrop(MainWindow f, string path) {
+        System.Windows.Controls.ComboBox cb = Find<System.Windows.Controls.ComboBox>(f.Host);
+        if (cb == null) return;
+        cb.IsDropDownOpen = true; Pump.Run(400);
+        System.Windows.Controls.Primitives.Popup pp = cb.Template.FindName("PART_Popup", cb) as System.Windows.Controls.Primitives.Popup;
+        if (pp != null && pp.Child is FrameworkElement) Save(f, (FrameworkElement)pp.Child, path);
+        cb.IsDropDownOpen = false; Pump.Run(100);
+    }
+    static T Find<T>(DependencyObject r) where T : DependencyObject {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(r); i++) {
+            DependencyObject c = VisualTreeHelper.GetChild(r, i);
+            UIElement u = c as UIElement;
+            if (u != null && !u.IsVisible) continue;
+            if (c is T) return (T)c;
+            T x = Find<T>(c); if (x != null) return x;
+        }
+        return null;
+    }
+
     static MainWindow Open(Settings s, string dir) {
         Loc.SetLang(s.Lang); Theme.Apply(s.Theme, s.Accent, s.SysFont);
         MainWindow f = new MainWindow(s, dir, false);
@@ -47,6 +67,7 @@ public static class Shots {
             for (int i = 2; i <= 4; i++) { f.VM.WizStep = i; Save(f, Path.Combine(dir, tag + "_wiz" + i + ".png")); }
             f.VM.Page = "advanced"; Save(f, Path.Combine(dir, tag + "_adv.png"));
             f.VM.Page = "settings"; Save(f, Path.Combine(dir, tag + "_set.png"));
+            SaveDrop(f, Path.Combine(dir, tag + "_set_lang.png"));
             f.VM.Page = "about"; Save(f, Path.Combine(dir, tag + "_about.png"));
             f.VM.FakeUpdate("9.9"); Save(f, Path.Combine(dir, tag + "_about_upd.png"));
             f.VM.Page = "dashboard"; f.Disclaimer(false, null); Save(f, Path.Combine(dir, tag + "_disc.png"));

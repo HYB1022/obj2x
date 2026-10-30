@@ -19,9 +19,7 @@
         </ItemsControl>
         <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
           <TextBlock Text="{ui:Tr lbl_par}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-          <Button Content="−" Style="{StaticResource BtnSmall}" Width="28" Command="{Binding ParDownCmd}"/>
-          <TextBlock Text="{Binding Par}" Width="40" TextAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
-          <Button Content="+" Style="{StaticResource BtnSmall}" Width="28" Command="{Binding ParUpCmd}"/>
+          <ui:NumBox Value="{Binding Par}" Minimum="1" Maximum="20"/>
           <TextBlock Text="{Binding CoresText}" Style="{StaticResource TSub}" VerticalAlignment="Center" Margin="16,0,0,0"/>
         </StackPanel>
       </StackPanel>

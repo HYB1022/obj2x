@@ -18,8 +18,6 @@ public partial class MainViewModel {
     public ICommand BrowseInCmd { get; private set; }
     public ICommand BrowseOutCmd { get; private set; }
     public ICommand PickRecentCmd { get; private set; }
-    public ICommand ParUpCmd { get; private set; }
-    public ICommand ParDownCmd { get; private set; }
 
     void InitWizard() {
         Recent = new ObservableCollection<RecentItem>();
@@ -30,8 +28,6 @@ public partial class MainViewModel {
         BrowseInCmd = new Cmd(delegate { string p = ui.BrowseFolder(InPath); if (p != null) InPath = p; });
         BrowseOutCmd = new Cmd(delegate { string p = ui.BrowseFolder(OutPath); if (p != null) OutPath = p; });
         PickRecentCmd = new Cmd(delegate(object p) { string s = p as string; if (s != null && Directory.Exists(s)) InPath = s; });
-        ParUpCmd = new Cmd(delegate { Par = Par + 1; });
-        ParDownCmd = new Cmd(delegate { Par = Par - 1; });
     }
 
     public int WizStep {

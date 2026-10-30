@@ -37,6 +37,14 @@ public class RecentItem {
     public string Missing { get { return L.T("recent_missing"); } }
 }
 
+// 언어 드롭다운 한 줄
+public class LangItem {
+    public string Code { get; private set; }
+    public string Name { get; private set; }
+    public LangItem(string code, string name) { Code = code; Name = name; }
+    public override string ToString() { return Name; }   // 드롭다운 닫힌 상자에 보이는 글자
+}
+
 // 고급: OmsiXConv 체크박스 한 개
 public class CoptItem : Observable {
     readonly Settings s; readonly string key;

@@ -42,7 +42,23 @@ public partial class MainViewModel {
     public string ConvPath { get { return S.Conv; } set { S.Conv = (value ?? "").Trim(); Raise("ConvPath"); RefreshStatus(); S.Save(); } }
 
     // ---- 설정: 모양
-    public string Lang { get { return S.Lang; } set { if (value == S.Lang) return; S.Lang = value; Loc.SetLang(value); S.Save(); } }
+    // 한 번만 만든다: 언어를 바꿀 때 화면이 모든 속성을 다시 읽어도 드롭다운 목록이 새로 바뀌지 않게 (바뀌면 선택이 풀려 빈 값이 들어온다)
+    List<LangItem> languages;
+    public List<LangItem> Languages {
+        get {
+            if (languages == null) { languages = new List<LangItem>(); foreach (string[] l in L.Languages) languages.Add(new LangItem(l[0], l[1])); }
+            return languages;
+        }
+    }
+    public string Lang {
+        get { return S.Lang; }
+        set {
+            if (value == null || value == S.Lang) return;
+            bool known = false; foreach (string[] l in L.Languages) if (l[0] == value) known = true;
+            if (!known) return;
+            S.Lang = value; Loc.SetLang(value); S.Save();
+        }
+    }
     public string ThemeName { get { return S.Theme; } set { if (value == S.Theme) return; S.Theme = value; ui.ApplyLook(); S.Save(); Raise("ThemeName"); } }
     public string AccentName { get { return S.Accent; } set { if (value == S.Accent) return; S.Accent = value; ui.ApplyLook(); S.Save(); Raise("AccentName"); } }
     public bool SysFont { get { return S.SysFont; } set { S.SysFont = value; ui.ApplyLook(); S.Save(); Raise("SysFont"); } }

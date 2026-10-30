@@ -20,6 +20,17 @@ public static class SelfTest {
         sb.AppendLine(line); Console.WriteLine(line);
     }
 
+    static T2 FindIn<T2>(DependencyObject r) where T2 : DependencyObject {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(r); i++) {
+            DependencyObject c = System.Windows.Media.VisualTreeHelper.GetChild(r, i);
+            UIElement u = c as UIElement;
+            if (u != null && !u.IsVisible) continue;
+            if (c is T2) return (T2)c;
+            T2 x = FindIn<T2>(c); if (x != null) return x;
+        }
+        return null;
+    }
+
     public static int Run(string here) {
         Motion.Off = true;
         string root = Path.Combine(Path.GetTempPath(), "obj2x_selftest_cs");
@@ -150,6 +161,18 @@ public static class SelfTest {
                 okb.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); Pump.Run(50);
                 T("면책: 계속 누르면 오버레이 사라지고 동의 기록", f.OverlayCount == 0 && us.Agreed && us.AgreedVer == AppInfo.Version, f.OverlayCount.ToString());
             }
+
+            // 숫자 상자 / 언어 드롭다운
+            f.VM.Page = "advanced"; Pump.Run(50);
+            NumBox nb = FindIn<NumBox>(f.Host);
+            f.VM.Par = 7; Pump.Run(20);
+            T("고급: 동시 실행 숫자 상자가 설정과 연결", nb != null && nb.Value == 7, nb == null ? "없음" : nb.Value.ToString());
+            f.VM.Page = "settings"; Pump.Run(50);
+            ComboBox lc = FindIn<ComboBox>(f.Host);
+            T("설정: 언어 드롭다운 (" + L.Languages.Length + "개 언어)", lc != null && lc.Items.Count == L.Languages.Length && (string)lc.SelectedValue == "ko", lc == null ? "없음" : lc.Items.Count.ToString());
+            if (lc != null) { lc.SelectedValue = "en"; Pump.Run(30); }
+            T("설정: 드롭다운으로 언어 전환", L.Lang == "en" && us.Lang == "en", L.Lang);
+            f.VM.Lang = "ko"; Pump.Run(20);
 
             // 업데이트 알림: 창 없이 메뉴 표시
             f.VM.FakeUpdate("9.9"); Pump.Run(20);

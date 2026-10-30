@@ -11,7 +11,8 @@
         <TextBlock Text="{ui:Tr sec_appearance}" Style="{StaticResource TBold}"/>
         <Rectangle Style="{StaticResource Div}" Margin="0,8,0,0"/>
         <DockPanel Height="56">
-          <ui:Segmented DockPanel.Dock="Right" Items="ko=!한국어;en=!English" Value="{Binding Lang}"/>
+          <ComboBox DockPanel.Dock="Right" Style="{StaticResource Drop}" Width="180" VerticalAlignment="Center"
+                    ItemsSource="{Binding Languages}" DisplayMemberPath="Name" SelectedValuePath="Code" SelectedValue="{Binding Lang}"/>
           <TextBlock Text="{ui:Tr lbl_language}" VerticalAlignment="Center"/>
         </DockPanel>
         <DockPanel Height="56">
