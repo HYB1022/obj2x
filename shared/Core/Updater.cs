@@ -75,16 +75,7 @@ public static class Updater {
                 string src = Path.Combine(here, n);
                 if (File.Exists(src)) File.Copy(src, Path.Combine(bak, n + ".v" + AppInfo.Version), true);
             }
-            // 실행 중인 exe와 불러온 dll은 덮어쓸 수 없지만 이름은 바꿀 수 있다: 바뀌는 것은 .old로 비켜 두고 새 파일을 넣는다 (다음 시작 때 지움)
-            foreach (string f in Directory.GetFiles(root)) {
-                string name = Path.GetFileName(f), cur = Path.Combine(here, name), ext = Path.GetExtension(name).ToLowerInvariant();
-                if (ext != ".exe" && ext != ".dll") continue;
-                if (!File.Exists(cur) || SameFile(f, cur)) continue;
-                string old = cur + ".old";
-                try { if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
-                File.Move(cur, old);
-            }
-            CopyTree(root, here);
+            Apply(root, here);
             return null;
         } catch (Exception e) {
             return e.Message;
@@ -93,8 +84,29 @@ public static class Updater {
         }
     }
 
+    // 풀어 놓은 새 버전(root)을 설치 폴더(here)에 넣는다
+    public static void Apply(string root, string here) {
+        // 실행 중인 exe와 불러온 dll은 덮어쓸 수 없지만 이름은 바꿀 수 있다: 바뀌는 것은 .old로 비켜 두고 새 파일을 넣는다 (다음 시작 때 지움)
+        foreach (string f in Directory.GetFiles(root)) {
+            string name = Path.GetFileName(f), cur = Path.Combine(here, name), ext = Path.GetExtension(name).ToLowerInvariant();
+            if (ext != ".exe" && ext != ".dll") continue;
+            // obj2x.exe 런처는 바로 끝나서 잠겨 있지 않다. 비켜 두면 아래 CopyTree가 '없던 파일'로 보고 건너뛴다
+            if (string.Equals(name, "obj2x.exe", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!File.Exists(cur) || SameFile(f, cur)) continue;
+            string old = cur + ".old";
+            try { if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
+            File.Move(cur, old);
+        }
+        CopyTree(root, here);
+    }
+
     // 지난 업데이트가 남긴 *.exe.old / *.dll.old 지우기 (시작할 때)
     public static void CleanupOld(string exePath) {
+        // v2.8.0의 업데이터는 obj2x.exe 런처를 .old로 비켜 둔 채 새 것을 넣지 않았다: 런처가 없으면 되살린다 (바로 가기용)
+        try {
+            string dir = Path.GetDirectoryName(exePath), l = Path.Combine(dir, "obj2x.exe");
+            if (!File.Exists(l) && File.Exists(l + ".old")) File.Move(l + ".old", l);
+        } catch (Exception) { }
         try { string old = exePath + ".old"; if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
         try {
             foreach (string old in Directory.GetFiles(Path.GetDirectoryName(exePath), "*.old")) {

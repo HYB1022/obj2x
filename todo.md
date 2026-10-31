@@ -5,6 +5,7 @@ v2.8.0부터 Windows와 맥이 같은 앱(`app/`, Avalonia 11 + .NET 8)을 쓴�
 
 ## Windows
 
+- [ ] **다음 릴리스(v2.8.1)에 꼭 들어갈 것: 업데이터 고침** (이미 main에 있음). v2.8.0의 업데이터는 다음 업데이트 때 obj2x.exe 런처를 `obj2x.exe.old`로 비켜 두고 새 것을 넣지 않는다 → 새 버전이 시작할 때 되살린다(`Updater.CleanupOld`). v2.8.0 → 새 버전 업데이트를 실제로 시험해 볼 것
 - [ ] **버스 모델·맵 타일 불러오기가 v2.7.8(WPF)보다 많이 느림** (v2.8.0 알려진 문제로 README에 적음)
   - 먼저 잴 것: `--view-shot <bus> <png>`, `--map-shot <맵> <png>`(txt에 load 시간이 남는다)로 v2.7.8과 비교. Debug 빌드가 아니라 `dist/win` 배포 exe로 잰다
   - 의심 가는 곳

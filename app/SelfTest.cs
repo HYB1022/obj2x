@@ -341,6 +341,27 @@ public static class SelfTest {
         Updater.CleanupObj2x(up);
         T("업데이트: obj2x에서 올라온 찌꺼기 정리 (obj2x.exe 런처와 BusDepot 파일은 남김)", File.Exists(Path.Combine(up, "obj2x.exe")) && File.Exists(Path.Combine(up, "BusDepot.ini")) && !File.Exists(Path.Combine(up, "obj2x.ini"))
             && !File.Exists(Path.Combine(up, "obj2x.bat")) && !File.Exists(Path.Combine(up, "obj2x_gui.ps1")) && !File.Exists(Path.Combine(up, "obj2x.py")) && !Directory.Exists(Path.Combine(up, "obj2x_backup")), "");
+        // 업데이트 설치: 바뀐 exe/dll은 .old로 비켜 두고 새 것을 넣는다. obj2x.exe 런처도 새 것으로, 설정과 예전 업데이터용 파일은 건드리지 않는다
+        {
+            string uh = Path.Combine(root, "upd_here"), ur = Path.Combine(root, "upd_new");
+            Directory.CreateDirectory(uh); Directory.CreateDirectory(ur);
+            File.WriteAllText(Path.Combine(uh, "BusDepot.exe"), "A"); File.WriteAllText(Path.Combine(uh, "obj2x.exe"), "L1");
+            File.WriteAllText(Path.Combine(uh, "libSkiaSharp.dll"), "D1"); File.WriteAllText(Path.Combine(uh, "BusDepot.ini"), "ini");
+            File.WriteAllText(Path.Combine(ur, "BusDepot.exe"), "B"); File.WriteAllText(Path.Combine(ur, "obj2x.exe"), "L2");
+            File.WriteAllText(Path.Combine(ur, "libSkiaSharp.dll"), "D1"); File.WriteAllText(Path.Combine(ur, "new.dll"), "N");
+            File.WriteAllText(Path.Combine(ur, "BusDepot.ini"), "X"); File.WriteAllText(Path.Combine(ur, "obj2x.bat"), "bat");
+            Updater.Apply(ur, uh);
+            string R(string n) => File.Exists(Path.Combine(uh, n)) ? File.ReadAllText(Path.Combine(uh, n)) : null;
+            bool applied = R("BusDepot.exe") == "B" && R("BusDepot.exe.old") == "A" && R("obj2x.exe") == "L2" && R("obj2x.exe.old") == null
+                && R("libSkiaSharp.dll.old") == null && R("new.dll") == "N" && R("BusDepot.ini") == "ini" && R("obj2x.bat") == null;
+            Updater.CleanupOld(Path.Combine(uh, "BusDepot.exe"));
+            bool cleaned = R("BusDepot.exe.old") == null;
+            // v2.8.0 업데이터가 남긴 모양: 런처가 .old로만 있으면 되살린다
+            File.Move(Path.Combine(uh, "obj2x.exe"), Path.Combine(uh, "obj2x.exe.old"));
+            Updater.CleanupOld(Path.Combine(uh, "BusDepot.exe"));
+            T("업데이트: 설치 (exe/dll 교체, obj2x.exe 런처 유지, 설정은 그대로, 다음 시작 때 .old 정리, 사라진 런처 되살리기)", applied && cleaned && R("obj2x.exe") == "L2" && R("obj2x.exe.old") == null,
+                string.Join(",", Directory.GetFiles(uh).Select(Path.GetFileName)));
+        }
 
         // 맵: global.cfg(UTF-16) + 타일, 없는 오브젝트/스플라인/AI/사람, HOF
         string om = Path.Combine(root, "OmsiRoot"), mdir = Path.Combine(om, "maps", "TestMap");
