@@ -18,9 +18,9 @@ v2.8.0부터 Windows와 맥이 같은 앱(`app/`, Avalonia 11 + .NET 8)을 쓴�
 - [ ] 3D에서 실제 마우스로 확인: 돌리기/옮기기/휠, 부품 누르기, 사람 길 점·좌석 끌기(Shift 1 m), 축 화살표, 손잡이 위 커서, `Ctrl+Z`/`Ctrl+Y`
 - [ ] 작업 표시줄 단추의 변환 진행률 (WPF의 TaskbarItemInfo가 Avalonia에는 없음 → `ITaskbarList3` COM으로 직접)
 - [ ] 화면 배율이 125%/150%인 모니터에서 글자·3D 선명도, 창 크기 배율(1.0~1.3배) 확인
-- [ ] 그래픽카드가 오래돼 OpenGL(ANGLE)이 안 될 때: 3D 칸에 안내 문구 띄우기 (지금은 비어 보이기만 함. `ModelView.RendererInfo`가 `GL:`로 시작하면 실패)
+- [*] 그래픽카드가 오래돼 OpenGL(ANGLE)이 안 될 때: 3D 칸에 안내 문구 띄우기 (지금은 비어 보이기만 함. `ModelView.RendererInfo`가 `GL:`로 시작하면 실패)
 
-## MacOS (맥북 있는 친구)
+## MacOS
 
 - [ ] 맥에서 빌드·실행: `python build.py mac` → `dist/BusDepot-mac-arm64.zip`(Apple 실리콘) / `-x64.zip`(Intel)
   - 처음 한 번: `xattr -dr com.apple.quarantine /Applications/BusDepot.app` → `codesign --force --deep --sign - /Applications/BusDepot.app`
