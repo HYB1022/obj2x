@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Bus Depot for macOS (openOMSI). The logic is ../shared/Core, the same code the Windows version uses.
+       Build/publish: build-mac.bat (Windows) -> publish/BusDepot-mac-arm64.zip, BusDepot-mac-x64.zip -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>BusDepot</AssemblyName>
+    <RootNamespace>BusDepotMac</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RuntimeIdentifiers>osx-arm64;osx-x64;win-x64</RuntimeIdentifiers>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- Core is written for C# 5 / .NET Framework 4; silence the modern-SDK style warnings it triggers -->
+    <NoWarn>$(NoWarn);CS0618;CS0168;CS0219;CS0414;CS0649;CS8981;SYSLIB0014;CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shared logic. Engine.cs/Win32.cs drive OmsiXConv windows and Updater.cs replaces the Windows exe: Windows only -->
+    <Compile Include="..\shared\Core\*.cs" Exclude="..\shared\Core\Engine.cs;..\shared\Core\Win32.cs;..\shared\Core\Updater.cs" LinkBase="Core" />
+    <!-- Built-in languages, same resource names as the Windows exe (Obj2x.Lang.<code>.json) -->
+    <EmbeddedResource Include="..\shared\lang\*.json" Exclude="..\shared\lang\_*.json" LogicalName="Obj2x.Lang.%(Filename).json" LinkBase="lang" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+  </ItemGroup>
+</Project>

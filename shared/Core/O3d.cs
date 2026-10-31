@@ -36,7 +36,7 @@ public class O3dModel {
             if (key != 0xFFFFFFFF) throw new Exception(L.T("o3d_err_encrypted"));   // 0xFFFFFFFF만 평문 (공식 차량의 0 등은 암호화)
         }
         bool longCount = m.Version >= 3, longIdx = (opt & 1) != 0;
-        Encoding enc = Encoding.Default;
+        Encoding enc = Omsi.Ansi;
         while (p < d.Length) {
             int sec = d[p++];
             if (sec == 0x17) {
@@ -174,7 +174,7 @@ public class ModelCfg {
                     if (arg(1).Length > 0 && arg(2).Length > 0) c.CtcSlots[arg(1)] = arg(2);
                     break;
                 case "[ctc]": {   // 도색(리페인트) 폴더: 차량 폴더 기준. 기본 텍스처 대신 그 안의 '<이름>_<도색>' 파일을 쓴다
-                    string d = System.IO.Path.Combine(c.VehicleDir, arg(2));
+                    string d = System.IO.Path.Combine(c.VehicleDir, Omsi.Rel(arg(2)));
                     if (Directory.Exists(d)) c.CtcDir = d;
                     break;
                 }
@@ -202,6 +202,7 @@ public class ModelCfg {
 
     // 부품 경로: 기준 폴더들 중 파일이 실제로 있는 첫 곳. 어디에도 없으면 첫 기준 폴더로 (목록에 '파일 없음'으로 보인다)
     public string Resolve(string file) {
+        file = Omsi.Rel(file);
         foreach (string b in Bases) { string p = System.IO.Path.Combine(b, file); if (File.Exists(p)) return p; }
         return System.IO.Path.Combine(Bases.Count > 0 ? Bases[0] : BaseDir, file);
     }
@@ -305,8 +306,8 @@ public class Repaint {
                 string name = a1.Length > 0 ? a1 : stem;
                 cur = list.Find(delegate(Repaint x) { return x.Name == name; });
                 if (cur == null) { cur = new Repaint(); cur.File = path; cur.Name = name; cur.Id = path + "|" + name; list.Add(cur); }
-                string f = System.IO.Path.Combine(dir, a3);
-                if (!System.IO.File.Exists(f) && i + 3 < utf.Length) { string g = System.IO.Path.Combine(dir, utf[i + 3].Trim()); if (System.IO.File.Exists(g)) f = g; }
+                string f = System.IO.Path.Combine(dir, Omsi.Rel(a3));
+                if (!System.IO.File.Exists(f) && i + 3 < utf.Length) { string g = System.IO.Path.Combine(dir, Omsi.Rel(utf[i + 3].Trim())); if (System.IO.File.Exists(g)) f = g; }
                 cur.Items[a2] = f;
             } else if (k == "[setvar]" && a1.Length > 0) {
                 if (cur != null) cur.Vars[a1] = a2; else fileVars[a1] = a2;

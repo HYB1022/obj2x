@@ -9,10 +9,19 @@ namespace Obj2x {
 
 // OMSI 2 관련: 설치 폴더 찾기, o3d/mtl에서 텍스처 이름 읽기, 텍스처 투명 여부
 public static class Omsi {
+    // OMSI 파일(cfg, sco, sli, map ...)의 글자 인코딩. Windows(.NET Framework)는 시스템 ANSI 그대로,
+    // 맥 버전은 시작할 때 코드 페이지(949 한국어, 1252 독일어 등)를 골라 넣는다
+    public static Encoding Ansi = Encoding.Default;
+    public static bool IsWindows { get { return Path.DirectorySeparatorChar == '\\'; } }
+    // OMSI 파일에 적힌 상대 경로(model\\x.o3d)를 이 운영체제의 경로로. Windows에서는 그대로
+    public static string Rel(string p) {
+        if (string.IsNullOrEmpty(p) || IsWindows) return p;
+        return p.Replace('\\', Path.DirectorySeparatorChar);
+    }
     // Steam 설치 경로(레지스트리) + libraryfolders.vdf의 라이브러리마다 steamapps\common\OMSI 2를 찾는다
     public static string FindInstall() {
         foreach (string l in SteamLibraries()) {
-            string d = Path.Combine(l, @"steamapps\common\OMSI 2");
+            string d = Path.Combine(Path.Combine(Path.Combine(l, "steamapps"), "common"), "OMSI 2");
             if (File.Exists(Path.Combine(d, "Omsi.exe"))) return d;
         }
         return "";
@@ -21,7 +30,12 @@ public static class Omsi {
     // Steam 설치 폴더(레지스트리) + libraryfolders.vdf에 적힌 라이브러리들
     public static List<string> SteamLibraries() {
         List<string> roots = new List<string>();
-        foreach (string key in new string[] { @"HKEY_CURRENT_USER\Software\Valve\Steam", @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Valve\Steam" }) {
+        // macOS: Steam은 ~/Library/Application Support/Steam (레지스트리 없음)
+        if (!IsWindows) {
+            string home = Environment.GetEnvironmentVariable("HOME") ?? "";
+            if (home.Length > 0) roots.Add(Path.Combine(Path.Combine(Path.Combine(home, "Library"), "Application Support"), "Steam"));
+        }
+        if (IsWindows) foreach (string key in new string[] { @"HKEY_CURRENT_USER\Software\Valve\Steam", @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Valve\Steam" }) {
             try {
                 string p = Microsoft.Win32.Registry.GetValue(key, key.StartsWith("HKEY_CURRENT") ? "SteamPath" : "InstallPath", null) as string;
                 if (!string.IsNullOrEmpty(p)) roots.Add(p.Replace('/', '\\'));
@@ -30,10 +44,10 @@ public static class Omsi {
         List<string> libs = new List<string>(roots);
         foreach (string r in roots) {
             try {
-                string vdf = Path.Combine(r, @"steamapps\libraryfolders.vdf");
+                string vdf = Path.Combine(Path.Combine(r, "steamapps"), "libraryfolders.vdf");
                 if (!File.Exists(vdf)) continue;
                 foreach (Match m in Regex.Matches(File.ReadAllText(vdf), "\"path\"\\s*\"([^\"]+)\""))
-                    libs.Add(m.Groups[1].Value.Replace(@"\\", @"\"));
+                    libs.Add(IsWindows ? m.Groups[1].Value.Replace(@"\\", @"\") : m.Groups[1].Value);
             } catch (Exception) { }
         }
         return libs;
@@ -49,7 +63,7 @@ public static class Omsi {
             string bf = System.IO.Path.Combine(pf, "Blender Foundation");
             try { foreach (string d in Directory.GetDirectories(bf)) cand.Add(System.IO.Path.Combine(d, "blender.exe")); } catch (Exception) { }
         }
-        foreach (string l in SteamLibraries()) cand.Add(System.IO.Path.Combine(l, @"steamapps\common\Blender\blender.exe"));
+        foreach (string l in SteamLibraries()) cand.Add(System.IO.Path.Combine(System.IO.Path.Combine(System.IO.Path.Combine(System.IO.Path.Combine(l, "steamapps"), "common"), "Blender"), "blender.exe"));
         if (!string.IsNullOrEmpty(extra)) cand.Add(extra);
         List<BlenderExe> r = new List<BlenderExe>();
         foreach (string c in cand) {
@@ -83,7 +97,7 @@ public static class Omsi {
     }
 
     // OMSI처럼 ANSI(시스템 코드 페이지)로 읽는다. 맨 앞의 UTF-8 BOM은 버린다 (File.ReadAllLines는 BOM을 보면 UTF-8로 바꿔 읽는다)
-    public static string[] AnsiLines(string path) { return Lines(path, Encoding.Default); }
+    public static string[] AnsiLines(string path) { return Lines(path, Ansi); }
     public static string[] Utf8Lines(string path) { return Lines(path, new UTF8Encoding(false)); }
     static string[] Lines(string path, Encoding enc) {
         byte[] b = File.ReadAllBytes(path);
@@ -114,7 +128,7 @@ public static class Omsi {
     public static List<string> MtlTextures(string mtlPath) {
         List<string> r = new List<string>();
         try {
-            foreach (string ln0 in File.ReadAllLines(mtlPath, Encoding.Default)) {
+            foreach (string ln0 in File.ReadAllLines(mtlPath, Ansi)) {
                 string ln = ln0.Trim();
                 if (!ln.StartsWith("map_Kd ") && !ln.StartsWith("map_d ")) continue;
                 string t = ln.Substring(ln.IndexOf(' ') + 1).Trim();
@@ -128,7 +142,7 @@ public static class Omsi {
 
     static string MtlOf(string objPath) {
         try {
-            foreach (string ln in File.ReadLines(objPath, Encoding.Default)) {
+            foreach (string ln in File.ReadLines(objPath, Ansi)) {
                 if (ln.StartsWith("mtllib ")) { string p = Path.Combine(Path.GetDirectoryName(objPath), ln.Substring(7).Trim()); if (File.Exists(p)) return p; break; }
                 if (ln.StartsWith("v ")) break;   // mtllib은 맨 앞에 있다. 꼭짓점이 나오면 그만 읽는다
             }
@@ -139,12 +153,13 @@ public static class Omsi {
 
     // 텍스처 파일 찾기: 적힌 경로, 기준 폴더, 그 안/옆의 texture 폴더
     public static string FindTexture(string name, params string[] dirs) {
+        name = Rel(name);
         try { if (Path.IsPathRooted(name) && File.Exists(name)) return name; } catch (Exception) { return null; }
-        string bn = Path.GetFileName(name.Replace('/', '\\'));
+        string bn = Path.GetFileName(IsWindows ? name.Replace('/', '\\') : name);
         foreach (string d in dirs) {
             if (string.IsNullOrEmpty(d)) continue;
             foreach (string c in new string[] { Path.Combine(d, name), Path.Combine(d, bn), Path.Combine(d, "texture", bn), Path.Combine(d, "textures", bn),
-                                                Path.Combine(d, @"..\texture", bn) }) {
+                                                Path.Combine(Path.Combine(d, ".."), "texture", bn) }) {
                 try { if (File.Exists(c)) return Path.GetFullPath(c); } catch (Exception) { }
             }
         }
@@ -284,7 +299,7 @@ public static class ScoMaker {
                 sb.Append("[matl_alpha]\r\n").Append(o.Alpha).Append("\r\n\r\n");
             }
         }
-        File.WriteAllText(path, sb.ToString(), Encoding.Default);
+        File.WriteAllText(path, sb.ToString(), Omsi.Ansi);
         return path;
     }
 }
@@ -421,7 +436,7 @@ public class SplineSpec {
         string road = TexFile(RoadTex, tdir, "busdepot_asphalt.bmp", false, copied);
         string walk = (WalkL > 0 || WalkR > 0) ? TexFile(WalkTex, tdir, "busdepot_pavement.bmp", true, copied) : "";
         string path = Path.Combine(splineDir, Omsi.SafeName(name) + ".sli");
-        File.WriteAllText(path, Text(road, walk), Encoding.Default);
+        File.WriteAllText(path, Text(road, walk), Omsi.Ansi);
         return path;
     }
 
@@ -485,7 +500,7 @@ public class SliFile {
     // 텍스처 파일: sli 옆 texture 폴더, sli 폴더, Splines 아래 texture (OMSI처럼)
     public string FindTex(int index) {
         if (index < 0 || index >= Textures.Count || Textures[index].Length == 0) return null;
-        string n = Textures[index], dir = System.IO.Path.GetDirectoryName(Path);
+        string n = Omsi.Rel(Textures[index]), dir = System.IO.Path.GetDirectoryName(Path);
         foreach (string c in new string[] { System.IO.Path.Combine(System.IO.Path.Combine(dir, "texture"), n), System.IO.Path.Combine(dir, n) })
             try { if (File.Exists(c)) return c; } catch (Exception) { }
         return null;

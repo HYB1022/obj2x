@@ -8,27 +8,6 @@ using System.Threading;
 
 namespace Obj2x {
 
-public class ObjItem {
-    public string Path, Rel, Name;
-    public DateTime Mtime;
-    public long Length;
-}
-
-public class ResRow {
-    public string Name, V, T, M, Sec, Status;
-    public int Kind; // 0 ok, 1 warn, 2 fail
-}
-
-public class RunOptions {
-    public string Mode = "std";      // std | fast | x
-    public string In = "", Out = "", Blender = "", Conv = "", Py = "";
-    public int Par = 4;
-    public bool Sub, Inc, DelX;
-    public Dictionary<string, int> Copt = new Dictionary<string, int>();
-    public string ExOpt = "";
-    public bool Verbose;             // Blender 출력을 거르지 않고 모두 로그에 (개발자 옵션)
-}
-
 // OmsiXConv 한 개를 자동으로 조작하는 작업 상태
 class Job {
     public string X, Name, O3d;
@@ -128,36 +107,9 @@ public class Engine {
         }
     }
 
-    // ------------------------------------------------------------ obj 목록
-    public static List<ObjItem> FindObjs(string dir, bool sub) {
-        List<ObjItem> r = new List<ObjItem>();
-        string[] files;
-        try { files = Directory.GetFiles(dir, "*.obj", sub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly); }
-        catch (Exception) { return r; }
-        Array.Sort(files, StringComparer.OrdinalIgnoreCase);
-        string root = dir.TrimEnd('\\', '/');
-        foreach (string f in files) {
-            if (!f.EndsWith(".obj", StringComparison.OrdinalIgnoreCase)) continue;
-            FileInfo fi = new FileInfo(f);
-            ObjItem it = new ObjItem();
-            it.Path = f; it.Length = fi.Length; it.Mtime = fi.LastWriteTime;
-            string rel = f.Substring(root.Length).TrimStart('\\', '/');
-            it.Rel = rel.Substring(0, rel.Length - 4);
-            it.Name = System.IO.Path.GetFileNameWithoutExtension(f);
-            r.Add(it);
-        }
-        return r;
-    }
-
-    // 변경된 것만 (결과 파일보다 obj가 새로운 것)
-    public static List<ObjItem> FilterChanged(List<ObjItem> objs, string outDir, string ext) {
-        List<ObjItem> sel = new List<ObjItem>();
-        foreach (ObjItem o in objs) {
-            string rf = System.IO.Path.Combine(outDir, o.Rel + ext);
-            if (!File.Exists(rf) || o.Mtime > File.GetLastWriteTime(rf)) sel.Add(o);
-        }
-        return sel;
-    }
+    // ------------------------------------------------------------ obj 목록 (ObjList로 옮김, 예전 이름도 남겨 둔다)
+    public static List<ObjItem> FindObjs(string dir, bool sub) { return ObjList.Find(dir, sub); }
+    public static List<ObjItem> FilterChanged(List<ObjItem> objs, string outDir, string ext) { return ObjList.FilterChanged(objs, outDir, ext); }
 
     // ------------------------------------------------------------ FastO3D
     void RunFast(RunOptions o, List<ObjItem> objs) {

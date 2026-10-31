@@ -29,6 +29,9 @@ public class MapInfo {
     static int I(string s) { int v; int.TryParse((s ?? "").Trim(), out v); return v; }
 
     // root: OMSI 폴더 (비우면 maps\<이름>의 두 단계 위)
+    // OMSI 폴더 말고도 파일을 찾아볼 곳 (맥 버전: openOMSI의 Mods 폴더와 그 안의 모드 폴더들)
+    public static List<string> ExtraRoots = new List<string>();
+
     public static MapInfo Load(string dir, string root, Action<int, int> progress) {
         MapInfo m = new MapInfo(); m.Dir = dir;
         string guess = Path.GetDirectoryName(Path.GetDirectoryName(dir.TrimEnd('\\')) ?? "") ?? "";
@@ -49,7 +52,7 @@ public class MapInfo {
             else if (k == "[standarddepot]") m.Depot = a(1);
             else if (k == "[map]") {
                 MapTile t = new MapTile(); t.X = I(a(1)); t.Y = I(a(2)); t.File = a(3);
-                t.Exists = File.Exists(Path.Combine(dir, t.File)); if (!t.Exists) m.MissingTiles++;
+                t.Exists = File.Exists(Path.Combine(dir, Omsi.Rel(t.File))); if (!t.Exists) m.MissingTiles++;
                 m.Tiles.Add(t);
             }
         }
@@ -60,7 +63,8 @@ public class MapInfo {
         Dictionary<string, int> objUse = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase), splUse = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         Func<string, bool> has = delegate(string rel) {
             bool e; if (exists.TryGetValue(rel, out e)) return e;
-            try { e = File.Exists(Path.Combine(m.Root, rel)); } catch (Exception) { e = false; }
+            try { e = File.Exists(Path.Combine(m.Root, Omsi.Rel(rel))); } catch (Exception) { e = false; }
+            if (!e) foreach (string r in ExtraRoots) { try { if (File.Exists(Path.Combine(r, Omsi.Rel(rel)))) { e = true; break; } } catch (Exception) { } }
             exists[rel] = e; return e;
         };
         for (int ti = 0; ti < m.Tiles.Count; ti++) {
@@ -68,7 +72,7 @@ public class MapInfo {
             if (progress != null && ti % 4 == 0) progress(ti, m.Tiles.Count);
             if (!t.Exists) continue;
             string[] T;
-            try { T = Omsi.AnsiLines(Path.Combine(dir, t.File)); } catch (Exception) { continue; }
+            try { T = Omsi.AnsiLines(Path.Combine(dir, Omsi.Rel(t.File))); } catch (Exception) { continue; }
             double ox = t.X * 300.0, oy = t.Y * 300.0;
             for (int i = 0; i < T.Length; i++) {
                 string k = T[i].Trim().ToLowerInvariant();

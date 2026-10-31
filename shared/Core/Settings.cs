@@ -37,7 +37,10 @@ public class Settings {
     public int ObjAlpha = 1;
     public string Spl = "";          // 스플라인 값 (SplSpec이 읽고 쓴다)
     public string SplName = "busdepot_road", SplFolder = "BusDepot";
-    public string BlendExe = "";     // .blend 저장에 쓸 Blender (비우면 설치된 것 중 가장 새 버전)
+    public string BlendExe = "";
+    // 맥 버전: openOMSI의 Mods 폴더(만든 오브젝트/스플라인을 넣고, 없는 파일 검사에도 쓴다), OMSI 파일 인코딩 코드 페이지(0 = 시스템)
+    public string ModsDir = "";
+    public int AnsiCp = 0;     // .blend 저장에 쓸 Blender (비우면 설치된 것 중 가장 새 버전)
     public static readonly string[] CoptKeys = new string[] { "zup", "sep", "det", "spec", "mat", "vert", "nrm", "sub" };
 
     public const string DiscMinVer = "2.0";
@@ -104,6 +107,8 @@ public class Settings {
         if (kv.TryGetValue("objalpha", out v)) { int n; if (int.TryParse(v, out n) && n >= 0 && n <= 2) s.ObjAlpha = n; }
         if (kv.TryGetValue("spl", out v)) s.Spl = v;
         if (kv.TryGetValue("blendexe", out v)) s.BlendExe = v;
+        if (kv.TryGetValue("modsdir", out v)) s.ModsDir = v;
+        if (kv.TryGetValue("ansicp", out v)) { int cp; if (int.TryParse(v, out cp)) s.AnsiCp = cp; }
         if (kv.TryGetValue("splname", out v) && v.Length > 0) s.SplName = v;
         if (kv.TryGetValue("splfolder", out v) && v.Length > 0) s.SplFolder = v;
         if (kv.TryGetValue("copt", out v)) {
@@ -166,6 +171,8 @@ public class Settings {
             o.Add("objalpha=" + ObjAlpha);
             o.Add("spl=" + Spl);
             o.Add("blendexe=" + BlendExe);
+            o.Add("modsdir=" + ModsDir);
+            o.Add("ansicp=" + AnsiCp);
             o.Add("splname=" + SplName);
             o.Add("splfolder=" + SplFolder);
             List<string> ex = new List<string>();

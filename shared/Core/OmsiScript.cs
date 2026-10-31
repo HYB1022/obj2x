@@ -33,13 +33,13 @@ public class OmsiScript {
             bool match = false;
             for (int i = 0; i + 1 < lines.Length; i++) {
                 if (lines[i].Trim().ToLowerInvariant() != "[model]") continue;
-                try { match = string.Equals(Path.GetFullPath(Path.Combine(vehicleDir, lines[i + 1].Trim())), want, StringComparison.OrdinalIgnoreCase); } catch (Exception) { }
+                try { match = string.Equals(Path.GetFullPath(Path.Combine(vehicleDir, Omsi.Rel(lines[i + 1].Trim()))), want, StringComparison.OrdinalIgnoreCase); } catch (Exception) { }
                 break;
             }
             if (!match) continue;
             OmsiScript s = new OmsiScript();
-            foreach (string f in List(lines, "[script]")) s.LoadOsc(Path.Combine(vehicleDir, f));
-            foreach (string f in List(lines, "[constfile]")) s.LoadConsts(Path.Combine(vehicleDir, f));
+            foreach (string f in List(lines, "[script]")) s.LoadOsc(Path.Combine(vehicleDir, Omsi.Rel(f)));
+            foreach (string f in List(lines, "[constfile]")) s.LoadConsts(Path.Combine(vehicleDir, Omsi.Rel(f)));
             return s;
         }
         return null;

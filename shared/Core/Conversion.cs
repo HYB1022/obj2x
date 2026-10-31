@@ -51,9 +51,9 @@ public static class Conversion {
             if (o.Mode == "std" && !ConvOk(s)) { error = "msg_err_conv"; return null; }
         }
         try { if (!Directory.Exists(o.Out)) Directory.CreateDirectory(o.Out); } catch (Exception) { }
-        List<ObjItem> objs = Engine.FindObjs(o.In, o.Sub);
+        List<ObjItem> objs = ObjList.Find(o.In, o.Sub);
         if (o.Inc) {
-            List<ObjItem> sel = Engine.FilterChanged(objs, o.Out, o.Mode == "x" ? ".x" : ".o3d");
+            List<ObjItem> sel = ObjList.FilterChanged(objs, o.Out, o.Mode == "x" ? ".x" : ".o3d");
             note = L.T("m_changed", sel.Count, objs.Count);
             objs = sel;
         }

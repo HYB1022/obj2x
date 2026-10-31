@@ -44,7 +44,7 @@ public class CfgDoc {
     public void Save() {
         string bak = Path + ".bak";
         if (File.Exists(Path) && !File.Exists(bak)) File.Copy(Path, bak);
-        File.WriteAllText(Path, string.Join("\r\n", Lines.ToArray()), Encoding.Default);
+        File.WriteAllText(Path, string.Join("\r\n", Lines.ToArray()), Omsi.Ansi);
         Dirty = false;
     }
 }
@@ -94,9 +94,9 @@ public class BusFile {
                 string a2 = i + 2 < L.Length ? L[i + 2].Trim() : "";
                 b.Name = (a + " " + a2).Trim();
             }
-            else if (k == "[model]" && b.Model.Length == 0) b.Model = System.IO.Path.Combine(b.Dir, a);
-            else if (k == "[paths]" && b.Paths.Length == 0) b.Paths = System.IO.Path.Combine(b.Dir, a);
-            else if (k == "[passengercabin]" && b.Cabin.Length == 0) b.Cabin = System.IO.Path.Combine(b.Dir, a);
+            else if (k == "[model]" && b.Model.Length == 0) b.Model = System.IO.Path.Combine(b.Dir, Omsi.Rel(a));
+            else if (k == "[paths]" && b.Paths.Length == 0) b.Paths = System.IO.Path.Combine(b.Dir, Omsi.Rel(a));
+            else if (k == "[passengercabin]" && b.Cabin.Length == 0) b.Cabin = System.IO.Path.Combine(b.Dir, Omsi.Rel(a));
         }
         if (b.Name.Length == 0) b.Name = System.IO.Path.GetFileNameWithoutExtension(path);
         return b;

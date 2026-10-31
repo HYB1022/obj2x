@@ -27,6 +27,17 @@ OMSI 2용 변환·제작 도구 (v2.7.2까지 이름은 obj2x). Blender에서 �
 - 소개 영상: `python windows/tools/video/make_video.py --exe <BusDepot.exe> --out <폴더> [--model <cfg>] [--split]`. 대본은 `windows/tools/video/narration.json`(장면 id = `--video-frames` 장면 이름). 음성은 edge-tts(Microsoft 온라인 음성), 언어마다 오디오/자막 트랙이 따로 들어간 MP4 하나를 만든다. 화면은 영어 UI, 작업 폴더는 사용자 경로가 안 보이게 드라이브 바로 아래 `obj2x_demo`.
 - README 맨 위 움직이는 그림: `BusDepot.exe --welcome-frames <폴더> [light|dark] [언어]`(2배 해상도)로 환영 화면을 한 바퀴(13초) 초당 25장 찍고, `windows/tools/mkwebp.py`(Pillow)로 처음과 끝을 섞어 이음매 없이 반복되는 WebP(`docs/images/welcome-light.webp`/`welcome-dark.webp`)로 만든다.
 
+## 맥 버전 (`mac/`)
+
+- Avalonia 11 + .NET 8, 화면은 XAML 없이 C# 코드로 만든다(`mac/App/*.cs`). 로직은 `shared/Core`를 그대로 컴파일한다. `Engine.cs`/`Win32.cs`(OmsiXConv 창 조작)와 `Updater.cs`(Windows exe 교체)는 뺀다 (`BusDepot.Mac.csproj`). 그래서 Core는 계속 C# 5 문법으로 쓰고, 맥에서 안 되는 것(레지스트리 등)은 `Omsi.IsWindows`로 막는다.
+- 지원 범위: 빠른 변환(FastO3D), 버스(부품 [newanim] 블록·paths.cfg·passengercabin.cfg를 숫자로 편집, 3D 없음), 맵(지도·없는 파일·AI·HOF), 오브젝트/스플라인 만들기, 설정, 정보. 3D 보기, Blender/OmsiXConv 변환, 자동 업데이트는 없다.
+- openOMSI 위주: OMSI 2 폴더(Steam `~/Library/Application Support/Steam` 또는 `~/.openomsi` 설정 속 경로, 설정에서 고를 수 있음)와 openOMSI의 Mods 폴더(`openOMSI.app` 옆의 `Mods`, `MacEnv.FindMods`). openOMSI는 OMSI 2 폴더에 쓰지 않으므로 만든 오브젝트/스플라인은 `<Mods>/Bus Depot/Sceneryobjects|Splines/...`에 넣는다. 맵의 없는 파일 검사는 `MapInfo.ExtraRoots`(Mods와 그 안의 모드 폴더들)도 본다.
+- OMSI 파일 속 `\` 경로는 `Omsi.Rel`로 바꾼다(Windows에서는 그대로). 글자 인코딩은 `Omsi.Ansi`(Windows는 시스템 ANSI, 맥은 설정의 코드 페이지 — 기본은 언어에 맞춰 949/1252 등).
+- 설정 파일: `~/Library/Application Support/BusDepot/BusDepot.ini` (Windows에서 시험할 때는 `%APPDATA%\BusDepot`). `Settings.ModsDir`, `Settings.AnsiCp`는 맥 전용.
+- 빌드: .NET 8 SDK(이 PC는 `%LOCALAPPDATA%\Microsoft\dotnet`에 설치)로 `macuild-mac.bat` → `mac\publish\BusDepot-mac-arm64.zip`, `BusDepot-mac-x64.zip`. `mac/make_app.py`가 `BusDepot.app`(Info.plist, 실행 권한 755, fonts, BusDepot.py, 처음 실행 안내)으로 묶는다. 서명이 없어서 맥에서 처음 한 번 `xattr -dr com.apple.quarantine`와 `codesign --force --deep --sign -`가 필요하다(Apple 실리콘은 서명 없이는 실행되지 않음).
+- 확인: `dotnet build mac/BusDepot.Mac.csproj -r win-x64`로 Windows에서도 돌려 볼 수 있다. `BusDepot.exe --selftest <파일>`(로직/경로/인코딩/Mods), `--shots <폴더> [버스] [맵]`(페이지별 PNG). 백슬래시 경로 변환은 맥에서만 실제로 일어나므로 맥에서도 `--selftest`를 돌려 본다.
+- 맥 전용 문구는 `mac_*` 키로 `shared/lang/*.json` 모두에 넣는다.
+
 ## 제약
 
 - 라이선스: GPL-3.0-or-later (v2.2까지는 MIT). 외부 코드를 가져올 때는 GPL과 호환되는 라이선스인지 확인한다.
