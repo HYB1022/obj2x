@@ -1,0 +1,58 @@
+<Grid xmlns="https://github.com/avaloniaui"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="clr-namespace:Obj2x.UI"
+      Background="{DynamicResource Bg}" TextElement.FontFamily="{DynamicResource UiFont}" TextElement.FontSize="12"
+      TextElement.Foreground="{DynamicResource Text}">
+  <!-- 메인 창 껍데기 (샤오미 태블릿 설정 앱처럼 화면을 둘로 나눈다):
+       왼쪽 = 큰 제목 + 앱 카드(버전/상태) + 둥근 카드로 묶은 메뉴, 오른쪽 = 페이지. 맨 위에 대화 상자 층 -->
+  <Grid x:Name="Root" ColumnDefinitions="272,*">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel x:Name="NavList" Margin="16,18,8,16">
+        <!-- 맨 위: 로고 + 이름, 그 아래 버전과 상태 -->
+        <DockPanel Margin="8,0,0,4">
+          <ui:LogoArt Width="50" Height="50" DockPanel.Dock="Left" Margin="0,0,12,0" VerticalAlignment="Center"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="Bus Depot" FontSize="26" FontWeight="Bold"/>
+            <TextBlock Text="{Binding VersionText}" Theme="{StaticResource TSub}" Margin="1,2,0,0"/>
+          </StackPanel>
+        </DockPanel>
+        <DockPanel Margin="12,6,0,0">
+          <ui:StatusDot State="{Binding StatusState}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+          <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource Muted}" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
+
+        <!-- 메뉴 묶음: 선택된 줄은 카드 안에서 강조색으로 옅게 칠해진다 -->
+        <Border Theme="{StaticResource DevCard}" Padding="6" Margin="0,14,0,0">
+          <StackPanel>
+            <ui:NavItem x:Name="Nav_dashboard" Page="dashboard" Key="nav_dashboard" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+            <ui:NavItem x:Name="Nav_wizard" Page="wizard" Key="nav_wizard" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+          </StackPanel>
+        </Border>
+        <Border Theme="{StaticResource DevCard}" Padding="6" Margin="0,14,0,0">
+          <StackPanel>
+            <ui:NavItem x:Name="Nav_object" Page="object" Key="nav_object" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+            <ui:NavItem x:Name="Nav_spline" Page="spline" Key="nav_spline" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+            <ui:NavItem x:Name="Nav_bus" Page="bus" Key="nav_bus" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+            <ui:NavItem x:Name="Nav_map" Page="map" Key="nav_map" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+          </StackPanel>
+        </Border>
+        <Border Theme="{StaticResource DevCard}" Padding="6" Margin="0,14,0,0">
+          <StackPanel>
+            <ui:NavItem x:Name="Nav_advanced" Page="advanced" Key="nav_advanced" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+            <ui:NavItem x:Name="Nav_settings" Page="settings" Key="nav_settings" Current="{Binding Page}" Command="{Binding NavCmd}"/>
+          </StackPanel>
+        </Border>
+        <Border Theme="{StaticResource DevCard}" Padding="6" Margin="0,14,0,0">
+          <StackPanel>
+            <ui:NavItem x:Name="Nav_dev" Page="dev" Key="nav_dev" Current="{Binding Page}" Command="{Binding NavCmd}" IsVisible="{Binding DevMode}"/>
+            <ui:NavItem x:Name="Nav_about" Page="about" Key="nav_info" Current="{Binding Page}" Command="{Binding NavCmd}" Badge="{Binding UpdNavBadge}"/>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- 페이지들 (MainWindow가 넣는다) -->
+    <Panel x:Name="PageHost" Grid.Column="1" ClipToBounds="True"/>
+  </Grid>
+  <Panel x:Name="Overlay"/>
+</Grid>

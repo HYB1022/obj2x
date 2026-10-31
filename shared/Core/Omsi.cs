@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -18,6 +18,26 @@ public static class Omsi {
         if (string.IsNullOrEmpty(p) || IsWindows) return p;
         return p.Replace('\\', Path.DirectorySeparatorChar);
     }
+    // 파일/폴더/주소를 운영체제의 기본 프로그램으로 연다 (Windows: 탐색기·연결 프로그램, 맥: open)
+    public static void Open(string path) {
+        System.Diagnostics.ProcessStartInfo psi;
+        if (IsWindows) { psi = new System.Diagnostics.ProcessStartInfo(path); psi.UseShellExecute = true; }
+        else psi = new System.Diagnostics.ProcessStartInfo("open", Quote(path));
+        System.Diagnostics.Process.Start(psi);
+    }
+    // 글자 파일을 편집기로 (Windows: 메모장, 맥: 텍스트 편집기)
+    public static void OpenText(string path) {
+        if (IsWindows) System.Diagnostics.Process.Start("notepad.exe", Quote(path));
+        else System.Diagnostics.Process.Start("open", "-t " + Quote(path));
+    }
+    static string Quote(string p) { return "\"" + (p ?? "").Replace("\"", "\\\"") + "\""; }
+    // 맥에서 Blender.app을 고르면 그 안의 실행 파일로
+    public static string BlenderPath(string p) {
+        if (!string.IsNullOrEmpty(p) && p.TrimEnd('/').EndsWith(".app", StringComparison.OrdinalIgnoreCase) && Directory.Exists(p))
+            return Path.Combine(Path.Combine(Path.Combine(p.TrimEnd('/'), "Contents"), "MacOS"), "Blender");
+        return p;
+    }
+
     // Steam 설치 경로(레지스트리) + libraryfolders.vdf의 라이브러리마다 steamapps\common\OMSI 2를 찾는다
     public static string FindInstall() {
         foreach (string l in SteamLibraries()) {
@@ -64,6 +84,14 @@ public static class Omsi {
             try { foreach (string d in Directory.GetDirectories(bf)) cand.Add(System.IO.Path.Combine(d, "blender.exe")); } catch (Exception) { }
         }
         foreach (string l in SteamLibraries()) cand.Add(System.IO.Path.Combine(System.IO.Path.Combine(System.IO.Path.Combine(System.IO.Path.Combine(l, "steamapps"), "common"), "Blender"), "blender.exe"));
+        // macOS: 응용 프로그램 폴더의 Blender*.app, Steam의 Blender.app
+        if (!IsWindows) {
+            string home = Environment.GetEnvironmentVariable("HOME") ?? "";
+            foreach (string root in new string[] { "/Applications", System.IO.Path.Combine(home, "Applications") }) {
+                try { foreach (string a in Directory.GetDirectories(root, "Blender*.app")) cand.Add(BlenderPath(a)); } catch (Exception) { }
+            }
+            foreach (string l in SteamLibraries()) cand.Add(BlenderPath(System.IO.Path.Combine(System.IO.Path.Combine(System.IO.Path.Combine(System.IO.Path.Combine(l, "steamapps"), "common"), "Blender"), "Blender.app")));
+        }
         if (!string.IsNullOrEmpty(extra)) cand.Add(extra);
         List<BlenderExe> r = new List<BlenderExe>();
         foreach (string c in cand) {

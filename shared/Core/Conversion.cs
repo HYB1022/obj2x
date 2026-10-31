@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -12,16 +12,21 @@ public static class Conversion {
 
     static bool ExeOk(string path, string name) {
         string p = Clean(path);
-        return p.Length > 0 && File.Exists(p) && string.Equals(Path.GetFileName(p), name, StringComparison.OrdinalIgnoreCase);
+        if (p.Length == 0 || !File.Exists(p)) return false;
+        string fn = Path.GetFileName(p);
+        if (string.Equals(fn, name, StringComparison.OrdinalIgnoreCase)) return true;
+        // 맥: 실행 파일에 .exe가 없다 (Blender.app/Contents/MacOS/Blender)
+        return !Omsi.IsWindows && string.Equals(fn, Path.GetFileNameWithoutExtension(name), StringComparison.OrdinalIgnoreCase);
     }
     public static bool BlenderOk(Settings s) { return ExeOk(s.Blender, "blender.exe"); }
-    public static bool ConvOk(Settings s) { return ExeOk(s.Conv, "OmsiXConv.exe"); }
+    // OmsiXConv는 Windows 프로그램이고 창을 직접 조작하므로 Windows에서만
+    public static bool ConvOk(Settings s) { return Omsi.IsWindows && ExeOk(s.Conv, "OmsiXConv.exe"); }
 
     // 없는 도구 목록 ("Blender (blender.exe)" 등). 비어 있으면 모두 있음
     public static List<string> MissingTools(Settings s) {
         List<string> m = new List<string>();
         if (!BlenderOk(s)) m.Add("Blender (blender.exe)");
-        if (!ConvOk(s)) m.Add("OmsiXConv (OmsiXConv.exe)");
+        if (Omsi.IsWindows && !ConvOk(s)) m.Add("OmsiXConv (OmsiXConv.exe)");
         return m;
     }
 

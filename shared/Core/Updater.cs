@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -42,8 +42,14 @@ public static class Updater {
         if (u.Version.Length == 0) return null;
         u.PageUrl = JsonStr(json, "html_url");
         u.ZipUrl = JsonStr(json, "zipball_url");
-        Match m = Regex.Match(json, "\"browser_download_url\"\\s*:\\s*\"([^\"]+\\.zip)\"");
-        if (m.Success) u.ZipUrl = m.Groups[1].Value;
+        // 릴리스에는 Windows용(BusDepot.zip)과 맥용(BusDepot-mac-*.zip)이 함께 있다. Windows용을 고른다
+        string first = null;
+        foreach (Match m in Regex.Matches(json, "\"browser_download_url\"\\s*:\\s*\"([^\"]+\\.zip)\"")) {
+            string url = m.Groups[1].Value;
+            if (url.EndsWith("/" + AppInfo.Exe + ".zip", StringComparison.OrdinalIgnoreCase)) { first = url; break; }
+            if (first == null && url.IndexOf("-mac", StringComparison.OrdinalIgnoreCase) < 0) first = url;
+        }
+        if (first != null) u.ZipUrl = first;
         return u;
     }
 
@@ -69,9 +75,15 @@ public static class Updater {
                 string src = Path.Combine(here, n);
                 if (File.Exists(src)) File.Copy(src, Path.Combine(bak, n + ".v" + AppInfo.Version), true);
             }
-            string old = exePath + ".old";
-            try { if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
-            File.Move(exePath, old);
+            // 실행 중인 exe와 불러온 dll은 덮어쓸 수 없지만 이름은 바꿀 수 있다: 바뀌는 것은 .old로 비켜 두고 새 파일을 넣는다 (다음 시작 때 지움)
+            foreach (string f in Directory.GetFiles(root)) {
+                string name = Path.GetFileName(f), cur = Path.Combine(here, name), ext = Path.GetExtension(name).ToLowerInvariant();
+                if (ext != ".exe" && ext != ".dll") continue;
+                if (!File.Exists(cur) || SameFile(f, cur)) continue;
+                string old = cur + ".old";
+                try { if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
+                File.Move(cur, old);
+            }
             CopyTree(root, here);
             return null;
         } catch (Exception e) {
@@ -81,9 +93,15 @@ public static class Updater {
         }
     }
 
-    // 지난 업데이트가 남긴 exe.old 지우기 (시작할 때)
+    // 지난 업데이트가 남긴 *.exe.old / *.dll.old 지우기 (시작할 때)
     public static void CleanupOld(string exePath) {
         try { string old = exePath + ".old"; if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
+        try {
+            foreach (string old in Directory.GetFiles(Path.GetDirectoryName(exePath), "*.old")) {
+                string e = Path.GetExtension(Path.GetFileNameWithoutExtension(old)).ToLowerInvariant();
+                if (e == ".exe" || e == ".dll") { try { File.Delete(old); } catch (Exception) { } }
+            }
+        } catch (Exception) { }
         // v2.7.2 이하에서 올라오면 그 업데이터가 남긴 obj2x.exe.old (예전 본체)도 지운다
         try { string old = Path.Combine(Path.GetDirectoryName(exePath), "obj2x.exe.old"); if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
     }
@@ -136,6 +154,6 @@ public static class Updater {
         } catch (Exception) { return false; }
     }
 
-    public static void OpenUrl(string url) { try { Process.Start(url); } catch (Exception) { } }
+    public static void OpenUrl(string url) { try { Omsi.Open(url); } catch (Exception) { } }
 }
 }

@@ -1,0 +1,161 @@
+<ScrollViewer xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- 개발자 옵션 (HyperOS 설정 화면 모양). 정보 화면의 버전을 7번 누르면 메뉴에 나타난다 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="820">
+    <TextBlock Text="{ui:Tr nav_dev}" Theme="{StaticResource PageTitle}" Margin="8,4,0,18"/>
+    <!-- 전체 스위치: 끄면 메뉴가 사라지고 정보 화면으로 돌아간다 -->
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding DevMode}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr dev_master}" Theme="{StaticResource DevTitle}"/>
+          </StackPanel>
+        </CheckBox>
+      </StackPanel>
+    </Border>
+    <StackPanel IsEnabled="{Binding DevMode}">
+      <TextBlock Text="{ui:Tr dev_grp_update}" Theme="{StaticResource DevCaption}"/>
+      <Border Theme="{StaticResource DevCard}">
+        <StackPanel>
+          <Button Theme="{StaticResource DevRow}" Command="{Binding BugReportCmd}">
+            <DockPanel>
+              <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_bug}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{ui:Tr dev_bug_sub}" Theme="{StaticResource DevSub}"/>
+              </StackPanel>
+            </DockPanel>
+          </Button>
+          <Button Theme="{StaticResource DevRow}" Command="{Binding DevCheckCmd}">
+            <DockPanel>
+              <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_check}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{Binding DevCheckValue}" Theme="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+            </DockPanel>
+          </Button>
+          <Button Theme="{StaticResource DevRow}" Command="{Binding ReinstallCmd}">
+            <DockPanel>
+              <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_reinstall}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{ui:Tr dev_reinstall_sub}" Theme="{StaticResource DevSub}"/>
+              </StackPanel>
+            </DockPanel>
+          </Button>
+        </StackPanel>
+      </Border>
+      <TextBlock Text="{ui:Tr dev_grp_debug}" Theme="{StaticResource DevCaption}"/>
+      <Border Theme="{StaticResource DevCard}">
+        <StackPanel>
+          <Button Theme="{StaticResource DevRow}" Command="{Binding SelfTestCmd}">
+            <DockPanel>
+              <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_selftest}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{Binding SelfTestValue}" Theme="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+            </DockPanel>
+          </Button>
+          <Button Theme="{StaticResource DevRow}" Command="{Binding LangReloadCmd}">
+            <DockPanel>
+              <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_lang_reload}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{ui:Tr dev_lang_reload_sub}" Theme="{StaticResource DevSub}"/>
+              </StackPanel>
+            </DockPanel>
+          </Button>
+          <Button Theme="{StaticResource DevRow}" Command="{Binding OpenIniCmd}">
+            <DockPanel>
+              <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_ini}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{Binding InfoIni}" Theme="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+            </DockPanel>
+          </Button>
+          <Button Theme="{StaticResource DevRow}" Command="{Binding WelcomeAgainCmd}">
+            <DockPanel>
+              <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_welcome}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{ui:Tr dev_welcome_sub}" Theme="{StaticResource DevSub}"/>
+              </StackPanel>
+            </DockPanel>
+          </Button>
+        </StackPanel>
+      </Border>
+      <TextBlock Text="{ui:Tr dev_grp_draw}" Theme="{StaticResource DevCaption}"/>
+      <Border Theme="{StaticResource DevCard}">
+        <StackPanel>
+          <CheckBox x:Name="DevFpsToggle" Theme="{StaticResource DevToggle}" IsChecked="{Binding DevFps}">
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr dev_fps}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr dev_fps_sub}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </CheckBox>
+          <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding DevBounds}">
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr dev_bounds}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr dev_bounds_sub}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </CheckBox>
+          <ComboBox Theme="{StaticResource DevSelect}" Tag="{ui:Tr dev_anim}" ItemsSource="{Binding AnimChoices}" DisplayMemberBinding="{Binding Name}"
+                    ui:Behave.Value="{Binding DevAnim}"/>
+        </StackPanel>
+      </Border>
+      <TextBlock Text="{ui:Tr dev_grp_convert}" Theme="{StaticResource DevCaption}"/>
+      <Border Theme="{StaticResource DevCard}">
+        <StackPanel>
+          <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding DevVerbose}">
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr dev_verbose}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr dev_verbose_sub}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </CheckBox>
+        </StackPanel>
+      </Border>
+      <TextBlock Text="{ui:Tr dev_grp_info}" Theme="{StaticResource DevCaption}"/>
+      <Border Theme="{StaticResource DevCard}">
+        <StackPanel>
+          <ContentControl Theme="{StaticResource DevStatic}">
+            <DockPanel Margin="0,1">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding InfoRuntime}" Theme="{StaticResource DevValue}" MaxWidth="380"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_runtime}" Theme="{StaticResource DevTitle}"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
+          <ContentControl Theme="{StaticResource DevStatic}">
+            <DockPanel Margin="0,1">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding InfoRender}" Theme="{StaticResource DevValue}" MaxWidth="380"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_render}" Theme="{StaticResource DevTitle}"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
+          <ContentControl Theme="{StaticResource DevStatic}">
+            <DockPanel Margin="0,1">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding InfoScale}" Theme="{StaticResource DevValue}" MaxWidth="380"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_scale}" Theme="{StaticResource DevTitle}"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
+          <ContentControl Theme="{StaticResource DevStatic}">
+            <DockPanel Margin="0,1">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding InfoPath}" Theme="{StaticResource DevValue}" MaxWidth="380"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr dev_path}" Theme="{StaticResource DevTitle}"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </StackPanel>
+</ScrollViewer>

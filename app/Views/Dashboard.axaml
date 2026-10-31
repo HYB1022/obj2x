@@ -1,0 +1,85 @@
+<Grid xmlns="https://github.com/avaloniaui"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="clr-namespace:Obj2x.UI" Margin="16" RowDefinitions="96,Auto,*">
+  <Grid.Styles>
+    <Style Selector="Grid.warn > TextBlock"><Setter Property="Foreground" Value="{DynamicResource Warn}"/></Style>
+    <Style Selector="Grid.fail > TextBlock"><Setter Property="Foreground" Value="{DynamicResource Bad}"/></Style>
+  </Grid.Styles>
+  <!-- 대시보드: 상태 카드, 경로 경고 배너, 작업 내역(로그/결과 표) -->
+  <Border Theme="{StaticResource CardBox}">
+    <Panel>
+      <TextBlock Text="{ui:Tr dash_status_title}" Theme="{StaticResource TBold}" Margin="20,14,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+      <StackPanel Orientation="Horizontal" Margin="20,42,0,0" VerticalAlignment="Top" HorizontalAlignment="Left">
+        <ui:StatusDot State="{Binding StatusState}" VerticalAlignment="Center"/>
+        <TextBlock Text="{Binding StatusText}" Margin="8,0,0,0"/>
+      </StackPanel>
+      <TextBlock Text="{Binding LastText}" Theme="{StaticResource TSub}" Margin="20,66,300,0" VerticalAlignment="Top" TextTrimming="CharacterEllipsis"/>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
+        <Button Content="{ui:Tr btn_stop}" Theme="{StaticResource BtnNormal}" Command="{Binding StopCmd}" Margin="0,0,10,0" IsVisible="{Binding StopVisible}"/>
+        <Button Content="{ui:Tr btn_retry}" Theme="{StaticResource BtnNormal}" Command="{Binding RetryCmd}" Margin="0,0,10,0" IsVisible="{Binding RetryVisible}"/>
+        <Button Content="{ui:Tr btn_start_wizard}" Theme="{StaticResource BtnPrimary}" Command="{Binding StartWizardCmd}" IsEnabled="{Binding NotRunning}"/>
+      </StackPanel>
+    </Panel>
+  </Border>
+
+  <!-- 노란 경고 배너 -->
+  <Border Grid.Row="1" Margin="0,12,0,0" Height="72" CornerRadius="14" BorderThickness="2" Background="{DynamicResource BnBg}" BorderBrush="{DynamicResource BnBorder}"
+          IsVisible="{Binding BannerVisible}">
+    <Panel>
+      <Path Data="M 15,0 L 30,26 L 0,26 Z M 15,8 L 15,17 M 15,21 L 15,21.5" Stroke="{DynamicResource BnText}" StrokeThickness="1.8"
+            StrokeJoin="Round" StrokeLineCap="Round" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="17,0,0,0"/>
+      <StackPanel Margin="68,0,200,0" VerticalAlignment="Center">
+        <TextBlock Text="{ui:Tr dash_banner_title}" Theme="{StaticResource TH2}" Foreground="{DynamicResource BnText}" TextTrimming="CharacterEllipsis"/>
+        <TextBlock Text="{Binding BannerText}" Theme="{StaticResource TSub}" Foreground="{DynamicResource BnText}" TextWrapping="Wrap" Margin="0,4,0,0" MaxHeight="32"/>
+      </StackPanel>
+      <Button Content="{ui:Tr btn_set_blender}" Theme="{StaticResource BtnBanner}" Command="{Binding SetPathsCmd}" HorizontalAlignment="Right" Margin="0,0,20,0"/>
+    </Panel>
+  </Border>
+
+  <!-- 작업 내역 -->
+  <Border Grid.Row="2" Margin="0,12,0,0" Theme="{StaticResource CardBox}">
+    <Grid Margin="20,0,20,20" RowDefinitions="48,32,*">
+      <TextBlock Text="{ui:Tr card_history_title}" Theme="{StaticResource TH2}" VerticalAlignment="Center" Margin="0,0,0,2"/>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <Button Content="{ui:Tr btn_clear}" Theme="{StaticResource BtnSmall}" Command="{Binding ClearCmd}"/>
+        <Button Content="{ui:Tr btn_save}" Theme="{StaticResource BtnSmall}" Command="{Binding SaveLogCmd}" Margin="6,0,16,0"/>
+        <Button Content="{ui:Tr tab_log}" Theme="{StaticResource BtnTab}" Tag="{Binding LogTab}" Command="{Binding TabCmd}" CommandParameter="log"/>
+        <Button Content="{ui:Tr tab_res}" Theme="{StaticResource BtnTab}" Tag="{Binding ResTab}" Command="{Binding TabCmd}" CommandParameter="res" Margin="6,0,0,0"/>
+      </StackPanel>
+      <Panel Grid.Row="1">
+        <ProgressBar Theme="{StaticResource Slim}" Value="{Binding Progress, Mode=OneWay}" VerticalAlignment="Top"/>
+        <TextBlock Text="{Binding StatText}" Theme="{StaticResource TSub}" Margin="0,8,0,0" TextTrimming="CharacterEllipsis"/>
+      </Panel>
+      <TextBox x:Name="LogBox" Grid.Row="2" Theme="{StaticResource LogBox}" IsVisible="{Binding LogVisible}"/>
+      <!-- 결과 표: 머리줄 + 줄마다 같은 칸 폭 -->
+      <Border Grid.Row="2" Background="{DynamicResource Input}" BorderBrush="{DynamicResource InputBdr}" BorderThickness="1" IsVisible="{Binding ResVisible}">
+        <DockPanel>
+          <Border DockPanel.Dock="Top" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Divider}" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="260,75,75,60,70,300" TextElement.Foreground="{DynamicResource Muted}" TextElement.FontWeight="Bold">
+              <TextBlock Grid.Column="0" Text="{ui:Tr col_file}" Margin="8,6" TextTrimming="CharacterEllipsis"/>
+              <TextBlock Grid.Column="1" Text="{ui:Tr col_vert}" Margin="8,6" TextAlignment="Right" TextTrimming="CharacterEllipsis"/>
+              <TextBlock Grid.Column="2" Text="{ui:Tr col_tri}" Margin="8,6" TextAlignment="Right" TextTrimming="CharacterEllipsis"/>
+              <TextBlock Grid.Column="3" Text="{ui:Tr col_mat}" Margin="8,6" TextAlignment="Right" TextTrimming="CharacterEllipsis"/>
+              <TextBlock Grid.Column="4" Text="{ui:Tr col_time}" Margin="8,6" TextAlignment="Right" TextTrimming="CharacterEllipsis"/>
+              <TextBlock Grid.Column="5" Text="{ui:Tr col_stat}" Margin="8,6" TextTrimming="CharacterEllipsis"/>
+            </Grid>
+          </Border>
+          <ListBox ItemsSource="{Binding Results}" Theme="{StaticResource ResList}">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="260,75,75,60,70,300" Classes.warn="{Binding Warn}" Classes.fail="{Binding Fail}">
+                  <TextBlock Grid.Column="0" Text="{Binding Name}" Margin="6,0" TextTrimming="CharacterEllipsis"/>
+                  <TextBlock Grid.Column="1" Text="{Binding V}" Margin="6,0" TextAlignment="Right"/>
+                  <TextBlock Grid.Column="2" Text="{Binding T}" Margin="6,0" TextAlignment="Right"/>
+                  <TextBlock Grid.Column="3" Text="{Binding M}" Margin="6,0" TextAlignment="Right"/>
+                  <TextBlock Grid.Column="4" Text="{Binding Sec}" Margin="6,0" TextAlignment="Right"/>
+                  <TextBlock Grid.Column="5" Text="{Binding Status}" Margin="6,0" TextTrimming="CharacterEllipsis"/>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </Border>
+</Grid>

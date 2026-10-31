@@ -1,0 +1,567 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="clr-namespace:Obj2x.UI">
+  <!-- 공통 모양 (WPF Styles.xaml과 같은 키 이름). 색은 모두 Theme.cs가 넣는 브러시({DynamicResource 이름})를 쓴다.
+       WPF의 키 스타일 = Avalonia ControlTheme: Theme="{StaticResource BtnNormal}" 로 쓴다. -->
+
+  <!-- 글자 -->
+  <ControlTheme x:Key="TTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="26"/><Setter Property="FontWeight" Value="Bold"/></ControlTheme>
+  <ControlTheme x:Key="TH2" TargetType="TextBlock"><Setter Property="FontSize" Value="14.67"/><Setter Property="FontWeight" Value="Bold"/></ControlTheme>
+  <ControlTheme x:Key="TBold" TargetType="TextBlock"><Setter Property="FontWeight" Value="Bold"/></ControlTheme>
+  <ControlTheme x:Key="TSub" TargetType="TextBlock"><Setter Property="FontSize" Value="11.33"/><Setter Property="Foreground" Value="{DynamicResource Muted}"/></ControlTheme>
+  <ControlTheme x:Key="TTiny" TargetType="TextBlock"><Setter Property="FontSize" Value="10.67"/><Setter Property="FontWeight" Value="Bold"/><Setter Property="Foreground" Value="{DynamicResource Muted}"/></ControlTheme>
+
+  <!-- 카드 / 구분선: HyperOS처럼 테두리 없는 둥근 카드 -->
+  <ControlTheme x:Key="CardBox" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Card}"/>
+    <Setter Property="CornerRadius" Value="20"/>
+  </ControlTheme>
+  <ControlTheme x:Key="Div" TargetType="Rectangle">
+    <Setter Property="Height" Value="1"/>
+    <Setter Property="Fill" Value="{DynamicResource Divider}"/>
+  </ControlTheme>
+
+  <!-- 버튼: 바탕 위에 호버 색 층이 부드럽게 나타나고, 누르면 누른 지점에서 물결이 퍼진다. 모서리는 ui:Behave.Radius, 호버 색은 ui:Behave.Hover -->
+  <ControlTheme x:Key="BtnNormal" TargetType="Button">
+    <Setter Property="Background" Value="{DynamicResource Btn}"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="ui:Behave.Hover" Value="{DynamicResource BtnHov}"/>
+    <Setter Property="ui:Behave.Radius" Value="8"/>
+    <Setter Property="Height" Value="36"/>
+    <Setter Property="Padding" Value="18,0"/>
+    <Setter Property="MinWidth" Value="72"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Border Name="bg" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding ui:Behave.Radius}"/>
+          <Border Name="hov" Background="{TemplateBinding ui:Behave.Hover}" Opacity="0" CornerRadius="{TemplateBinding ui:Behave.Radius}"/>
+          <ui:Ripple CornerRadius="{TemplateBinding ui:Behave.Radius}"/>
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Margin="{TemplateBinding Padding}"/>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#hov"><Setter Property="ui:Anim.Opacity" Value="1"/></Style>
+    <Style Selector="^:disabled /template/ Border#bg"><Setter Property="Background" Value="{DynamicResource DisBg}"/></Style>
+    <Style Selector="^:disabled /template/ Border#hov"><Setter Property="IsVisible" Value="False"/></Style>
+    <Style Selector="^:disabled"><Setter Property="Foreground" Value="{DynamicResource DisText}"/></Style>
+  </ControlTheme>
+  <ControlTheme x:Key="BtnPrimary" TargetType="Button" BasedOn="{StaticResource BtnNormal}">
+    <Setter Property="Background" Value="{DynamicResource Accent}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="ui:Behave.Hover" Value="{DynamicResource AccentHov}"/>
+  </ControlTheme>
+  <ControlTheme x:Key="BtnBanner" TargetType="Button" BasedOn="{StaticResource BtnNormal}">
+    <Setter Property="Background" Value="{DynamicResource BnBtnBg}"/>
+    <Setter Property="Foreground" Value="{DynamicResource BnBtnFg}"/>
+    <Setter Property="ui:Behave.Hover" Value="{DynamicResource BnBtnHov}"/>
+  </ControlTheme>
+  <ControlTheme x:Key="BtnSmall" TargetType="Button" BasedOn="{StaticResource BtnNormal}">
+    <Setter Property="Height" Value="28"/>
+    <Setter Property="ui:Behave.Radius" Value="6"/>
+    <Setter Property="MinWidth" Value="0"/>
+  </ControlTheme>
+  <!-- 탭 버튼: Tag가 on이면 강조색 -->
+  <ControlTheme x:Key="BtnTab" TargetType="Button" BasedOn="{StaticResource BtnSmall}">
+    <Style Selector="^[Tag=on]">
+      <Setter Property="Background" Value="{DynamicResource Accent}"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="ui:Behave.Hover" Value="{DynamicResource AccentHov}"/>
+    </Style>
+  </ControlTheme>
+  <!-- 목록 줄 버튼 (최근 폴더) -->
+  <ControlTheme x:Key="BtnRow" TargetType="Button">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Height" Value="44"/>
+    <Setter Property="Padding" Value="0"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Background="Transparent">
+          <Border Name="hov" Background="{DynamicResource Btn}" CornerRadius="8" Margin="0,1" Opacity="0"/>
+          <ui:Ripple CornerRadius="8" Margin="0,1"/>
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center"/>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#hov"><Setter Property="ui:Anim.Opacity" Value="1"/></Style>
+  </ControlTheme>
+
+  <!-- 토글 (CheckBox): 손잡이가 미끄러지고 바탕이 강조색으로 바뀐다 -->
+  <ControlTheme x:Key="Toggle" TargetType="CheckBox">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Width="46" Height="24" Background="Transparent">
+          <Border CornerRadius="10" Margin="2" Background="{DynamicResource ToggleOff}"/>
+          <Border Name="on" CornerRadius="10" Margin="2" Background="{DynamicResource Accent}" Opacity="0"/>
+          <Ellipse Name="knob" Width="14" Height="14" Fill="White" HorizontalAlignment="Left" Margin="6,0,0,0"/>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:checked /template/ Ellipse#knob"><Setter Property="ui:Anim.X" Value="20"/></Style>
+    <Style Selector="^:checked /template/ Border#on"><Setter Property="ui:Anim.Opacity" Value="1"/></Style>
+    <Style Selector="^:disabled"><Setter Property="Opacity" Value="0.5"/></Style>
+  </ControlTheme>
+
+  <!-- 체크 표시 + 글자 -->
+  <ControlTheme x:Key="Chk" TargetType="CheckBox">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Height" Value="24"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="Transparent" ColumnDefinitions="26,*">
+          <Border Name="box" Width="17" Height="17" CornerRadius="4" BorderThickness="1.5" HorizontalAlignment="Left"
+                  BorderBrush="{DynamicResource Muted}" Background="{DynamicResource Card}"/>
+          <Path Name="mark" Width="17" Height="17" HorizontalAlignment="Left" Data="M 4.5,9 L 7.5,12 L 13,5.5" Stroke="White" StrokeThickness="2"
+                StrokeLineCap="Round" StrokeJoin="Round" Opacity="0"/>
+          <ContentPresenter Name="PART_ContentPresenter" Grid.Column="1" VerticalAlignment="Center" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"/>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:checked /template/ Border#box">
+      <Setter Property="Background" Value="{DynamicResource Accent}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+    </Style>
+    <Style Selector="^:checked /template/ Path#mark"><Setter Property="Opacity" Value="1"/></Style>
+    <Style Selector="^:disabled"><Setter Property="Foreground" Value="{DynamicResource DisText}"/></Style>
+  </ControlTheme>
+
+  <!-- 라디오 (선택 대화 상자) -->
+  <ControlTheme x:Key="Radio" TargetType="RadioButton">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="Transparent" ColumnDefinitions="34,*">
+          <Ellipse Name="ring" Width="18" Height="18" StrokeThickness="2" Stroke="{DynamicResource Muted}" HorizontalAlignment="Left" Margin="2,0,0,0"/>
+          <Ellipse Name="dot" Width="8" Height="8" Fill="{DynamicResource Accent}" HorizontalAlignment="Left" Margin="7,0,0,0" Opacity="0"/>
+          <ContentPresenter Name="PART_ContentPresenter" Grid.Column="1" VerticalAlignment="Center" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"/>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:checked /template/ Ellipse#ring"><Setter Property="Stroke" Value="{DynamicResource Accent}"/></Style>
+    <Style Selector="^:checked /template/ Ellipse#dot"><Setter Property="Opacity" Value="1"/></Style>
+  </ControlTheme>
+
+  <!-- 입력 상자 안쪽용: 스크롤 막대 칸 없이 -->
+  <ControlTheme x:Key="PlainScroll" TargetType="ScrollViewer">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
+          <ScrollContentPresenter Name="PART_ContentPresenter" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"
+                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+          <ScrollBar Name="PART_HorizontalScrollBar" Grid.Row="1" Orientation="Horizontal"/>
+          <ScrollBar Name="PART_VerticalScrollBar" Grid.Column="1" Orientation="Vertical"/>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- 입력 상자 (모든 TextBox의 기본 모양) -->
+  <ControlTheme x:Key="{x:Type TextBox}" TargetType="TextBox">
+    <Setter Property="Background" Value="{DynamicResource Input}"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource InputBdr}"/>
+    <Setter Property="CaretBrush" Value="{DynamicResource Text}"/>
+    <Setter Property="SelectionBrush" Value="{DynamicResource Accent}"/>
+    <Setter Property="SelectionForegroundBrush" Value="White"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Height" Value="28"/>
+    <Setter Property="Margin" Value="0,0,0,1"/>
+    <Setter Property="Padding" Value="4,0"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Hidden"/>
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+          <ScrollViewer Name="PART_ScrollViewer" Margin="{TemplateBinding Padding}" Theme="{StaticResource PlainScroll}"
+                        HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                        VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+                        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+            <TextPresenter Name="PART_TextPresenter"
+                           Text="{TemplateBinding Text, Mode=TwoWay}"
+                           CaretIndex="{TemplateBinding CaretIndex}"
+                           SelectionStart="{TemplateBinding SelectionStart}"
+                           SelectionEnd="{TemplateBinding SelectionEnd}"
+                           TextAlignment="{TemplateBinding TextAlignment}"
+                           TextWrapping="{TemplateBinding TextWrapping}"
+                           LineHeight="{TemplateBinding LineHeight}"
+                           PasswordChar="{TemplateBinding PasswordChar}"
+                           RevealPassword="{TemplateBinding RevealPassword}"
+                           SelectionBrush="{TemplateBinding SelectionBrush}"
+                           SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                           CaretBrush="{TemplateBinding CaretBrush}"
+                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+          </ScrollViewer>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:focus /template/ Border#b"><Setter Property="BorderBrush" Value="{DynamicResource Accent}"/></Style>
+    <Style Selector="^:disabled /template/ Border#b"><Setter Property="Background" Value="{DynamicResource DisBg}"/></Style>
+    <Style Selector="^:disabled"><Setter Property="Foreground" Value="{DynamicResource DisText}"/></Style>
+  </ControlTheme>
+  <ControlTheme x:Key="LogBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+    <Setter Property="Height" Value="NaN"/>
+    <Setter Property="FontFamily" Value="Consolas, Menlo, monospace"/>
+    <Setter Property="IsReadOnly" Value="True"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+    <Setter Property="AcceptsReturn" Value="True"/>
+    <Setter Property="VerticalContentAlignment" Value="Top"/>
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+    <Setter Property="Padding" Value="4,4"/>
+  </ControlTheme>
+  <!-- 숫자 상자 가운데 칸: 테두리 없이 글자만 -->
+  <ControlTheme x:Key="NumText" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Height" Value="NaN"/>
+    <Setter Property="Margin" Value="0"/>
+    <Setter Property="Padding" Value="0"/>
+    <Style Selector="^:disabled /template/ Border#b"><Setter Property="Background" Value="Transparent"/></Style>
+    <Style Selector="^:focus /template/ Border#b"><Setter Property="BorderBrush" Value="Transparent"/></Style>
+  </ControlTheme>
+  <!-- 숫자 상자 −/+ 버튼: 투명 바탕 + 호버 시 연한 회색 -->
+  <ControlTheme x:Key="NumBtn" TargetType="RepeatButton">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="b" Background="Transparent" CornerRadius="6" Margin="2">
+          <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#b"><Setter Property="Background" Value="{DynamicResource Btn}"/></Style>
+    <Style Selector="^:pressed /template/ Border#b"><Setter Property="Background" Value="{DynamicResource BtnHov}"/></Style>
+  </ControlTheme>
+
+  <!-- 드롭다운 (언어 선택 등): 둥근 상자 + 아래로 펼쳐지는 카드, 고른 항목에 체크 표시 -->
+  <ControlTheme x:Key="DropItem" TargetType="ComboBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="bd" Background="Transparent" CornerRadius="6" Padding="10,0" Height="34">
+          <Panel>
+            <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" Margin="0,0,24,0"/>
+            <Path Name="check" Data="M 0,4.5 L 3.5,8 L 10,1" Stroke="{DynamicResource Accent}" StrokeThickness="1.8" StrokeLineCap="Round" StrokeJoin="Round"
+                  HorizontalAlignment="Right" VerticalAlignment="Center" IsVisible="False"/>
+          </Panel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#bd"><Setter Property="Background" Value="{DynamicResource Btn}"/></Style>
+    <Style Selector="^:focus /template/ Border#bd"><Setter Property="Background" Value="{DynamicResource Btn}"/></Style>
+    <Style Selector="^:selected /template/ Path#check"><Setter Property="IsVisible" Value="True"/></Style>
+    <Style Selector="^:selected">
+      <Setter Property="Foreground" Value="{DynamicResource Accent}"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+    </Style>
+  </ControlTheme>
+  <ControlTheme x:Key="Drop" TargetType="ComboBox">
+    <Setter Property="Height" Value="32"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="ItemContainerTheme" Value="{StaticResource DropItem}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Border Name="bd" Background="{DynamicResource Input}" BorderBrush="{DynamicResource InputBdr}" BorderThickness="1" CornerRadius="8"/>
+          <ContentPresenter IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding ItemTemplate}"
+                            Margin="12,0,34,0" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+          <Path Name="arrow" IsHitTestVisible="False" Data="M 0,0 L 4.5,4.5 L 9,0" Stroke="{DynamicResource Muted}" StrokeThickness="1.6"
+                StrokeLineCap="Round" StrokeJoin="Round" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0"/>
+          <Popup Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}" Placement="BottomEdgeAlignedLeft" VerticalOffset="4"
+                 IsLightDismissEnabled="True" InheritsTransform="True" ui:Anim.PopIn="True">
+            <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBdr}" BorderThickness="1" CornerRadius="10" Padding="4"
+                    Margin="0,0,10,12" MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}" BoxShadow="0 4 18 0 #2E000000">
+              <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}"/>
+              </ScrollViewer>
+            </Border>
+          </Popup>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#bd"><Setter Property="BorderBrush" Value="{DynamicResource Muted}"/></Style>
+    <Style Selector="^:dropdownopen /template/ Border#bd"><Setter Property="BorderBrush" Value="{DynamicResource Accent}"/></Style>
+    <Style Selector="^:dropdownopen /template/ Path#arrow"><Setter Property="ui:Anim.Angle" Value="180"/></Style>
+    <Style Selector="^:disabled"><Setter Property="Opacity" Value="0.5"/></Style>
+  </ControlTheme>
+
+  <!-- 둥근 화살표 버튼 (환영 화면의 시작) -->
+  <ControlTheme x:Key="BtnRound" TargetType="Button">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="Width" Value="64"/><Setter Property="Height" Value="64"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Border Background="{DynamicResource Accent}" CornerRadius="32" BoxShadow="0 4 20 0 #38000000"/>
+          <Ellipse Name="hov" Fill="{DynamicResource AccentHov}" Opacity="0"/>
+          <ui:Ripple CornerRadius="32"/>
+          <Path Data="M 0,8 L 18,8 M 11,1 L 18,8 L 11,15" Stroke="White" StrokeThickness="2.4" StrokeLineCap="Round"
+                StrokeJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Ellipse#hov"><Setter Property="ui:Anim.Opacity" Value="1"/></Style>
+    <Style Selector="^:disabled"><Setter Property="Opacity" Value="0.5"/></Style>
+  </ControlTheme>
+
+  <!-- 개발자 옵션 (HyperOS 설정 화면 모양): 큰 제목, 둥근 카드, 제목/설명 줄, 오른쪽에 스위치·화살표·값 선택 -->
+  <ControlTheme x:Key="DevCard" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Card}"/>
+    <Setter Property="CornerRadius" Value="20"/>
+    <Setter Property="ui:RoundClip.On" Value="True"/>
+  </ControlTheme>
+  <ControlTheme x:Key="DevCaption" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    <Setter Property="Margin" Value="24,18,0,8"/>
+  </ControlTheme>
+  <ControlTheme x:Key="DevTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="15"/>
+    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    <Style Selector="^:disabled"><Setter Property="Foreground" Value="{DynamicResource DisText}"/></Style>
+  </ControlTheme>
+  <ControlTheme x:Key="DevSub" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    <Setter Property="Margin" Value="0,4,0,0"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+    <Style Selector="^:disabled"><Setter Property="Foreground" Value="{DynamicResource DisText}"/></Style>
+  </ControlTheme>
+  <ControlTheme x:Key="DevValue" TargetType="TextBlock" BasedOn="{StaticResource DevSub}">
+    <Setter Property="Margin" Value="16,0,0,0"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="TextWrapping" Value="NoWrap"/>
+    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+  </ControlTheme>
+  <ControlTheme x:Key="DevChevron" TargetType="Path">
+    <Setter Property="Data" Value="M 0,0 L 5.5,5.5 L 0,11"/>
+    <Setter Property="Stroke" Value="{DynamicResource Muted}"/>
+    <Setter Property="StrokeThickness" Value="1.6"/>
+    <Setter Property="StrokeLineCap" Value="Round"/><Setter Property="StrokeJoin" Value="Round"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="Margin" Value="14,0,0,0"/>
+  </ControlTheme>
+  <!-- 누를 수 있는 줄: 마우스를 올리면 옅게 칠해지고, 누르면 물결이 퍼진다 -->
+  <ControlTheme x:Key="DevRow" TargetType="Button">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Background="Transparent">
+          <Border Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+          <ui:Ripple/>
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalContentAlignment="Stretch" Margin="24,17"/>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#hov"><Setter Property="ui:Anim.Opacity" Value="0.6"/></Style>
+    <Style Selector="^:disabled"><Setter Property="Cursor" Value="Arrow"/></Style>
+  </ControlTheme>
+  <!-- 누르는 기능은 없지만 마우스를 올리면 옅게 칠해지고, 누르면 물결이 퍼지는 줄 (앱 정보, 오른쪽에 컨트롤이 있는 줄).
+       줄 안의 컨트롤을 누를 때는 줄 물결이 생기지 않는다 (Ripple이 알아서 거른다) -->
+  <ControlTheme x:Key="DevStatic" TargetType="ContentControl">
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Background="Transparent">
+          <Border Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+          <ui:Ripple/>
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalContentAlignment="Stretch" Margin="24,17"/>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#hov"><Setter Property="ui:Anim.Opacity" Value="0.6"/></Style>
+  </ControlTheme>
+  <!-- 페이지 큰 제목 (HyperOS 설정 화면) -->
+  <ControlTheme x:Key="PageTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="30"/><Setter Property="FontWeight" Value="Bold"/><Setter Property="Margin" Value="8,4,0,4"/>
+  </ControlTheme>
+
+  <!-- 스위치 줄 (CheckBox): 줄 어디를 눌러도 켜고 끈다. 내용 = 왼쪽 제목/설명 -->
+  <ControlTheme x:Key="DevToggle" TargetType="CheckBox">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Background="Transparent">
+          <Border Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+          <ui:Ripple/>
+          <DockPanel Margin="24,17">
+            <Panel Name="sw" DockPanel.Dock="Right" Width="46" Height="24" VerticalAlignment="Center" Margin="16,0,0,0">
+              <Border CornerRadius="10" Margin="2" Background="{DynamicResource ToggleOff}"/>
+              <Border Name="on" CornerRadius="10" Margin="2" Background="{DynamicResource Accent}" Opacity="0"/>
+              <Ellipse Name="knob" Width="14" Height="14" Fill="White" HorizontalAlignment="Left" Margin="6,0,0,0"/>
+            </Panel>
+            <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center"/>
+          </DockPanel>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#hov"><Setter Property="ui:Anim.Opacity" Value="0.6"/></Style>
+    <Style Selector="^:checked /template/ Ellipse#knob"><Setter Property="ui:Anim.X" Value="20"/></Style>
+    <Style Selector="^:checked /template/ Border#on"><Setter Property="ui:Anim.Opacity" Value="1"/></Style>
+    <Style Selector="^:disabled /template/ Panel#sw"><Setter Property="Opacity" Value="0.5"/></Style>
+    <Style Selector="^:disabled"><Setter Property="Cursor" Value="Arrow"/></Style>
+  </ControlTheme>
+  <!-- 값 선택 줄 (ComboBox): 왼쪽 제목(Tag), 오른쪽 값 + ⌃⌄. 줄 어디를 눌러도 목록이 펼쳐진다 -->
+  <ControlTheme x:Key="DevSelect" TargetType="ComboBox">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="ItemContainerTheme" Value="{StaticResource DropItem}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Background="Transparent">
+          <Border Name="hov" Background="{DynamicResource Btn}" Opacity="0"/>
+          <ui:Ripple/>
+          <DockPanel Margin="24,17" IsHitTestVisible="False">
+            <StackPanel Name="val" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+              <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding ItemTemplate}" VerticalAlignment="Center"
+                                Foreground="{DynamicResource Muted}" FontSize="13"/>
+              <Path Data="M 0,4 L 4,0 L 8,4 M 0,9 L 4,13 L 8,9" Stroke="{DynamicResource Muted}" StrokeThickness="1.5" StrokeLineCap="Round"
+                    StrokeJoin="Round" VerticalAlignment="Center" Margin="10,0,0,0"/>
+            </StackPanel>
+            <TextBlock Text="{TemplateBinding Tag}" Theme="{StaticResource DevTitle}" VerticalAlignment="Center"/>
+          </DockPanel>
+          <Popup Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}" PlacementTarget="{Binding #val}" Placement="BottomEdgeAlignedLeft"
+                 HorizontalOffset="-60" VerticalOffset="10" IsLightDismissEnabled="True" InheritsTransform="True" ui:Anim.PopIn="True">
+            <Border Background="{DynamicResource Card}" BorderBrush="{DynamicResource CardBdr}" BorderThickness="1" CornerRadius="14" Padding="4" Margin="0,0,10,12" MinWidth="200"
+                    BoxShadow="0 4 18 0 #2E000000">
+              <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}"/>
+              </ScrollViewer>
+            </Border>
+          </Popup>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#hov"><Setter Property="ui:Anim.Opacity" Value="0.6"/></Style>
+  </ControlTheme>
+
+  <!-- 얇은 스크롤 막대 (라이트/다크 모두, 항상 보인다) -->
+  <ControlTheme x:Key="ThumbTheme" TargetType="Thumb">
+    <Setter Property="Template">
+      <ControlTemplate><Border Background="{DynamicResource Dim}" CornerRadius="4" Margin="2" Opacity="0.7"/></ControlTemplate>
+    </Setter>
+  </ControlTheme>
+  <ControlTheme x:Key="PageBtn" TargetType="RepeatButton">
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="Template"><ControlTemplate><Border Background="Transparent"/></ControlTemplate></Setter>
+  </ControlTheme>
+  <ControlTheme x:Key="{x:Type ScrollBar}" TargetType="ScrollBar">
+    <Setter Property="Cursor" Value="Arrow"/>
+    <Style Selector="^:vertical">
+      <Setter Property="Width" Value="10"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Track Name="track" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{TemplateBinding Value, Mode=TwoWay}"
+                 ViewportSize="{TemplateBinding ViewportSize}" Orientation="Vertical" IsDirectionReversed="True">
+            <Track.DecreaseButton><RepeatButton Name="PART_PageUpButton" Theme="{StaticResource PageBtn}"/></Track.DecreaseButton>
+            <Track.IncreaseButton><RepeatButton Name="PART_PageDownButton" Theme="{StaticResource PageBtn}"/></Track.IncreaseButton>
+            <Thumb Name="thumb" Theme="{StaticResource ThumbTheme}"/>
+          </Track>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="^:horizontal">
+      <Setter Property="Height" Value="10"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Track Name="track" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{TemplateBinding Value, Mode=TwoWay}"
+                 ViewportSize="{TemplateBinding ViewportSize}" Orientation="Horizontal">
+            <Track.DecreaseButton><RepeatButton Name="PART_PageUpButton" Theme="{StaticResource PageBtn}"/></Track.DecreaseButton>
+            <Track.IncreaseButton><RepeatButton Name="PART_PageDownButton" Theme="{StaticResource PageBtn}"/></Track.IncreaseButton>
+            <Thumb Name="thumb" Theme="{StaticResource ThumbTheme}"/>
+          </Track>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+  </ControlTheme>
+  <!-- 스크롤 막대가 내용 옆 칸에 따로 있는 스크롤 상자 (WPF처럼. Fluent는 내용 위에 겹쳐 숨긴다) -->
+  <ControlTheme x:Key="{x:Type ScrollViewer}" TargetType="ScrollViewer">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
+          <ScrollContentPresenter Name="PART_ContentPresenter" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"
+                                  HorizontalSnapPointsType="{TemplateBinding HorizontalSnapPointsType}" VerticalSnapPointsType="{TemplateBinding VerticalSnapPointsType}"
+                                  HorizontalSnapPointsAlignment="{TemplateBinding HorizontalSnapPointsAlignment}" VerticalSnapPointsAlignment="{TemplateBinding VerticalSnapPointsAlignment}"
+                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+            <ScrollContentPresenter.GestureRecognizers>
+              <ScrollGestureRecognizer CanHorizontallyScroll="{Binding CanHorizontallyScroll, ElementName=PART_ContentPresenter}"
+                                       CanVerticallyScroll="{Binding CanVerticallyScroll, ElementName=PART_ContentPresenter}"
+                                       IsScrollInertiaEnabled="{Binding (ScrollViewer.IsScrollInertiaEnabled), RelativeSource={RelativeSource TemplatedParent}}"/>
+            </ScrollContentPresenter.GestureRecognizers>
+          </ScrollContentPresenter>
+          <ScrollBar Name="PART_HorizontalScrollBar" Grid.Row="1" Orientation="Horizontal"/>
+          <ScrollBar Name="PART_VerticalScrollBar" Grid.Column="1" Orientation="Vertical"/>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+  <!-- 얇은 진행 막대 -->
+  <ControlTheme x:Key="Slim" TargetType="ProgressBar">
+    <Setter Property="Height" Value="4"/>
+    <Setter Property="MinHeight" Value="4"/>
+    <Setter Property="Minimum" Value="0"/>
+    <Setter Property="Maximum" Value="1"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Border Name="PART_Track" Background="{DynamicResource Divider}"/>
+          <Border Name="PART_Indicator" Background="{DynamicResource Accent}" HorizontalAlignment="Left"/>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- 결과 표 (대시보드): 줄에 마우스를 올리면 옅게, 고르면 강조색 알약 색 -->
+  <ControlTheme x:Key="ResRow" TargetType="ListBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="bd" Background="Transparent" Padding="0,3">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalContentAlignment="Stretch"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#bd"><Setter Property="Background" Value="{DynamicResource Btn}"/></Style>
+    <Style Selector="^:selected /template/ Border#bd"><Setter Property="Background" Value="{DynamicResource NavPill}"/></Style>
+  </ControlTheme>
+  <ControlTheme x:Key="ResList" TargetType="ListBox">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="ItemContainerTheme" Value="{StaticResource ResRow}"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ScrollViewer Name="PART_ScrollViewer" Background="{TemplateBinding Background}" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+          <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}"/>
+        </ScrollViewer>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

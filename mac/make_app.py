@@ -1,4 +1,4 @@
-# dotnet publish 결과(osx-arm64 / osx-x64)를 BusDepot.app으로 묶어 zip으로 만든다 (Windows에서도 실행 가능).
+# dotnet publish 결과(osx-arm64 / osx-x64, app/BusDepot.csproj)를 BusDepot.app으로 묶어 zip으로 만든다 (Windows에서도 실행 가능). build.py가 부른다.
 #   python mac/make_app.py <publish 폴더> <출력 zip> <버전>
 # zip 안의 실행 파일에는 유닉스 실행 권한(755)을 넣는다. Windows에서 만든 zip은 기본으로 권한이 없어 맥에서 실행되지 않는다.
 # 서명이 없으므로 맥에서 처음 한 번은 README의 안내대로 xattr / codesign을 해야 한다.
@@ -22,6 +22,7 @@ plist = """<?xml version="1.0" encoding="UTF-8"?>
   <key>CFBundleVersion</key><string>%s</string>
   <key>CFBundleShortVersionString</key><string>%s</string>
   <key>CFBundleExecutable</key><string>BusDepot</string>
+  <key>CFBundleIconFile</key><string>BusDepot.icns</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>NSHighResolutionCapable</key><true/>
@@ -70,17 +71,16 @@ def add(z, name, data=None, path=None, exe=False):
 
 with zipfile.ZipFile(out, "w") as z:
     add(z, app + "Info.plist", plist.encode("utf-8"))
+    add(z, app + "Resources/BusDepot.icns", path=os.path.join(here, "BusDepot.icns"))   # 로고 (BusDepot --make-icns로 만든 것)
     for dp, dn, fn in os.walk(pub):
         for f in fn:
             full = os.path.join(dp, f)
             rel = os.path.relpath(full, pub).replace(os.sep, "/")
+            if f.lower().startswith("misans"): continue
             exe = f == "BusDepot" or f.endswith(".dylib")
             add(z, app + "MacOS/" + rel, path=full, exe=exe)
     for f in ("LICENSE",):
         add(z, f, path=os.path.join(root, f))
     add(z, "처음 실행 - READ ME FIRST.txt", FIRST.encode("utf-8"))
-    for f in os.listdir(os.path.join(root, "shared", "fonts")):
-        if f.lower().startswith("misans"): continue   # MiSans는 라이선스상 재배포 금지
-        add(z, app + "MacOS/fonts/" + f, path=os.path.join(root, "shared", "fonts", f))
-    add(z, app + "MacOS/BusDepot.py", path=os.path.join(root, "shared", "BusDepot.py"))
+    # 글꼴은 exe 안에 들어 있고(MiSans는 라이선스상 넣지 않는다), 글꼴 라이선스(fonts/OFL.txt)와 BusDepot.py는 publish 결과에 함께 있다
 print("ok", out)

@@ -1,0 +1,138 @@
+<ScrollViewer xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- 설정 (HyperOS 설정 화면 모양, 개발자 옵션과 같은 줄 스타일): 모양, 동작, 파일 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="820">
+    <TextBlock Text="{ui:Tr nav_settings}" Theme="{StaticResource PageTitle}" Margin="8,4,0,6"/>
+
+    <TextBlock Text="{ui:Tr sec_appearance}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <DockPanel>
+            <ComboBox DockPanel.Dock="Right" Theme="{StaticResource Drop}" Width="180" VerticalAlignment="Center"
+                      ItemsSource="{Binding Languages}" DisplayMemberBinding="{Binding Name}" ui:Behave.Value="{Binding Lang}"/>
+            <Button DockPanel.Dock="Right" Content="{ui:Tr btn_lang_folder}" Theme="{StaticResource BtnNormal}" Height="32" VerticalAlignment="Center"
+                    Command="{Binding LangFolderCmd}" Margin="16,0,10,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_language}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr lbl_language_sub}" Theme="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="system=theme_system;light=theme_light;dark=theme_dark" Value="{Binding ThemeName}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <TextBlock Text="{ui:Tr lbl_theme}" Theme="{StaticResource DevTitle}" VerticalAlignment="Center"/>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="indigo=accent_indigo;teal=accent_teal;rose=accent_rose" Value="{Binding AccentName}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_accent}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr lbl_accent_sub}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <DockPanel>
+            <ComboBox DockPanel.Dock="Right" Theme="{StaticResource Drop}" Width="210" VerticalAlignment="Center" Margin="16,0,0,0"
+                      ItemsSource="{Binding Fonts}" DisplayMemberBinding="{Binding Name}" ui:Behave.Value="{Binding FontName}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_font}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr lbl_font_sub}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+
+    <!-- 맥(openOMSI) 전용: OMSI 2 폴더(직접 고름), openOMSI content 폴더, OMSI 파일 인코딩 -->
+    <StackPanel IsVisible="{Binding IsMac}">
+      <TextBlock Text="OMSI 2 / openOMSI" Theme="{StaticResource DevCaption}"/>
+      <Border Theme="{StaticResource DevCard}">
+        <StackPanel>
+          <Button Theme="{StaticResource DevRow}" Command="{Binding BrowseOmsiCmd}">
+            <DockPanel>
+              <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr mac_omsi_dir}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{ui:Tr mac_omsi_dir_sub}" Theme="{StaticResource DevSub}"/>
+                <TextBlock Text="{Binding OmsiDirText}" Theme="{StaticResource DevSub}" Foreground="{DynamicResource Accent}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+            </DockPanel>
+          </Button>
+          <ContentControl Theme="{StaticResource DevStatic}">
+            <DockPanel>
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                <Button Content="{ui:Tr btn_auto}" Theme="{StaticResource BtnSmall}" Command="{Binding AutoModsCmd}"/>
+                <Button Content="{ui:Tr btn_browse}" Theme="{StaticResource BtnSmall}" Command="{Binding BrowseModsCmd}" Margin="6,0,0,0"/>
+              </StackPanel>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr mac_mods_dir}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{ui:Tr mac_mods_dir_sub}" Theme="{StaticResource DevSub}"/>
+                <TextBlock Text="{Binding ModsDirText}" Theme="{StaticResource DevSub}" Foreground="{DynamicResource Accent}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
+          <ContentControl Theme="{StaticResource DevStatic}">
+            <DockPanel>
+              <ComboBox DockPanel.Dock="Right" Theme="{StaticResource Drop}" Width="230" VerticalAlignment="Center" Margin="16,0,0,0"
+                        ItemsSource="{Binding AnsiChoices}" DisplayMemberBinding="{Binding Name}" ui:Behave.Value="{Binding AnsiCp}"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr mac_encoding}" Theme="{StaticResource DevTitle}"/>
+                <TextBlock Text="{ui:Tr mac_encoding_sub}" Theme="{StaticResource DevSub}"/>
+              </StackPanel>
+            </DockPanel>
+          </ContentControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <TextBlock Text="{ui:Tr sec_behavior}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding UpdCheck}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr lbl_updcheck}" Theme="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr lbl_updcheck_sub}" Theme="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding DelX}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr lbl_delx}" Theme="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr lbl_delx_sub}" Theme="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+      </StackPanel>
+    </Border>
+
+    <TextBlock Text="{ui:Tr sec_files}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Theme="{StaticResource DevRow}" Command="{Binding OpenBackupCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+            <TextBlock DockPanel.Dock="Right" Text="{ui:Tr btn_open_folder}" Theme="{StaticResource DevValue}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_backup}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding BackupPath}" Theme="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+        <Button Theme="{StaticResource DevRow}" Command="{Binding CleanTempCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+            <TextBlock DockPanel.Dock="Right" Text="{ui:Tr btn_clean}" Theme="{StaticResource DevValue}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_temp}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding TempText}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</ScrollViewer>

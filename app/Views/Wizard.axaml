@@ -1,0 +1,131 @@
+<Grid xmlns="https://github.com/avaloniaui"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="clr-namespace:Obj2x.UI" RowDefinitions="Auto,Auto,*,64">
+  <!-- 변환 마법사: 종류 → 경로 → 옵션 → 확인 -->
+  <TextBlock Text="{ui:Tr wiz_title}" Theme="{StaticResource TTitle}" Margin="24,20,24,0"/>
+  <ui:Stepper Grid.Row="1" Step="{Binding WizStep}" Margin="24,8,24,0"/>
+
+  <ScrollViewer Grid.Row="2" Margin="24,4,24,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <ScrollViewer.Styles>
+    <Style Selector="Canvas.folder Rectangle"><Setter Property="Fill" Value="{DynamicResource Accent}"/></Style>
+    <Style Selector="Grid.gone Rectangle"><Setter Property="Fill" Value="{DynamicResource Bad}"/></Style>
+  </ScrollViewer.Styles>
+    <Grid>
+      <!-- 1단계: 종류 -->
+      <StackPanel IsVisible="{Binding WizStep, Converter={x:Static ui:EqVis.I}, ConverterParameter=1}">
+        <TextBlock Text="{ui:Tr wiz_sub}" Theme="{StaticResource TBold}" Margin="0,4,0,0"/>
+        <ui:RadioCard Mode="std" TitleKey="wiz_std_title" SubKey="wiz_std_sub" BadgeKey="wiz_std_badge" Margin="0,12,0,0"
+                      Selected="{Binding IsStd, Mode=OneWay}" IsEnabled="{Binding StdEnabled}" Command="{Binding PickModeCmd}"/>
+        <ui:RadioCard Mode="x" TitleKey="wiz_xonly_title" SubKey="wiz_xonly_sub" Margin="0,8,0,0"
+                      Selected="{Binding IsX, Mode=OneWay}" IsEnabled="{Binding XEnabled}" Command="{Binding PickModeCmd}"/>
+        <ui:RadioCard Mode="fast" TitleKey="wiz_fast_title" SubKey="wiz_fast_sub" BadgeKey="wiz_fast_badge" Margin="0,8,0,0"
+                      Selected="{Binding IsFast, Mode=OneWay}" Command="{Binding PickModeCmd}"/>
+        <TextBlock Text="{Binding AvailText}" Theme="{StaticResource TSub}" Foreground="{DynamicResource Warn}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+      </StackPanel>
+
+      <!-- 2단계: 경로 -->
+      <StackPanel IsVisible="{Binding WizStep, Converter={x:Static ui:EqVis.I}, ConverterParameter=2}">
+        <TextBlock Text="{ui:Tr wiz_step2_title}" Theme="{StaticResource TH2}"/>
+        <TextBlock Text="{ui:Tr wiz_step2_sub}" Theme="{StaticResource TSub}" Margin="0,4,0,0"/>
+        <TextBlock Text="{ui:Tr lbl_in_folder}" Theme="{StaticResource TBold}" Margin="0,14,0,6"/>
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Theme="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseInCmd}" Margin="10,0,0,0"/>
+          <TextBox Text="{Binding InPath, UpdateSourceTrigger=PropertyChanged}" ui:Behave.FolderDrop="True"/>
+        </DockPanel>
+        <TextBlock Text="{ui:Tr lbl_in_hint}" Theme="{StaticResource TSub}" Margin="0,4,0,0"/>
+        <TextBlock Text="{ui:Tr lbl_out_folder}" Theme="{StaticResource TBold}" Margin="0,12,0,6"/>
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Theme="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseOutCmd}" IsEnabled="{Binding OutEnabled}" Margin="10,0,0,0"/>
+          <TextBox Text="{Binding OutPath, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding OutEnabled}"/>
+        </DockPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+          <CheckBox Theme="{StaticResource Toggle}" IsChecked="{Binding SameDir}"/>
+          <TextBlock Text="{ui:Tr chk_samedir}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+        </StackPanel>
+        <TextBlock Text="{ui:Tr recent_title}" Theme="{StaticResource TBold}" Margin="0,12,0,6"/>
+        <Border Theme="{StaticResource CardBox}" Padding="8,4">
+          <Grid>
+            <TextBlock Text="{ui:Tr lbl_recent_empty}" Theme="{StaticResource TSub}" Margin="6,12" IsVisible="{Binding RecentEmpty}"/>
+            <ItemsControl ItemsSource="{Binding Recent}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Button Theme="{StaticResource BtnRow}" CommandParameter="{Binding Path}"
+                          Command="{Binding DataContext.PickRecentCmd, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                    <Grid Classes.gone="{Binding !Exists}">
+                      <Canvas Classes="folder" Width="50" HorizontalAlignment="Left">
+                        <Rectangle x:Name="f1" Canvas.Left="14" Canvas.Top="14" Width="9" Height="4"/>
+                        <Rectangle x:Name="f2" Canvas.Left="14" Canvas.Top="17" Width="22" Height="14"/>
+                      </Canvas>
+                      <StackPanel Margin="50,0,10,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Path}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="miss" Text="{Binding Missing}" Theme="{StaticResource TSub}" Foreground="{DynamicResource Bad}" IsVisible="{Binding !Exists}"/>
+                      </StackPanel>
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Grid>
+        </Border>
+      </StackPanel>
+
+      <!-- 3단계: 옵션 -->
+      <StackPanel IsVisible="{Binding WizStep, Converter={x:Static ui:EqVis.I}, ConverterParameter=3}">
+        <TextBlock Text="{ui:Tr wiz_step3_title}" Theme="{StaticResource TH2}"/>
+        <TextBlock Text="{ui:Tr wiz_step3_sub}" Theme="{StaticResource TSub}" Margin="0,4,0,0"/>
+        <Border Theme="{StaticResource CardBox}" Margin="0,14,0,0">
+          <StackPanel>
+            <DockPanel Height="64" Margin="20,0">
+              <CheckBox DockPanel.Dock="Right" Theme="{StaticResource Toggle}" IsChecked="{Binding Inc}"/>
+              <TextBlock Text="{ui:Tr chk_inc}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Rectangle Theme="{StaticResource Div}" Margin="20,0"/>
+            <DockPanel Height="64" Margin="20,0">
+              <CheckBox DockPanel.Dock="Right" Theme="{StaticResource Toggle}" IsChecked="{Binding Sub}"/>
+              <TextBlock Text="{ui:Tr chk_sub}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <!-- OmsiXConv를 쓰는 표준 방식일 때만 보인다 (FastO3D/.x만은 OmsiXConv를 띄우지 않는다) -->
+            <StackPanel IsVisible="{Binding ParEnabled}">
+            <Rectangle Theme="{StaticResource Div}" Margin="20,0"/>
+            <DockPanel Height="64" Margin="20,0">
+              <ui:NumBox DockPanel.Dock="Right" Value="{Binding Par}" Minimum="1" Maximum="20" VerticalAlignment="Center"/>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{ui:Tr lbl_par}"/>
+                <TextBlock Text="{Binding CoresText}" Theme="{StaticResource TSub}" Margin="0,3,0,0"/>
+              </StackPanel>
+            </DockPanel>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- 4단계: 확인 -->
+      <StackPanel IsVisible="{Binding WizStep, Converter={x:Static ui:EqVis.I}, ConverterParameter=4}">
+        <TextBlock Text="{ui:Tr wiz_step4_title}" Theme="{StaticResource TH2}"/>
+        <TextBlock Text="{ui:Tr wiz_step4_sub}" Theme="{StaticResource TSub}" Margin="0,4,0,0"/>
+        <Border Theme="{StaticResource CardBox}" Margin="0,14,0,0" Padding="20,14">
+          <Grid ColumnDefinitions="170,*" RowDefinitions="32,32,32,32">
+            <TextBlock Text="{ui:Tr wiz_confirm_mode}" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="{Binding Summary[0]}" FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            <TextBlock Grid.Row="1" Text="{ui:Tr wiz_confirm_input}" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Summary[1]}" FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            <TextBlock Grid.Row="2" Text="{ui:Tr wiz_confirm_output}" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Summary[2]}" FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            <TextBlock Grid.Row="3" Text="{ui:Tr wiz_confirm_opts}" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Summary[3]}" FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+          </Grid>
+        </Border>
+        <Button Content="{ui:Tr btn_open_adv}" Theme="{StaticResource BtnNormal}" Command="{Binding NavCmd}" CommandParameter="advanced" HorizontalAlignment="Left" Margin="0,16,0,0"/>
+      </StackPanel>
+    </Grid>
+  </ScrollViewer>
+
+  <Grid Grid.Row="3" Margin="24,0,24,0" VerticalAlignment="Center">
+    <Button Content="{ui:Tr btn_cancel}" Theme="{StaticResource BtnNormal}" Height="38" MinWidth="96" HorizontalAlignment="Left" Command="{Binding WizCancelCmd}"/>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+      <Button Content="{ui:Tr btn_back}" Theme="{StaticResource BtnNormal}" Height="38" MinWidth="96" Command="{Binding WizBackCmd}" Margin="0,0,10,0"
+              IsVisible="{Binding BackVisible}"/>
+      <Button Content="{Binding NextText}" Theme="{StaticResource BtnPrimary}" Height="38" MinWidth="110" Command="{Binding WizNextCmd}"/>
+    </StackPanel>
+  </Grid>
+</Grid>

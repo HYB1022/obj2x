@@ -74,7 +74,7 @@
 
 | 所需 | 说明 |
 | --- | --- |
-| Windows 10 / 11 | 运行所需的 .NET Framework 4.x 已内置于 Windows |
+| Windows 10 / 11 | 程序已内置 .NET，无需另外安装（64 位） |
 | [Blender 2.79b](https://download.blender.org/release/Blender2.79/) | 需要启用自带的 `Import-Export: DirectX X Format` 插件。其他版本（2.8 及以上）不支持用于转换 |
 | OmsiXConv (Omsi X to O3D Converter 1.0) | **本仓库不包含。** 请另行获取并指定 `OmsiXConv.exe` 的位置 |
 
@@ -174,7 +174,7 @@ OMSI 2 文件夹会根据 Steam 安装信息自动查找。找不到时，请点
 
 | 现象 | 检查事项 |
 | --- | --- |
-| Windows 阻止运行或发出警告 | `BusDepot.exe` 没有代码签名，SmartScreen 可能会警告。点击 `更多信息` → `仍要运行`，或查看源码（`src/`）后用 `windows\build.bat` 自行构建 |
+| Windows 阻止运行或发出警告 | `BusDepot.exe` 没有代码签名，SmartScreen 可能会警告。点击 `更多信息` → `仍要运行`，或查看源码（`app/`、`shared/`）后用 `python build.py win` 自行构建 |
 | 与 `blender.exe` 有关的错误 | 请确认指定的是 2.79b 的 `blender.exe`（不会自动检测） |
 | 偶尔出现 `E/A-Fehler 103` | 这是 OmsiXConv 的错误。会自动重试最多 3 次，若仍持续出现，请减少并行数量 |
 | 日志显示 `找不到 OmsiXConv 窗口` | 请确认 OmsiXConv 路径正确，且没有其他程序挡住其窗口 |
@@ -185,14 +185,15 @@ OMSI 2 文件夹会根据 Steam 安装信息自动查找。找不到时，请点
 
 ## 自行构建
 
-运行 `windows\build.bat`，会用 Windows 自带的 C# 编译器（.NET Framework 4）把 `shared\Core`（转换逻辑）和 `windows\App`（WPF 界面）构建为 `BusDepot.exe`。无需另外安装任何东西。
+Windows 和 macOS 使用同一个应用（`app/`、[Avalonia](https://avaloniaui.net/) + .NET 8）。需要 [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) 和 Python 3。
 
 ```bat
-windows\build.bat
-windows\BusDepot.exe --selftest
+python build.py win        :: Windows → dist\win\BusDepot.exe, dist\BusDepot.zip
+python build.py mac        :: macOS → dist\BusDepot-mac-arm64.zip, BusDepot-mac-x64.zip（在 Windows 上也能构建）
+dist\win\BusDepot.exe --selftest
 ```
 
-`--selftest` 会自动检查设置、文字、转换器和界面，并把结果以 `PASS` / `FAIL` 行写入同一文件夹的 `BusDepot_selftest.txt`。
+`--selftest` 会自动检查设置、文本、转换器、3D 和界面，并把 `PASS` / `FAIL` 行写入 `BusDepot_selftest.txt`。
 
 ## 免责声明
 
@@ -204,6 +205,7 @@ windows\BusDepot.exe --selftest
 
 ## 更新日志
 
+- **v2.8.0** — 重新制作了界面（WPF → [Avalonia](https://avaloniaui.net/) + .NET 8）。外观和功能不变，巴士 3D 改用 OpenGL 绘制。已内置 .NET，无需另外安装，但 zip 增大到约 22 MB。字体内置在 exe 中。现在也能用同一套代码构建 macOS（openOMSI）版（尚未发布）。**已知问题：加载巴士模型和地图地块比以前慢很多。** 将在下个版本修复
 - **v2.7.8** — 地图页：修复 AI 列表中车场车型（`[aigroup_depot_typgroup]`）显示为空组的问题（计入车场车辆）。物件页：打开由加密 o3d 组成的 .sco 时提示已加密无法打开，而不是“找不到文件”
 - **v2.7.7** — 巴士页：在 3D 中**拖动乘客路径点和座位**（自由移动，红/绿/蓝箭头沿 x/y/z 轴，`Shift` 以 1 m 为单位），**隐藏模型**（只看路径和座位），**撤销/重做**（`Ctrl+Z` / `Ctrl+Y`），手柄上显示普通光标。修复透过玻璃看不到车内的问题（透明材质最后绘制）。README 各语言截图
 - **v2.7.6** — 物件页可**打开 .sco 查看**（带贴图的 3D），样条线页可**打开 .sli 查看**（作为 40 m 直路以 3D 显示，含车辆/行人路径及方向、宽度、断面和贴图信息）。把 `.sco`/`.sli` 拖到窗口上也能打开

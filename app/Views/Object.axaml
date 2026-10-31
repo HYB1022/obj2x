@@ -1,0 +1,157 @@
+<ScrollViewer xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- OMSI 오브젝트 만들기: 모델 폴더의 o3d로 .sco를 만들고 모델/텍스처를 Sceneryobjects로 복사 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="820">
+    <TextBlock Text="{ui:Tr nav_object}" Theme="{StaticResource PageTitle}" Margin="8,4,0,4"/>
+    <TextBlock Text="{ui:Tr obj_intro}" Theme="{StaticResource DevSub}" Margin="8,0,8,6"/>
+    <TextBlock Text="{ui:Tr obj_sec_view}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Theme="{StaticResource DevRow}" Command="{Binding OpenScoCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr obj_view_file}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding ScoPathText}" Theme="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+      </StackPanel>
+    </Border>
+    <Border Theme="{StaticResource DevCard}" Margin="0,14,0,0" Padding="10">
+      <Grid Height="380">
+        <ui:ModelView Parts="{Binding ScoParts}" Scene="{Binding ScoScene}"/>
+        <TextBlock Text="{ui:Tr obj_view_empty}" Theme="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   TextAlignment="Center" Margin="40,0" IsVisible="{Binding ScoEmpty}"/>
+        <TextBlock Text="{Binding ScoStatus}" Theme="{StaticResource DevSub}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"
+                   IsVisible="{Binding ScoBusy}"/>
+      </Grid>
+    </Border>
+    <DockPanel Margin="24,8,8,0">
+      <Button DockPanel.Dock="Right" Content="{ui:Tr obj_view_bus}" Theme="{StaticResource BtnNormal}" Command="{Binding ScoToBusCmd}" Height="34" Padding="14,0" VerticalAlignment="Top"/>
+      <StackPanel Margin="0,0,12,0">
+        <TextBlock Text="{Binding ScoStatus}" Theme="{StaticResource DevSub}" TextWrapping="Wrap"/>
+        <TextBlock Text="{ui:Tr view_controls}" Theme="{StaticResource DevSub}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+      </StackPanel>
+    </DockPanel>
+    <TextBlock Text="{ui:Tr obj_sec_models}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Theme="{StaticResource DevRow}" Command="{Binding BrowseModelsCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr obj_models}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding ObjModels}" Theme="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+        <ContentControl Theme="{StaticResource DevStatic}" IsVisible="{Binding ModelsEmpty}">
+          <TextBlock Text="{ui:Tr obj_models_hint}" Theme="{StaticResource DevSub}" Margin="0"/>
+        </ContentControl>
+        <ItemsControl ItemsSource="{Binding Models}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding Checked}">
+                <StackPanel>
+                  <TextBlock Text="{Binding Name}" Theme="{StaticResource DevTitle}"/>
+                  <TextBlock Text="{Binding Sub}" Theme="{StaticResource DevSub}"/>
+                </StackPanel>
+              </CheckBox>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{Binding ModelsText}" Theme="{StaticResource DevSub}" Margin="24,8,0,0"/>
+    <TextBlock Text="{ui:Tr obj_sec_object}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:Segmented DockPanel.Dock="Right" Items="each=obj_mode_each;one=obj_mode_one" Value="{Binding ObjMode}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr obj_mode}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr obj_mode_sub}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center" Margin="16,0,0,0" Text="{Binding ObjName, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding ObjNameEnabled}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr obj_name}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr obj_name_sub}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center" Margin="16,0,0,0" Text="{Binding ObjGroup, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr obj_group}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{ui:Tr obj_group_sub}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr obj_sec_props}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding ObjColl}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr obj_coll}" Theme="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr obj_coll_sub}" Theme="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding ObjSurf}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr obj_surf}" Theme="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr obj_surf_sub}" Theme="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding ObjShadow}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr obj_shadow}" Theme="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr obj_shadow_sub}" Theme="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding ObjFixed}">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{ui:Tr obj_fixed}" Theme="{StaticResource DevTitle}"/>
+            <TextBlock Text="{ui:Tr obj_fixed_sub}" Theme="{StaticResource DevSub}"/>
+          </StackPanel>
+        </CheckBox>
+        <ComboBox Theme="{StaticResource DevSelect}" Tag="{ui:Tr obj_alpha}" ItemsSource="{Binding AlphaChoices}" DisplayMemberBinding="{Binding Name}"
+                  ui:Behave.Value="{Binding ObjAlpha}"/>
+      </StackPanel>
+    </Border>
+    <TextBlock Text="{ui:Tr obj_sec_save}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <Button Theme="{StaticResource DevRow}" Command="{Binding BrowseOmsiCmd}">
+          <DockPanel>
+            <Path DockPanel.Dock="Right" Theme="{StaticResource DevChevron}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr omsi_dir}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding OmsiDirText}" Theme="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </Button>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <DockPanel>
+            <TextBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center" Margin="16,0,0,0" Text="{Binding ObjFolder, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr obj_folder}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding ObjOutText}" Theme="{StaticResource DevSub}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+    <Button Content="{ui:Tr obj_make}" Theme="{StaticResource BtnPrimary}" Command="{Binding MakeObjCmd}" HorizontalAlignment="Right" Height="40" MinWidth="140" Margin="0,22,8,0"/>
+  </StackPanel>
+</ScrollViewer>

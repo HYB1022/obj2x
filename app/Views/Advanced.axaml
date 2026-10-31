@@ -1,0 +1,71 @@
+<ScrollViewer xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:ui="clr-namespace:Obj2x.UI"
+              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <!-- 고급 (HyperOS 설정 화면 모양, 개발자 옵션과 같은 줄 스타일): OmsiXConv 세부 옵션, Blender 내보내기 추가 옵션, 실행 프로그램 경로 -->
+  <StackPanel Margin="24,20,24,28" MaxWidth="820">
+    <TextBlock Text="{ui:Tr nav_advanced}" Theme="{StaticResource PageTitle}" Margin="8,4,0,6"/>
+
+    <!-- OmsiXConv는 Windows 전용 -->
+    <TextBlock Text="{ui:Tr sec_adv_omsi}" Theme="{StaticResource DevCaption}" Margin="24,18,0,2" IsVisible="{Binding IsWindows}"/>
+    <TextBlock Text="{ui:Tr sec_adv_omsi_sub}" Theme="{StaticResource DevSub}" Margin="24,0,0,8" IsVisible="{Binding IsWindows}"/>
+    <Border Theme="{StaticResource DevCard}" IsVisible="{Binding IsWindows}">
+      <StackPanel>
+        <!-- OmsiXConv 체크박스 하나가 스위치 줄 하나 -->
+        <ItemsControl ItemsSource="{Binding Copts}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <CheckBox Theme="{StaticResource DevToggle}" IsChecked="{Binding Checked}">
+                <TextBlock Text="{Binding Name}" Theme="{StaticResource DevTitle}"/>
+              </CheckBox>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <DockPanel>
+            <ui:NumBox DockPanel.Dock="Right" Value="{Binding Par}" Minimum="1" Maximum="20" VerticalAlignment="Center" Margin="16,0,0,0"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{ui:Tr lbl_par}" Theme="{StaticResource DevTitle}"/>
+              <TextBlock Text="{Binding CoresText}" Theme="{StaticResource DevSub}"/>
+            </StackPanel>
+          </DockPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+
+    <TextBlock Text="{ui:Tr sec_adv_rna}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <ContentControl Theme="{StaticResource DevStatic}">
+        <StackPanel>
+          <TextBlock Text="{ui:Tr sec_adv_rna_sub}" Theme="{StaticResource DevSub}" Margin="0,0,0,10"/>
+          <TextBox Text="{Binding ExOpt, UpdateSourceTrigger=PropertyChanged}" Height="80" AcceptsReturn="True" TextWrapping="Wrap"
+                   VerticalContentAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Auto" Padding="4"/>
+        </StackPanel>
+      </ContentControl>
+    </Border>
+
+    <TextBlock Text="{ui:Tr sec_adv_paths}" Theme="{StaticResource DevCaption}"/>
+    <Border Theme="{StaticResource DevCard}">
+      <StackPanel>
+        <ContentControl Theme="{StaticResource DevStatic}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr lbl_blender_path}" Theme="{StaticResource DevTitle}" Margin="0,0,0,8"/>
+            <DockPanel>
+              <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Theme="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseBlenderCmd}" Margin="10,0,0,0"/>
+              <TextBox Text="{Binding BlenderPath}"/>
+            </DockPanel>
+          </StackPanel>
+        </ContentControl>
+        <ContentControl Theme="{StaticResource DevStatic}" IsVisible="{Binding IsWindows}">
+          <StackPanel>
+            <TextBlock Text="{ui:Tr lbl_conv_path}" Theme="{StaticResource DevTitle}" Margin="0,0,0,8"/>
+            <DockPanel>
+              <Button DockPanel.Dock="Right" Content="{ui:Tr btn_browse}" Theme="{StaticResource BtnSmall}" VerticalAlignment="Top" Command="{Binding BrowseConvCmd}" Margin="10,0,0,0"/>
+              <TextBox Text="{Binding ConvPath}"/>
+            </DockPanel>
+          </StackPanel>
+        </ContentControl>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</ScrollViewer>

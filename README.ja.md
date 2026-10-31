@@ -74,7 +74,7 @@
 
 | 必要なもの | 説明 |
 | --- | --- |
-| Windows 10 / 11 | 実行に必要な .NET Framework 4.x は Windows に標準で入っています |
+| Windows 10 / 11 | .NET がプログラムに同梱されているので別途インストールは不要です（64 ビット） |
 | [Blender 2.79b](https://download.blender.org/release/Blender2.79/) | 標準の `Import-Export: DirectX X Format` アドオンが有効になっている必要があります。他のバージョン（2.8 以降）は変換に対応していません |
 | OmsiXConv (Omsi X to O3D Converter 1.0) | **このリポジトリには含まれていません。** 別途入手して `OmsiXConv.exe` の場所を指定してください |
 
@@ -174,7 +174,7 @@ OmsiXConv の `.o3d` と照らし合わせて確認した範囲では、三角�
 
 | 症状 | 確認すること |
 | --- | --- |
-| Windows が実行をブロックする・警告する | `BusDepot.exe` はコード署名がないため SmartScreen の警告が出ることがあります。`詳細情報` → `実行` を押すか、ソース（`src/`）を確認して `windows\build.bat` で自分でビルドしてください |
+| Windows が実行をブロックする・警告する | `BusDepot.exe` はコード署名がないため SmartScreen の警告が出ることがあります。`詳細情報` → `実行` を押すか、ソース（`app/`、`shared/`）を確認して `python build.py win` で自分でビルドしてください |
 | `blender.exe` 関連のエラー | 2.79b の `blender.exe` を指定したか確認してください（自動検出はしません） |
 | `E/A-Fehler 103` がときどき出る | OmsiXConv 側のエラーです。自動で最大 3 回再試行し、続く場合は同時実行数を減らしてみてください |
 | ログに `OmsiXConv のウィンドウが見つかりません` | OmsiXConv のパスが正しいか、他のプログラムがそのウィンドウを遮っていないか確認してください |
@@ -185,14 +185,15 @@ OmsiXConv の `.o3d` と照らし合わせて確認した範囲では、三角�
 
 ## 自分でビルドする
 
-`windows\build.bat` を実行すると、Windows に標準で入っている C# コンパイラー（.NET Framework 4）で `shared\Core`（変換ロジック）と `windows\App`（WPF 画面）を `BusDepot.exe` にビルドします。別途インストールするものはありません。
+Windows と macOS は同じアプリ（`app/`、[Avalonia](https://avaloniaui.net/) + .NET 8）を使います。[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) と Python 3 が必要です。
 
 ```bat
-windows\build.bat
-windows\BusDepot.exe --selftest
+python build.py win        :: Windows → dist\win\BusDepot.exe, dist\BusDepot.zip
+python build.py mac        :: macOS → dist\BusDepot-mac-arm64.zip, BusDepot-mac-x64.zip（Windows でも作れます）
+dist\win\BusDepot.exe --selftest
 ```
 
-`--selftest` は設定・文言・変換器・画面構成を自動で点検し、結果を同じフォルダーの `BusDepot_selftest.txt` に `PASS` / `FAIL` の行で残します。
+`--selftest` は設定・文言・変換器・3D・画面構成を自動で点検し、結果を `BusDepot_selftest.txt` に `PASS` / `FAIL` の行で残します。
 
 ## 免責事項
 
@@ -204,6 +205,7 @@ windows\BusDepot.exe --selftest
 
 ## 変更履歴
 
+- **v2.8.0** — 画面を作り直しました（WPF → [Avalonia](https://avaloniaui.net/) + .NET 8）。見た目と機能はそのままで、バスの 3D は OpenGL で描画します。.NET が同梱されているので別途インストールは不要ですが、zip は約 22 MB になりました。フォントは exe に内蔵されます。macOS（openOMSI）も同じコードからビルドできるようになりました（まだリリースしていません）。**既知の問題：バスのモデルとマップのタイルの読み込みが以前よりかなり遅くなっています。** 次のバージョンで修正予定です
 - **v2.7.8** — マップタブ：AI 一覧で車庫の車種（`[aigroup_depot_typgroup]`）が空のグループとして表示される問題を修正（車庫の車両として数える）。オブジェクトタブ：暗号化された o3d の .sco を開くと「ファイルが見つからない」ではなく暗号化で開けないと表示
 - **v2.7.7** — バスタブ：3D で **経路の点・座席をドラッグで移動**（自由移動、赤/緑/青の矢印で x/y/z 軸方向、`Shift` で 1 m 単位）、**モデルを隠す**（経路と座席だけ表示）、**元に戻す/やり直し**（`Ctrl+Z` / `Ctrl+Y`）、ハンドルの上では通常のカーソル。ガラス越しに車内が見えない問題を修正（透明なマテリアルを最後に描画）。README の画面を言語ごとに
 - **v2.7.6** — オブジェクトタブで **.sco を開いて表示**（テクスチャ付き 3D）、スプラインタブで **.sli を開いて表示**（長さ 40 m のまっすぐな道路として 3D、車/人の経路と方向、幅・断面・テクスチャの情報）。`.sco`/`.sli` をウィンドウにドロップしても開けます

@@ -61,3 +61,11 @@ mac/bin/
 mac/obj/
 mac/publish/
 *.app/
+
+# 지울 것 모아 두는 곳 (직접 확인하고 지움)
+useless/
+
+# build.py 결과
+dist/
+app/bin/
+app/obj/

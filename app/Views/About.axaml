@@ -1,0 +1,8 @@
+<Grid xmlns="https://github.com/avaloniaui"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="clr-namespace:Obj2x.UI">
+  <!-- 정보: 뒤쪽 그라데이션(계속 흐름)과 앞쪽 내용(움직일 때만 다시 그림)을 나눈다 -->
+  <ui:HeroBackdrop/>
+  <ui:AboutHero x:Name="Hero" IsNew="{Binding UpdIsNew}" NewVersion="{Binding UpdVersion}" UpdateValue="{Binding UpdValue}" Busy="{Binding UpdBusy}"
+                UpdateCommand="{Binding UpdateCmd}" RepoCommand="{Binding RepoCmd}" DisclaimerCommand="{Binding DisclaimerCmd}" VersionCommand="{Binding VersionTapCmd}"/>
+</Grid>

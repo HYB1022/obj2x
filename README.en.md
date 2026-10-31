@@ -74,7 +74,7 @@ The `.o3d` is created in the same folder as the `.x`, with the same name as the 
 
 | Requirement | Notes |
 | --- | --- |
-| Windows 10 / 11 | The .NET Framework 4.x it needs is built into Windows |
+| Windows 10 / 11 | .NET is included in the program, nothing else to install (64-bit) |
 | [Blender 2.79b](https://download.blender.org/release/Blender2.79/) | The bundled `Import-Export: DirectX X Format` add-on must be enabled. Other versions (2.8 and later) are not supported for conversion |
 | OmsiXConv (Omsi X to O3D Converter 1.0) | **Not included in this repository.** Get it separately and set the location of `OmsiXConv.exe` |
 
@@ -174,7 +174,7 @@ When a new version is available, an `Update` mark appears next to the `About` me
 
 | Problem | What to check |
 | --- | --- |
-| Windows blocks or warns about the program | `BusDepot.exe` is not code-signed, so SmartScreen may warn. Click `More info` → `Run anyway`, or check the source (`shared/`, `windows/`) and build it yourself with `windows\build.bat` |
+| Windows blocks or warns about the program | `BusDepot.exe` is not code-signed, so SmartScreen may warn. Click `More info` → `Run anyway`, or check the source (`app/`, `shared/`) and build it yourself with `python build.py win` |
 | Errors about `blender.exe` | Make sure you chose the `blender.exe` of 2.79b (it is not detected automatically) |
 | `E/A-Fehler 103` now and then | An OmsiXConv error. It retries up to 3 times automatically; if it keeps happening, lower the parallel count |
 | `OmsiXConv window not found` in the log | Check the OmsiXConv path and that no other program covers its window |
@@ -185,14 +185,15 @@ If something goes wrong, please open an [issue](https://github.com/HYB1022/obj2x
 
 ## Building it yourself
 
-`windows\build.bat` builds `shared\Core` (logic) and `windows\App` (WPF UI) into `BusDepot.exe` with the C# compiler that ships with Windows (.NET Framework 4). Nothing else needs to be installed.
+Windows and macOS use the same app (`app/`, [Avalonia](https://avaloniaui.net/) + .NET 8). You need the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and Python 3.
 
 ```bat
-windows\build.bat
-windows\BusDepot.exe --selftest
+python build.py win        :: Windows → dist\win\BusDepot.exe, dist\BusDepot.zip
+python build.py mac        :: macOS → dist\BusDepot-mac-arm64.zip, BusDepot-mac-x64.zip (can be built on Windows)
+dist\win\BusDepot.exe --selftest
 ```
 
-`--selftest` checks the settings, texts, converters and UI automatically and writes `PASS` / `FAIL` lines to `BusDepot_selftest.txt` in the same folder.
+`--selftest` checks the settings, strings, converter, 3D and screens automatically and writes `PASS` / `FAIL` lines to `BusDepot_selftest.txt`.
 
 ## Disclaimer
 
@@ -204,6 +205,7 @@ Blender and OmsiXConv are not included in this repository. Each program is under
 
 ## Changelog
 
+- **v2.8.0** — Rebuilt the user interface (WPF → [Avalonia](https://avaloniaui.net/) + .NET 8). It looks and works the same, and the bus 3D view is drawn with OpenGL. .NET is included, so nothing needs to be installed, but the zip is now about 22 MB. Fonts are built into the exe. macOS (openOMSI) can now be built from the same code (not released yet). **Known issue: loading bus models and map tiles is much slower than before.** This will be fixed in the next version
 - **v2.7.8** — Map tab: depot vehicle groups (`[aigroup_depot_typgroup]`) no longer show up as empty groups in the AI list (they count as the depot's vehicles). Object tab: opening a .sco made of encrypted o3d files now says so instead of "files not found"
 - **v2.7.7** — Bus tab: **drag passenger path points and seats in 3D** (free move, red/green/blue arrows for x/y/z, `Shift` for 1 m steps), **hide model** (paths and seats only), **undo/redo** (`Ctrl+Z` / `Ctrl+Y`), normal cursor over handles. Fixed interiors not showing through glass (transparent materials are drawn last). README screenshots per language
 - **v2.7.6** — **Open a .sco** in the Object tab (3D with textures) and **open a .sli** in the Spline tab (3D as a straight 40 m road, vehicle/pedestrian paths with directions, width, profile and texture info). Dropping a `.sco`/`.sli` onto the window opens it too

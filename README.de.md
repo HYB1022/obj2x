@@ -74,7 +74,7 @@ Die `.o3d` entsteht im selben Ordner wie die `.x` und heißt wie die obj (`face.
 
 | Voraussetzung | Hinweis |
 | --- | --- |
-| Windows 10 / 11 | Das benötigte .NET Framework 4.x ist in Windows enthalten |
+| Windows 10 / 11 | .NET ist im Programm enthalten, es muss nichts installiert werden (64 Bit) |
 | [Blender 2.79b](https://download.blender.org/release/Blender2.79/) | Das mitgelieferte Add-on `Import-Export: DirectX X Format` muss aktiviert sein. Andere Versionen (2.8 und neuer) werden für die Konvertierung nicht unterstützt |
 | OmsiXConv (Omsi X to O3D Converter 1.0) | **Nicht in diesem Repository enthalten.** Separat besorgen und den Ort von `OmsiXConv.exe` angeben |
 
@@ -174,7 +174,7 @@ Gibt es eine neue Version, erscheint neben dem Menü `Info` und in der Zeile `Up
 
 | Problem | Was prüfen |
 | --- | --- |
-| Windows blockiert oder warnt | `BusDepot.exe` ist nicht signiert, SmartScreen kann warnen. `Weitere Informationen` → `Trotzdem ausführen`, oder den Quellcode (`shared/`, `windows/`) prüfen und selbst mit `windows\build.bat` bauen |
+| Windows blockiert oder warnt | `BusDepot.exe` ist nicht signiert, SmartScreen kann warnen. `Weitere Informationen` → `Trotzdem ausführen`, oder den Quellcode (`app/`, `shared/`) prüfen und selbst mit `python build.py win` bauen |
 | Fehler mit `blender.exe` | Prüfe, ob die `blender.exe` von 2.79b angegeben ist (wird nicht automatisch erkannt) |
 | Gelegentlich `E/A-Fehler 103` | Ein Fehler von OmsiXConv. Es wird automatisch bis zu 3-mal wiederholt; passiert es weiter, verringere die parallele Anzahl |
 | `OmsiXConv-Fenster nicht gefunden` im Protokoll | Prüfe den OmsiXConv-Pfad und ob ein anderes Programm das Fenster verdeckt |
@@ -185,14 +185,15 @@ Bei Problemen bitte ein [Issue](https://github.com/HYB1022/obj2x/issues) mit dem
 
 ## Selbst bauen
 
-`windows\build.bat` baut `shared\Core` (Logik) und `windows\App` (WPF-Oberfläche) mit dem in Windows enthaltenen C#-Compiler (.NET Framework 4) zu `BusDepot.exe`. Sonst muss nichts installiert werden.
+Windows und macOS nutzen dieselbe App (`app/`, [Avalonia](https://avaloniaui.net/) + .NET 8). Benötigt werden das [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) und Python 3.
 
 ```bat
-windows\build.bat
-windows\BusDepot.exe --selftest
+python build.py win        :: Windows → dist\win\BusDepot.exe, dist\BusDepot.zip
+python build.py mac        :: macOS → dist\BusDepot-mac-arm64.zip, BusDepot-mac-x64.zip (geht auch unter Windows)
+dist\win\BusDepot.exe --selftest
 ```
 
-`--selftest` prüft Einstellungen, Texte, Konverter und Oberfläche automatisch und schreibt `PASS` / `FAIL`-Zeilen in `BusDepot_selftest.txt` im selben Ordner.
+`--selftest` prüft Einstellungen, Texte, Konverter, 3D und Oberfläche automatisch und schreibt `PASS`- / `FAIL`-Zeilen in `BusDepot_selftest.txt`.
 
 ## Haftungsausschluss
 
@@ -204,6 +205,7 @@ Blender und OmsiXConv sind nicht in diesem Repository enthalten. Jedes Programm 
 
 ## Änderungen
 
+- **v2.8.0** — Oberfläche neu gebaut (WPF → [Avalonia](https://avaloniaui.net/) + .NET 8). Aussehen und Funktionen bleiben gleich, die Bus-3D-Ansicht wird mit OpenGL gezeichnet. .NET ist enthalten, es muss nichts installiert werden, das Zip ist aber jetzt etwa 22 MB groß. Die Schriften stecken in der exe. macOS (openOMSI) lässt sich jetzt aus demselben Code bauen (noch nicht veröffentlicht). **Bekanntes Problem: Busmodelle und Kartenkacheln laden deutlich langsamer als vorher.** Wird in der nächsten Version behoben
 - **v2.7.8** — Tab Karte: Fahrzeuggruppen von Betriebshöfen (`[aigroup_depot_typgroup]`) erscheinen in der KI-Liste nicht mehr als leere Gruppen (sie zählen als Fahrzeuge des Betriebshofs). Tab Objekt: Eine .sco aus verschlüsselten o3d meldet das jetzt statt „Dateien nicht gefunden“
 - **v2.7.7** — Tab Bus: **Wegpunkte und Sitze in 3D ziehen** (freie Bewegung, rote/grüne/blaue Pfeile für x/y/z, `Shift` in 1-m-Schritten), **Modell ausblenden** (nur Wege und Sitze), **Rückgängig/Wiederholen** (`Strg+Z` / `Strg+Y`), normaler Mauszeiger über Griffen. Innenraum hinter Glas war unsichtbar – behoben (transparente Materialien werden zuletzt gezeichnet). README-Bilder je Sprache
 - **v2.7.6** — **.sco öffnen** im Tab Objekt (3D mit Texturen) und **.sli öffnen** im Tab Spline (3D als gerade 40-m-Straße, Fahrzeug-/Fußgängerpfade mit Richtung, Breite, Profile und Texturen). Eine `.sco`/`.sli` lässt sich auch auf das Fenster ziehen

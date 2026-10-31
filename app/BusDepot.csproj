@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Bus Depot: Windows + macOS 공용 (Avalonia 11, .NET 8). 로직은 ../shared/Core -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>BusDepot</AssemblyName>
+    <RootNamespace>Obj2x.UI</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\windows\BusDepot.ico</ApplicationIcon>
+    <RuntimeIdentifiers>win-x64;osx-arm64;osx-x64</RuntimeIdentifiers>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- Core는 C# 5 / .NET Framework 4 문법: 최신 SDK의 스타일 경고는 끈다. Windows 전용 API는 Omsi.IsWindows로 막는다 -->
+    <NoWarn>$(NoWarn);CS0618;CS0168;CS0219;CS0414;CS0649;CS8981;SYSLIB0014;CA1416;AVLN3001;IL2026;IL2057;IL2062;IL2070;IL2072;IL2075;IL2087;IL2091;IL2104;IL3000;IL3002</NoWarn>
+    <!-- exe 파일 정보의 버전은 AppInfo.Version을 따른다 -->
+    <AppInfoText>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\shared\Core\AppInfo.cs'))</AppInfoText>
+    <Version>$([System.Text.RegularExpressions.Regex]::Match($(AppInfoText), 'Version = "([0-9.]+)"').Groups[1].Value)</Version>
+    <Company>HYB1022</Company>
+    <Product>Bus Depot</Product>
+    <Description>Bus Depot - OMSI 2 model conversion and creation tool</Description>
+    <Copyright>Copyright (C) 2026 Hyunwoo Bang (HYB1022), Junyoung. GPL-3.0-or-later.</Copyright>
+  </PropertyGroup>
+
+  <!-- 배포(dotnet publish -c Release): .NET을 함께 넣은 한 파일 exe. 안 쓰는 .NET 코드는 덜어 내고(partial: 우리 코드는 그대로) 압축한다.
+       네이티브 dll(Skia, HarfBuzz, ANGLE)은 exe 옆에 둔다 (실행할 때 임시 폴더에 풀어 쓰면 백신이 오진하기 쉽다) -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <DebugType>none</DebugType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\shared\Core\*.cs" LinkBase="Core" />
+    <!-- 문구: 예전 exe와 같은 리소스 이름 (Obj2x.Lang.<코드>.json) -->
+    <EmbeddedResource Include="..\shared\lang\*.json" Exclude="..\shared\lang\_*.json" LogicalName="Obj2x.Lang.%(Filename).json" LinkBase="lang" />
+    <AvaloniaResource Include="Assets\**" />
+    <!-- 글꼴은 exe 안에 넣는다 (MiSans는 라이선스상 절대 넣지 않는다). 글꼴 라이선스 원문과 Blender 스크립트는 exe 옆에 -->
+    <AvaloniaResource Include="..\shared\fonts\*.ttf" Exclude="..\shared\fonts\MiSans*" Link="Assets\Fonts\%(Filename)%(Extension)" />
+    <None Include="..\shared\fonts\OFL.txt" Link="fonts\OFL.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\shared\BusDepot.py" Link="BusDepot.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+  </ItemGroup>
+</Project>
