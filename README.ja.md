@@ -174,7 +174,7 @@ OmsiXConv の `.o3d` と照らし合わせて確認した範囲では、三角�
 
 | 症状 | 確認すること |
 | --- | --- |
-| Windows が実行をブロックする・警告する | `BusDepot.exe` はコード署名がないため SmartScreen の警告が出ることがあります。`詳細情報` → `実行` を押すか、ソース（`src/`）を確認して `build.bat` で自分でビルドしてください |
+| Windows が実行をブロックする・警告する | `BusDepot.exe` はコード署名がないため SmartScreen の警告が出ることがあります。`詳細情報` → `実行` を押すか、ソース（`src/`）を確認して `windows\build.bat` で自分でビルドしてください |
 | `blender.exe` 関連のエラー | 2.79b の `blender.exe` を指定したか確認してください（自動検出はしません） |
 | `E/A-Fehler 103` がときどき出る | OmsiXConv 側のエラーです。自動で最大 3 回再試行し、続く場合は同時実行数を減らしてみてください |
 | ログに `OmsiXConv のウィンドウが見つかりません` | OmsiXConv のパスが正しいか、他のプログラムがそのウィンドウを遮っていないか確認してください |
@@ -185,11 +185,11 @@ OmsiXConv の `.o3d` と照らし合わせて確認した範囲では、三角�
 
 ## 自分でビルドする
 
-`build.bat` を実行すると、Windows に標準で入っている C# コンパイラー（.NET Framework 4）で `src\Core`（変換ロジック）と `src\App`（WPF 画面）を `BusDepot.exe` にビルドします。別途インストールするものはありません。
+`windows\build.bat` を実行すると、Windows に標準で入っている C# コンパイラー（.NET Framework 4）で `shared\Core`（変換ロジック）と `windows\App`（WPF 画面）を `BusDepot.exe` にビルドします。別途インストールするものはありません。
 
 ```bat
-build.bat
-BusDepot.exe --selftest
+windows\build.bat
+windows\BusDepot.exe --selftest
 ```
 
 `--selftest` は設定・文言・変換器・画面構成を自動で点検し、結果を同じフォルダーの `BusDepot_selftest.txt` に `PASS` / `FAIL` の行で残します。

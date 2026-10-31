@@ -174,7 +174,7 @@ When a new version is available, an `Update` mark appears next to the `About` me
 
 | Problem | What to check |
 | --- | --- |
-| Windows blocks or warns about the program | `BusDepot.exe` is not code-signed, so SmartScreen may warn. Click `More info` → `Run anyway`, or check the source (`src/`) and build it yourself with `build.bat` |
+| Windows blocks or warns about the program | `BusDepot.exe` is not code-signed, so SmartScreen may warn. Click `More info` → `Run anyway`, or check the source (`shared/`, `windows/`) and build it yourself with `windows\build.bat` |
 | Errors about `blender.exe` | Make sure you chose the `blender.exe` of 2.79b (it is not detected automatically) |
 | `E/A-Fehler 103` now and then | An OmsiXConv error. It retries up to 3 times automatically; if it keeps happening, lower the parallel count |
 | `OmsiXConv window not found` in the log | Check the OmsiXConv path and that no other program covers its window |
@@ -185,11 +185,11 @@ If something goes wrong, please open an [issue](https://github.com/HYB1022/obj2x
 
 ## Building it yourself
 
-`build.bat` builds `src\Core` (logic) and `src\App` (WPF UI) into `BusDepot.exe` with the C# compiler that ships with Windows (.NET Framework 4). Nothing else needs to be installed.
+`windows\build.bat` builds `shared\Core` (logic) and `windows\App` (WPF UI) into `BusDepot.exe` with the C# compiler that ships with Windows (.NET Framework 4). Nothing else needs to be installed.
 
 ```bat
-build.bat
-BusDepot.exe --selftest
+windows\build.bat
+windows\BusDepot.exe --selftest
 ```
 
 `--selftest` checks the settings, texts, converters and UI automatically and writes `PASS` / `FAIL` lines to `BusDepot_selftest.txt` in the same folder.

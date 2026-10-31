@@ -174,7 +174,7 @@ OMSI 2 文件夹会根据 Steam 安装信息自动查找。找不到时，请点
 
 | 现象 | 检查事项 |
 | --- | --- |
-| Windows 阻止运行或发出警告 | `BusDepot.exe` 没有代码签名，SmartScreen 可能会警告。点击 `更多信息` → `仍要运行`，或查看源码（`src/`）后用 `build.bat` 自行构建 |
+| Windows 阻止运行或发出警告 | `BusDepot.exe` 没有代码签名，SmartScreen 可能会警告。点击 `更多信息` → `仍要运行`，或查看源码（`src/`）后用 `windows\build.bat` 自行构建 |
 | 与 `blender.exe` 有关的错误 | 请确认指定的是 2.79b 的 `blender.exe`（不会自动检测） |
 | 偶尔出现 `E/A-Fehler 103` | 这是 OmsiXConv 的错误。会自动重试最多 3 次，若仍持续出现，请减少并行数量 |
 | 日志显示 `找不到 OmsiXConv 窗口` | 请确认 OmsiXConv 路径正确，且没有其他程序挡住其窗口 |
@@ -185,11 +185,11 @@ OMSI 2 文件夹会根据 Steam 安装信息自动查找。找不到时，请点
 
 ## 自行构建
 
-运行 `build.bat`，会用 Windows 自带的 C# 编译器（.NET Framework 4）把 `src\Core`（转换逻辑）和 `src\App`（WPF 界面）构建为 `BusDepot.exe`。无需另外安装任何东西。
+运行 `windows\build.bat`，会用 Windows 自带的 C# 编译器（.NET Framework 4）把 `shared\Core`（转换逻辑）和 `windows\App`（WPF 界面）构建为 `BusDepot.exe`。无需另外安装任何东西。
 
 ```bat
-build.bat
-BusDepot.exe --selftest
+windows\build.bat
+windows\BusDepot.exe --selftest
 ```
 
 `--selftest` 会自动检查设置、文字、转换器和界面，并把结果以 `PASS` / `FAIL` 行写入同一文件夹的 `BusDepot_selftest.txt`。

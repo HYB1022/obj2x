@@ -175,7 +175,7 @@ OmsiXConv의 `.o3d`와 대조해 검증한 범위에서는 삼각형·재질·UV
 
 | 증상 | 확인할 것 |
 | --- | --- |
-| Windows가 실행을 막거나 경고함 | `BusDepot.exe`는 코드 서명이 없어 SmartScreen 경고가 뜰 수 있습니다. `추가 정보` → `실행`을 누르거나, 소스(`src/`)를 확인하고 `build.bat`으로 직접 빌드하세요 |
+| Windows가 실행을 막거나 경고함 | `BusDepot.exe`는 코드 서명이 없어 SmartScreen 경고가 뜰 수 있습니다. `추가 정보` → `실행`을 누르거나, 소스(`shared/`, `windows/`)를 확인하고 `windows\build.bat`으로 직접 빌드하세요 |
 | `blender.exe` 관련 오류 | 2.79b의 `blender.exe`를 지정했는지 확인하세요 (자동 감지는 하지 않습니다) |
 | `E/A-Fehler 103`이 간혹 뜸 | OmsiXConv 쪽 오류입니다. 자동으로 최대 3번 재시도하고, 계속 나면 동시 실행 개수를 줄여 보세요 |
 | 로그에 `OmsiXConv 창을 못 찾음` | OmsiXConv 경로가 맞는지, 다른 프로그램이 그 창을 가로막지 않는지 확인하세요 |
@@ -186,11 +186,11 @@ OmsiXConv의 `.o3d`와 대조해 검증한 범위에서는 삼각형·재질·UV
 
 ## 직접 빌드하기
 
-`build.bat`을 실행하면 Windows에 기본 포함된 C# 컴파일러(.NET Framework 4)로 `src\Core`(변환 로직)와 `src\App`(WPF 화면)을 `BusDepot.exe`로 빌드합니다. 따로 설치할 것은 없습니다.
+`windows\build.bat`을 실행하면 Windows에 기본 포함된 C# 컴파일러(.NET Framework 4)로 `shared\Core`(변환 로직)와 `windows\App`(WPF 화면)을 `BusDepot.exe`로 빌드합니다. 따로 설치할 것은 없습니다.
 
 ```bat
-build.bat
-BusDepot.exe --selftest
+windows\build.bat
+windows\BusDepot.exe --selftest
 ```
 
 `--selftest`는 설정·문구·변환기·화면 구성을 자동으로 점검하고, 결과를 같은 폴더의 `BusDepot_selftest.txt`에 `PASS` / `FAIL` 줄로 남깁니다.
