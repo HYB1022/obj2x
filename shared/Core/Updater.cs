@@ -57,6 +57,7 @@ public static class Updater {
     // exePath는 지금 실행 중인 exe, here는 그 폴더.
     public static string Install(UpdateInfo u, string here, string exePath) {
         if (u == null || !u.ZipUrl.StartsWith("https://")) return "no zip";
+        PreloadAssemblies();
         string tmp = Path.Combine(Path.GetTempPath(), "BusDepot_upd_" + Guid.NewGuid().ToString("N"));
         try {
             Directory.CreateDirectory(tmp);
@@ -82,6 +83,25 @@ public static class Updater {
         } finally {
             try { Directory.Delete(tmp, true); } catch (Exception) { }
         }
+    }
+
+    // 한 파일 exe(.NET 8)는 필요한 dll을 처음 쓸 때 exe 안에서 꺼낸다. 설치하며 exe를 새 버전으로 바꾸면
+    // 그 뒤로는 꺼낼 수 없어서 새 버전을 띄우는 코드(Process 등)가 FileNotFoundException으로 죽었다 (v2.8.0 → v2.8.1).
+    // 그래서 바꾸기 전에 앱이 참조하는 어셈블리를 모두 메모리에 올려 둔다.
+    static void PreloadAssemblies() {
+        try {
+            System.Reflection.Assembly entry = System.Reflection.Assembly.GetEntryAssembly();
+            if (entry == null) return;
+            System.Collections.Generic.Queue<System.Reflection.Assembly> todo = new System.Collections.Generic.Queue<System.Reflection.Assembly>();
+            System.Collections.Generic.HashSet<string> seen = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            todo.Enqueue(entry); seen.Add(entry.FullName);
+            while (todo.Count > 0) {
+                foreach (System.Reflection.AssemblyName n in todo.Dequeue().GetReferencedAssemblies()) {
+                    if (!seen.Add(n.FullName)) continue;
+                    try { todo.Enqueue(System.Reflection.Assembly.Load(n)); } catch (Exception) { }
+                }
+            }
+        } catch (Exception) { }
     }
 
     // 풀어 놓은 새 버전(root)을 설치 폴더(here)에 넣는다

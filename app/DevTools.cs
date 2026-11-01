@@ -28,8 +28,23 @@ public static class DevTools {
             case "--view-shot": return A(2) != null ? Shots.ViewShot(A(1), A(2), A(3) ?? "light", A(4) ?? "ext") : -1;
             case "--welcome-frames": return A(1) != null ? Shots.WelcomeFrames(A(1), A(2) ?? "light", A(3) ?? "ko") : -1;
             case "--fonttest": return A(1) != null ? FontTest(A(1)) : -1;
+            // --update-test <로그>: 앱 안의 업데이트와 똑같이 최신 릴리스를 이 exe 폴더에 깔고 새 exe를 다시 띄운다 (버전이 같아도). 복사한 폴더에서만 쓴다
+            case "--update-test": return A(1) != null ? UpdateTest(A(1)) : -1;
+            case "--update-test-ran": if (A(1) == null) return -1; File.AppendAllText(A(1), "restarted v" + AppInfo.Version + "\r\n"); return 0;
         }
         return -1;
+    }
+
+    static int UpdateTest(string log) {
+        string exe = Environment.ProcessPath, here = Path.GetDirectoryName(exe);
+        File.WriteAllText(log, "from v" + AppInfo.Version + "\r\n");
+        UpdateInfo u = Updater.Latest();
+        if (u == null) { File.AppendAllText(log, "no release\r\n"); return 1; }
+        string err = Updater.Install(u, here, exe);
+        File.AppendAllText(log, "install " + (err ?? "ok") + "\r\n");
+        try { MainViewModel.Restart(exe, "--update-test-ran \"" + log + "\""); File.AppendAllText(log, "start ok\r\n"); }
+        catch (Exception ex) { File.AppendAllText(log, "start failed: " + ex.GetType().Name + " " + ex.Message + "\r\n"); }
+        return 0;
     }
 
     // 글꼴이 실제로 무엇으로 잡히는지 (보통/굵게)

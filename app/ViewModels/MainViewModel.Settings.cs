@@ -155,6 +155,12 @@ public partial class MainViewModel {
     public void FakeUpdate(string ver) { upd = new UpdateInfo(); upd.Version = ver; updText = "upd_link_new"; RaiseUpdate(); }
 
     void Install() { if (upd != null) Install(upd); }
+    // 새 버전 띄우기. 따로 둔 메서드라 여기서 실패해도(아래 참고) 부른 쪽의 try가 잡는다
+    public static void Restart(string exe, string args) {
+        ProcessStartInfo psi = new ProcessStartInfo(exe, args); psi.UseShellExecute = false; psi.WorkingDirectory = Path.GetDirectoryName(exe);
+        Process.Start(psi);
+    }
+
     void Install(UpdateInfo u) {
         if (updInstalling || u == null) return;
         if (running) { ui.Msg(L.T("upd_busy")); return; }
@@ -174,7 +180,7 @@ public partial class MainViewModel {
                     return;
                 }
                 Say(L.T("upd_installed"));
-                try { Process.Start(exe); } catch (Exception) { }
+                try { Restart(exe, ""); } catch (Exception ex) { ui.Msg(L.T("upd_error", ex.Message)); return; }
                 ui.Exit();
             });
         });
