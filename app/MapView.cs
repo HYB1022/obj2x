@@ -137,6 +137,16 @@ public class MapCanvas : Drawn {
         dc.DrawText(Art.Ft(lab, 11, false, Look.Text), new Point(bx, by - 18));
     }
 
+    // 개발용(--map-shot): 조금씩 옮기며 n번 그려서 한 번 그리는 데 드는 평균 밀리초 (끌어서 옮길 때의 부드러움)
+    public double BenchRender(int n) {
+        int w = Math.Max(1, (int)W), h = Math.Max(1, (int)H);
+        using var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize(w, h));
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        for (int i = 0; i < n; i++) { cx += 3 / scale; using (DrawingContext dc = rtb.CreateDrawingContext()) Render(dc); }
+        return sw.Elapsed.TotalMilliseconds / n;
+    }
+    public void ZoomBy(double k) { scale *= k; InvalidateVisual(); }
+
     static void Box(StreamGeometryContext c, double x, double y, double w, double h) {
         c.BeginFigure(new Point(x, y), true);
         c.LineTo(new Point(x + w, y)); c.LineTo(new Point(x + w, y + h)); c.LineTo(new Point(x, y + h));

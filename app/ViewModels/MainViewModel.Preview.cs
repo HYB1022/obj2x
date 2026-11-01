@@ -57,15 +57,17 @@ public partial class MainViewModel {
         Raise("ScoPathText", "ScoScene", "ScoEmpty", "ScoBusy", "ScoStatus");
         Cmd.Requery();
         Thread th = new Thread(delegate() {
-            List<PartItem> items = new List<PartItem>();
             List<string> missing = new List<string>();
             Dictionary<string, Material> cache = new Dictionary<string, Material>();
-            foreach (CfgMesh m in cfg.Meshes) {
-                if (gen != scoGen) return;
-                PartItem it = ModelScene.Build(cfg, m, cache, missing, false);
-                it.Checked = it.Model != null && cfg.DefaultOn(m);
-                items.Add(it);
-            }
+            PartItem[] arr = new PartItem[cfg.Meshes.Count];   // 여러 코어로 함께 읽는다 (버스 탭과 같이)
+            System.Threading.Tasks.Parallel.For(0, arr.Length, (i, st) => {
+                if (gen != scoGen) { st.Stop(); return; }
+                arr[i] = ModelScene.Build(cfg, cfg.Meshes[i], cache, missing, false);
+            });
+            if (gen != scoGen) return;
+            List<PartItem> items = new List<PartItem>(arr);
+            for (int i = 0; i < items.Count; i++) items[i].Checked = items[i].Model != null && cfg.DefaultOn(cfg.Meshes[i]);
+            ModelScene.LoadTextures(cache.Values, delegate { return gen != scoGen; });
             ui.Post(delegate {
                 if (gen != scoGen) return;
                 scoBusy = false;

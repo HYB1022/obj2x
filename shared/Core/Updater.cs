@@ -90,7 +90,7 @@ public static class Updater {
         foreach (string f in Directory.GetFiles(root)) {
             string name = Path.GetFileName(f), cur = Path.Combine(here, name), ext = Path.GetExtension(name).ToLowerInvariant();
             if (ext != ".exe" && ext != ".dll") continue;
-            // obj2x.exe 런처는 바로 끝나서 잠겨 있지 않다. 비켜 두면 아래 CopyTree가 '없던 파일'로 보고 건너뛴다
+            // obj2x.exe 런처는 v2.8.1부터 설치하지 않는다 (CopyTree가 건너뛰고, 시작할 때 CleanupObj2x가 지운다)
             if (string.Equals(name, "obj2x.exe", StringComparison.OrdinalIgnoreCase)) continue;
             if (!File.Exists(cur) || SameFile(f, cur)) continue;
             string old = cur + ".old";
@@ -102,11 +102,6 @@ public static class Updater {
 
     // 지난 업데이트가 남긴 *.exe.old / *.dll.old 지우기 (시작할 때)
     public static void CleanupOld(string exePath) {
-        // v2.8.0의 업데이터는 obj2x.exe 런처를 .old로 비켜 둔 채 새 것을 넣지 않았다: 런처가 없으면 되살린다 (바로 가기용)
-        try {
-            string dir = Path.GetDirectoryName(exePath), l = Path.Combine(dir, "obj2x.exe");
-            if (!File.Exists(l) && File.Exists(l + ".old")) File.Move(l + ".old", l);
-        } catch (Exception) { }
         try { string old = exePath + ".old"; if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
         try {
             foreach (string old in Directory.GetFiles(Path.GetDirectoryName(exePath), "*.old")) {
@@ -118,8 +113,10 @@ public static class Updater {
         try { string old = Path.Combine(Path.GetDirectoryName(exePath), "obj2x.exe.old"); if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
     }
 
-    // obj2x(v2.7.2 이하)에서 올라온 뒤 남은 파일 정리: 설정은 BusDepot.ini로 옮긴 다음이고, 예전 바로 가기용 obj2x.exe(런처)만 남긴다
-    static readonly string[] Obj2xLeftovers = { "obj2x.ini", "obj2x.bat", "obj2x_gui.ps1", "obj2x.py", "obj2x_selftest.txt", "obj2x_fps.txt" };
+    // obj2x에서 쓰던 파일을 모두 지운다 (v2.8.1부터 이름은 Bus Depot 하나). 설정은 BusDepot.ini로 옮긴 다음이다.
+    // obj2x.exe 런처도 지운다: 예전 업데이터(v2.7.3~v2.8.0)가 릴리스 zip의 obj2x.exe를 다시 깔아도 다음 시작 때 지워진다.
+    // (릴리스 zip에는 v2.7.2 이하의 업데이터가 찾을 수 있게 obj2x.exe·obj2x.bat·obj2x_gui.ps1을 계속 넣는다)
+    static readonly string[] Obj2xLeftovers = { "obj2x.exe", "obj2x.exe.old", "obj2x.ini", "obj2x.bat", "obj2x_gui.ps1", "obj2x.py", "obj2x_selftest.txt", "obj2x_fps.txt" };
     public static void CleanupObj2x(string here) {
         if (!File.Exists(Path.Combine(here, AppInfo.Exe + ".exe"))) return;    // 개발 폴더 등 BusDepot.exe 옆이 아니면 건드리지 않는다
         if (File.Exists(Path.Combine(here, "obj2x.ini")) && !File.Exists(Path.Combine(here, AppInfo.Exe + ".ini"))) return;   // 아직 못 옮겼으면 남긴다
@@ -134,9 +131,9 @@ public static class Updater {
         foreach (string f in Directory.GetFiles(src)) {
             string name = Path.GetFileName(f);
             if (string.Equals(name, "obj2x.ini", StringComparison.OrdinalIgnoreCase) || string.Equals(name, AppInfo.Exe + ".ini", StringComparison.OrdinalIgnoreCase)) continue;
-            // 예전 버전 업데이터용 파일(zip 최상위)은 새 업데이터가 설치할 때는 다시 깔지 않는다. obj2x.exe 런처는 이미 있을 때(바로 가기용)만 바꾼다
-            if (top && (string.Equals(name, "obj2x.bat", StringComparison.OrdinalIgnoreCase) || string.Equals(name, "obj2x_gui.ps1", StringComparison.OrdinalIgnoreCase))) continue;
-            if (top && string.Equals(name, "obj2x.exe", StringComparison.OrdinalIgnoreCase) && !File.Exists(Path.Combine(dst, name))) continue;
+            // 예전 버전 업데이터용 파일(zip 최상위: obj2x.exe 런처, obj2x.bat, obj2x_gui.ps1)은 새 업데이터가 설치할 때는 깔지 않는다
+            if (top && (string.Equals(name, "obj2x.exe", StringComparison.OrdinalIgnoreCase) || string.Equals(name, "obj2x.bat", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(name, "obj2x_gui.ps1", StringComparison.OrdinalIgnoreCase))) continue;
             string to = Path.Combine(dst, name);
             if (SameFile(f, to)) continue;
             try { File.Copy(f, to, true); }

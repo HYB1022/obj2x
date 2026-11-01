@@ -121,16 +121,24 @@ public partial class MainViewModel {
         Raise("ViewPath", "ViewScene", "ViewEmpty", "ViewBusy", "ViewStatus");
         Cmd.Requery();
         Thread th = new Thread(delegate() {
-            List<PartItem> items = new List<PartItem>();
             List<string> missing = new List<string>();
             Dictionary<string, Material> cache = new Dictionary<string, Material>();
-            for (int i = 0; i < cfg.Meshes.Count; i++) {
-                if (gen != loadGen) return;
-                PartItem it = ModelScene.Build(cfg, cfg.Meshes[i], cache, missing, both);
-                it.Checked = it.Model != null && cfg.DefaultOn(cfg.Meshes[i]);
-                items.Add(it);
-                if (i % 8 == 0) { int n = i; ui.Post(delegate { if (gen == loadGen) { viewStatus = L.T("view_loading", n, cfg.Meshes.Count); Raise("ViewStatus"); } }); }
-            }
+            // 부품을 여러 코어로 함께 읽는다 (o3d 읽기·텍스처 풀기가 대부분). 순서는 cfg 순서 그대로
+            PartItem[] arr = new PartItem[cfg.Meshes.Count];
+            int done = 0; long lastPost = 0;
+            System.Threading.Tasks.Parallel.For(0, arr.Length, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount) }, (i, st) => {
+                if (gen != loadGen) { st.Stop(); return; }
+                arr[i] = ModelScene.Build(cfg, cfg.Meshes[i], cache, missing, both);
+                int n = Interlocked.Increment(ref done);
+                // 진행 표시는 0.1초에 한 번만 (화면 스레드를 깨우는 횟수를 줄인다)
+                long now = Environment.TickCount64, prev = Interlocked.Read(ref lastPost);
+                if (now - prev >= 100 && Interlocked.CompareExchange(ref lastPost, now, prev) == prev)
+                    ui.Post(delegate { if (gen == loadGen) { viewStatus = L.T("view_loading", n, cfg.Meshes.Count); Raise("ViewStatus"); } });
+            });
+            if (gen != loadGen) return;
+            List<PartItem> items = new List<PartItem>(arr);
+            for (int i = 0; i < items.Count; i++) items[i].Checked = items[i].Model != null && cfg.DefaultOn(cfg.Meshes[i]);
+            ModelScene.LoadTextures(cache.Values, delegate { return gen != loadGen; });
             HideStrays(items);
             ui.Post(delegate {
                 if (gen != loadGen) return;

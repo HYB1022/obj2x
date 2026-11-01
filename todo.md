@@ -5,16 +5,11 @@ v2.8.0부터 Windows와 맥이 같은 앱(`app/`, Avalonia 11 + .NET 8)을 쓴�
 
 ## Windows
 
-- [ ] **다음 릴리스(v2.8.1)에 꼭 들어갈 것: 업데이터 고침** (이미 main에 있음). v2.8.0의 업데이터는 다음 업데이트 때 obj2x.exe 런처를 `obj2x.exe.old`로 비켜 두고 새 것을 넣지 않는다 → 새 버전이 시작할 때 되살린다(`Updater.CleanupOld`). v2.8.0 → 새 버전 업데이트를 실제로 시험해 볼 것
-- [ ] **버스 모델·맵 타일 불러오기가 v2.7.8(WPF)보다 많이 느림** (v2.8.0 알려진 문제로 README에 적음)
-  - 먼저 잴 것: `--view-shot <bus> <png>`, `--map-shot <맵> <png>`(txt에 load 시간이 남는다)로 v2.7.8과 비교. Debug 빌드가 아니라 `dist/win` 배포 exe로 잰다
-  - 의심 가는 곳
-    - `Observable.Raise`가 바뀔 때마다 `Cmd.Requery()`를 부름 → 읽는 동안 상태 글자가 자주 바뀌면 버튼 CanExecute를 계속 다시 물음
-    - 다른 스레드에서 `ui.Post`로 상태를 너무 자주 보냄 (`map_loading`, `view_loading`)
-    - 텍스처 읽기 `TexLoad.Decode`(Avalonia Bitmap → WriteableBitmap 복사), `Half`(1024 넘으면 절반 줄이기)가 관리 코드라 느림
-    - `ModelScene.Build`의 `List<float>` → 배열 복사, OpenGL로 처음 올릴 때(`GlSurface.Upload`) 한꺼번에
-    - `Omsi.Ansi`(.NET 8의 코드 페이지 공급자)로 cfg/map 읽기
-    - 트리밍한 한 파일 exe가 처음 쓰는 코드를 JIT하는 시간 (ReadyToRun을 켜 보면 비교 가능, 대신 exe가 커짐)
+- [x] v2.8.1(릴리스 전): 업데이터 고침, obj2x 파일 모두 지우기, 버스 모델 열기 빠르게(부품 병렬 + 텍스처는 뒤에서, ReadyToRun)
+  - [ ] 릴리스하면 v2.8.0 → v2.8.1 자동 업데이트를 실제로 시험 (v2.8.0 업데이터는 obj2x.exe를 .old로 남기는데 v2.8.1이 시작하며 지운다)
+  - [ ] 텍스처를 뒤에서 푸는 동안 화면을 계속 다시 그리면 DispatcherTimer(WM_TIMER)가 밀린다. 0.5~1초 정도라 그대로 뒀음 (스크린샷 도구의 '모델 보임' 시간이 늦게 찍히는 이유)
+  - [x] 맵이 느렸던 원인: v2.8.0 exe에 미리 컴파일(ReadyToRun)이 없어서 처음 도는 읽기 코드가 느렸음 (안락문산: v2.8.0 2.9~5.4초·화면 멈춤 최대 2.2초 → v2.8.1 0.7~1.0초). `--map-shot` txt에 한 번 그리는 시간(frame full/zoom8)도 남긴다
+  - ReadyToRun으로 zip이 22 MB → 33 MB. 속도의 주된 원인이라 끄지 말 것
 - [ ] 3D에서 실제 마우스로 확인: 돌리기/옮기기/휠, 부품 누르기, 사람 길 점·좌석 끌기(Shift 1 m), 축 화살표, 손잡이 위 커서, `Ctrl+Z`/`Ctrl+Y`
 - [ ] 작업 표시줄 단추의 변환 진행률 (WPF의 TaskbarItemInfo가 Avalonia에는 없음 → `ITaskbarList3` COM으로 직접)
 - [ ] 화면 배율이 125%/150%인 모니터에서 글자·3D 선명도, 창 크기 배율(1.0~1.3배) 확인

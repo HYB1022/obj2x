@@ -191,7 +191,7 @@ public static class Video {
     static void ViewerScene(MainWindow f, string sd, int n, string model) {
         f.VM.Page = "bus";
         f.VM.LoadModel(model);
-        for (int i = 0; i < 600 && f.VM.ViewBusy; i++) Pump.Run(50);
+        for (int i = 0; i < 600 && (f.VM.ViewBusy || ModelScene.Pending > 0); i++) Pump.Run(50);
         Pump.Run(300);
         ModelView mv = null;
         foreach (ModelView m in FindAll<ModelView>(f.Host)) if (m.IsEffectivelyVisible) mv = m;

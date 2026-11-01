@@ -339,7 +339,7 @@ public static class SelfTest {
         string up = Path.Combine(root, "upgraded"); Directory.CreateDirectory(Path.Combine(up, "obj2x_backup"));
         foreach (string n in new string[] { "BusDepot.exe", "BusDepot.ini", "obj2x.exe", "obj2x.ini", "obj2x.bat", "obj2x_gui.ps1", "obj2x.py" }) File.WriteAllText(Path.Combine(up, n), "");
         Updater.CleanupObj2x(up);
-        T("업데이트: obj2x에서 올라온 찌꺼기 정리 (obj2x.exe 런처와 BusDepot 파일은 남김)", File.Exists(Path.Combine(up, "obj2x.exe")) && File.Exists(Path.Combine(up, "BusDepot.ini")) && !File.Exists(Path.Combine(up, "obj2x.ini"))
+        T("업데이트: obj2x 파일 모두 지우기 (obj2x.exe 런처 포함, BusDepot 파일은 남김)", !File.Exists(Path.Combine(up, "obj2x.exe")) && File.Exists(Path.Combine(up, "BusDepot.exe")) && File.Exists(Path.Combine(up, "BusDepot.ini")) && !File.Exists(Path.Combine(up, "obj2x.ini"))
             && !File.Exists(Path.Combine(up, "obj2x.bat")) && !File.Exists(Path.Combine(up, "obj2x_gui.ps1")) && !File.Exists(Path.Combine(up, "obj2x.py")) && !Directory.Exists(Path.Combine(up, "obj2x_backup")), "");
         // 업데이트 설치: 바뀐 exe/dll은 .old로 비켜 두고 새 것을 넣는다. obj2x.exe 런처도 새 것으로, 설정과 예전 업데이터용 파일은 건드리지 않는다
         {
@@ -352,14 +352,14 @@ public static class SelfTest {
             File.WriteAllText(Path.Combine(ur, "BusDepot.ini"), "X"); File.WriteAllText(Path.Combine(ur, "obj2x.bat"), "bat");
             Updater.Apply(ur, uh);
             string R(string n) => File.Exists(Path.Combine(uh, n)) ? File.ReadAllText(Path.Combine(uh, n)) : null;
-            bool applied = R("BusDepot.exe") == "B" && R("BusDepot.exe.old") == "A" && R("obj2x.exe") == "L2" && R("obj2x.exe.old") == null
+            bool applied = R("BusDepot.exe") == "B" && R("BusDepot.exe.old") == "A" && R("obj2x.exe") == "L1" && R("obj2x.exe.old") == null
                 && R("libSkiaSharp.dll.old") == null && R("new.dll") == "N" && R("BusDepot.ini") == "ini" && R("obj2x.bat") == null;
             Updater.CleanupOld(Path.Combine(uh, "BusDepot.exe"));
             bool cleaned = R("BusDepot.exe.old") == null;
-            // v2.8.0 업데이터가 남긴 모양: 런처가 .old로만 있으면 되살린다
-            File.Move(Path.Combine(uh, "obj2x.exe"), Path.Combine(uh, "obj2x.exe.old"));
-            Updater.CleanupOld(Path.Combine(uh, "BusDepot.exe"));
-            T("업데이트: 설치 (exe/dll 교체, obj2x.exe 런처 유지, 설정은 그대로, 다음 시작 때 .old 정리, 사라진 런처 되살리기)", applied && cleaned && R("obj2x.exe") == "L2" && R("obj2x.exe.old") == null,
+            // 시작할 때: obj2x 파일은 모두 지운다 (v2.8.0 업데이터가 남긴 obj2x.exe.old 포함)
+            File.WriteAllText(Path.Combine(uh, "obj2x.exe.old"), "old");
+            Updater.CleanupObj2x(uh);
+            T("업데이트: 설치 (exe/dll 교체, obj2x 런처는 새로 깔지 않음, 설정은 그대로, 다음 시작 때 .old와 obj2x 파일 정리)", applied && cleaned && R("obj2x.exe") == null && R("obj2x.exe.old") == null && R("BusDepot.exe") == "B",
                 string.Join(",", Directory.GetFiles(uh).Select(Path.GetFileName)));
         }
 
@@ -496,12 +496,12 @@ public static class SelfTest {
             T("끌어다 놓기: o3d → 오브젝트 만들기 + 모델 목록", f.VM.Page == "object" && f.VM.ObjModels == md && f.VM.Models.Count == 4 && f.VM.ObjFolder == "models",
                 f.VM.Page + " " + f.VM.Models.Count + " " + f.VM.ObjFolder);
             // 끌어다 놓기: .sco → 오브젝트 탭에서 3D, .sli → 스플라인 탭에서 3D (차/사람 길 덧그림)
-            f.VM.DropPath(sr2.Sco[0]); for (int w = 0; w < 200 && f.VM.ScoBusy; w++) Pump.Run(30);
+            f.VM.DropPath(sr2.Sco[0]); for (int w = 0; w < 200 && (f.VM.ScoBusy || ModelScene.Pending > 0); w++) Pump.Run(30);
             T("오브젝트 탭: .sco 열어 3D로 보기", f.VM.Page == "object" && f.VM.ScoParts.Count > 0 && f.VM.ScoParts[0].Model != null && !f.VM.ScoEmpty && f.VM.ScoStatus.Length > 0,
                 f.VM.Page + " " + f.VM.ScoParts.Count + " " + f.VM.ScoStatus);
             f.VM.DropPath(sf); Pump.Run(60);
             // 버스 탭: 사람 길 점 / 좌석을 3D에서 끌어 옮기기 (자유 이동, Shift = 1 m 단위)
-            f.VM.LoadModel(Path.Combine(vb, "a.bus")); for (int w = 0; w < 200 && f.VM.ViewBusy; w++) Pump.Run(30);
+            f.VM.LoadModel(Path.Combine(vb, "a.bus")); for (int w = 0; w < 200 && (f.VM.ViewBusy || ModelScene.Pending > 0); w++) Pump.Run(30);
             f.VM.GizmoMove(new GizmoDrag { Handle = "p:0", Start = true });
             f.VM.GizmoMove(new GizmoDrag { Handle = "p:0", Delta = new Vector3D(0.4, 0.3, -1.2) });
             f.VM.GizmoMove(new GizmoDrag { Handle = "p:0", Delta = new Vector3D(0.4, 0.3, -1.2), Done = true });
@@ -541,7 +541,7 @@ public static class SelfTest {
             T("스플라인 화면: 숫자가 아니면 이전 값 유지, 입력은 그대로", Math.Abs(f.VM.SplSpec.LaneW - 3.5) < 1e-9 && f.VM.SplLaneW == "abc", f.VM.SplLaneW);
             // 모델 보기: 다른 스레드에서 읽은 부품이 3D 화면에 보이고, 묶음을 바꾸면 켜진 부품이 바뀐다
             f.VM.DropPath(Path.Combine(bm2, "model.cfg")); Pump.Run(60);
-            for (int i = 0; i < 200 && f.VM.ViewBusy; i++) Pump.Run(30);
+            for (int i = 0; i < 200 && (f.VM.ViewBusy || ModelScene.Pending > 0); i++) Pump.Run(30);
             Pump.Run(100);
             ModelView mv3 = FindAll<ModelView>(f.Host).Find(delegate(ModelView q) { return Vis(q); });
             int onParts = 0; foreach (PartItem pi in f.VM.Parts) if (pi.Checked) onParts++;

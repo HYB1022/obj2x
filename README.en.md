@@ -35,7 +35,7 @@
 </p>
 
 > [!NOTE]
-> **Since v2.7.3 the name changed from obj2x to Bus Depot.** The program is `BusDepot.exe` and the settings file is `BusDepot.ini`. Your old settings (`obj2x.ini`) are carried over on first start, and older versions still update automatically. Leftover old files are cleaned up; the `obj2x.exe` launcher stays so old shortcuts keep working.
+> **Since v2.7.3 the name changed from obj2x to Bus Depot.** The program is `BusDepot.exe` and the settings file is `BusDepot.ini`. Your old settings (`obj2x.ini`) are carried over on first start, and older versions still update automatically. Since v2.8.1 all old-name files, including the `obj2x.exe` launcher, are removed.
 
 Instead of opening files one by one, setting options and pressing Convert, **just pick a folder** and it does the rest.
 
@@ -205,6 +205,7 @@ Blender and OmsiXConv are not included in this repository. Each program is under
 
 ## Changelog
 
+- **v2.8.1** — **Bus models open much faster**: parts are read on several cores, and textures are filled in in the background after the model is shown (test bus: 6–7 s → about 1 s, about 1.5 s with textures). Large textures use a smaller dds mipmap or are scaled while decoding. **Maps load faster too** (Anrak&Munsan: 3–5 s → about 1 s, no more freezing while loading). The program also starts faster (precompiled — the main reason v2.8.0 was slow). **All obj2x files are removed**: the `obj2x.exe` launcher, `obj2x.bat`, `obj2x.ini` and other old-name files are deleted and only Bus Depot remains (if a shortcut points to `obj2x.exe`, recreate it for `BusDepot.exe`). Fixed the auto-update dropping the launcher
 - **v2.8.0** — Rebuilt the user interface (WPF → [Avalonia](https://avaloniaui.net/) + .NET 8). It looks and works the same, and the bus 3D view is drawn with OpenGL. .NET is included, so nothing needs to be installed, but the zip is now about 22 MB. Fonts are built into the exe. macOS (openOMSI) can now be built from the same code (not released yet). **Known issue: loading bus models and map tiles is much slower than before.** This will be fixed in the next version
 - **v2.7.8** — Map tab: depot vehicle groups (`[aigroup_depot_typgroup]`) no longer show up as empty groups in the AI list (they count as the depot's vehicles). Object tab: opening a .sco made of encrypted o3d files now says so instead of "files not found"
 - **v2.7.7** — Bus tab: **drag passenger path points and seats in 3D** (free move, red/green/blue arrows for x/y/z, `Shift` for 1 m steps), **hide model** (paths and seats only), **undo/redo** (`Ctrl+Z` / `Ctrl+Y`), normal cursor over handles. Fixed interiors not showing through glass (transparent materials are drawn last). README screenshots per language

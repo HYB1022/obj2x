@@ -235,7 +235,7 @@ public static class Shots {
         // 버스: 앞문을 연 모습, 애니메이션 칸, 길·좌석 편집
         f.VM.Page = "bus"; Pump.Run(100);
         f.VM.LoadModel(bus);
-        for (int i = 0; i < 400 && f.VM.ViewBusy; i++) Pump.Run(50);
+        for (int i = 0; i < 400 && (f.VM.ViewBusy || ModelScene.Pending > 0); i++) Pump.Run(50);
         foreach (VarItem v in f.VM.Vars) v.Value = v.Max;
         Pump.Run(200);
         ModelView mv = Visible<ModelView>(f);
@@ -266,7 +266,7 @@ public static class Shots {
         string sco = Video.CafeShelter(Path.Combine(work, "Shelter"));
         if (File.Exists(sco)) {
             f.VM.DropPath(sco);
-            for (int i = 0; i < 400 && f.VM.ScoBusy; i++) Pump.Run(50);
+            for (int i = 0; i < 400 && (f.VM.ScoBusy || ModelScene.Pending > 0); i++) Pump.Run(50);
             Pump.Run(300);
             Save(f, P("10_object"));
         }
@@ -284,7 +284,7 @@ public static class Shots {
         MainWindow g = Open(s, work);
         g.VM.Page = "bus"; Pump.Run(100);
         g.VM.LoadModel(bus);
-        for (int i = 0; i < 400 && g.VM.ViewBusy; i++) Pump.Run(50);
+        for (int i = 0; i < 400 && (g.VM.ViewBusy || ModelScene.Pending > 0); i++) Pump.Run(50);
         foreach (VarItem v in g.VM.Vars) v.Value = v.Max * 0.6;
         Pump.Run(200);
         ModelView gm = Visible<ModelView>(g); gm?.Orbit(125, 10, 0.75);
@@ -320,6 +320,11 @@ public static class Shots {
         timing += string.Format(", render {0:0}ms", sw.Elapsed.TotalMilliseconds - t0);
         ScrollViewer sv = PageScroll(f);
         if (sv != null) for (int k = 1; k <= 5; k++) { sv.Offset = new Vector(0, k * 640); Pump.Run(100); Save(f, Path.Combine(dir, Path.GetFileNameWithoutExtension(png) + "_" + k + ".png")); }
+        MapCanvas mc = f.Host.GetVisualDescendants().OfType<MapCanvas>().FirstOrDefault();
+        if (mc != null) {   // 끌어서 옮길 때 한 번 그리는 데 드는 시간 (전체 보기 / 8배 확대)
+            timing += string.Format(", frame full {0:0.0}ms", mc.BenchRender(20));
+            mc.ZoomBy(8); timing += string.Format(", frame zoom8 {0:0.0}ms", mc.BenchRender(20));
+        }
         File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.MapStats + "\r\n" + f.VM.MissingText + "\r\n" + timing, new UTF8Encoding(true));
         f.Close();
         return 0;
@@ -335,7 +340,7 @@ public static class Shots {
         string ext = Path.GetExtension(cfg).ToLowerInvariant();
         if (ext == ".sli" || ext == ".sco" && preset == "obj") {
             f.VM.DropPath(cfg);
-            for (int i = 0; i < 600 && f.VM.ScoBusy; i++) Pump.Run(50);
+            for (int i = 0; i < 600 && (f.VM.ScoBusy || ModelScene.Pending > 0); i++) Pump.Run(50);
             Pump.Run(400);
             ScrollTo(f, Visible<ModelView>(f), 12);
             Save(f, png);
@@ -344,9 +349,14 @@ public static class Shots {
             return 0;
         }
         f.VM.Page = "bus"; Pump.Run(100);
+        System.Diagnostics.Stopwatch lsw = System.Diagnostics.Stopwatch.StartNew();
         f.VM.LoadModel(cfg);
-        for (int i = 0; i < 600 && f.VM.ViewBusy; i++) Pump.Run(50);
+        for (int i = 0; i < 6000 && f.VM.ViewBusy; i++) Pump.Run(5);
+        double modelSec = lsw.Elapsed.TotalSeconds;            // 모델이 화면에 나온 때
+        for (int i = 0; i < 6000 && ModelScene.Pending > 0; i++) Pump.Run(5);
+        double loadSec = lsw.Elapsed.TotalSeconds;             // 텍스처까지 다 풀린 때
         ModelView mv = Visible<ModelView>(f);
+        lsw.Restart(); mv?.Snapshot(64, 64); double firstFrame = lsw.Elapsed.TotalSeconds;   // 처음 그릴 때 GPU로 올리는 시간
         // pose: 변수를 85%로 놓고 첫 번째 움직이는 부품을 골라 피벗까지 보이게 + 아래 카드들도 찍는다
         if (preset == "pose") {
             foreach (VarItem v in f.VM.Vars) v.Value = v.Min + (v.Max - v.Min) * 0.85;
@@ -371,7 +381,8 @@ public static class Shots {
         List<string> pn = new(); if (f.VM.Paints != null) foreach (TrItem p in f.VM.Paints) pn.Add(p.Name);
         StringBuilder parts = new StringBuilder();
         foreach (PartItem p in f.VM.Parts) parts.Append(p.Checked ? "[on]  " : "[off] ").Append(p.Name).Append("  ").Append(p.Sub).Append("\r\n");
-        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.ViewStatus + "\r\n" + string.Join(", ", pn) + "\r\n" + "gl: " + (mv?.RendererInfo ?? "-") + "\r\n" + parts, new UTF8Encoding(true));
+        File.WriteAllText(Path.ChangeExtension(png, ".txt"), f.VM.ViewStatus + "\r\n" + string.Join(", ", pn) + "\r\n" + "gl: " + (mv?.RendererInfo ?? "-") + "\r\n"
+            + string.Format(CultureInfo.InvariantCulture, "model shown {2:0.00}s, textures done {0:0.00}s, first frame {1:0.00}s", loadSec, firstFrame, modelSec) + "\r\n" + Prof.Text() + "\r\n" + parts, new UTF8Encoding(true));
         f.Close();
         return 0;
     }
@@ -384,9 +395,9 @@ public static class Shots {
         if (blender != null) s.BlendExe = blender;
         MainWindow f = Open(s, AppContext.BaseDirectory);
         f.VM.Page = "bus"; f.VM.LoadModel(cfg);
-        for (int i = 0; i < 1200 && f.VM.ViewBusy; i++) Pump.Run(50);
+        for (int i = 0; i < 1200 && (f.VM.ViewBusy || ModelScene.Pending > 0); i++) Pump.Run(50);
         f.VM.ExportTo(outFile.EndsWith(".blend", StringComparison.OrdinalIgnoreCase), Path.GetFullPath(outFile), null);
-        for (int i = 0; i < 12000 && f.VM.ViewBusy; i++) Pump.Run(50);
+        for (int i = 0; i < 12000 && (f.VM.ViewBusy || ModelScene.Pending > 0); i++) Pump.Run(50);
         File.WriteAllText(outFile + ".txt", (f.VM.LastExportError ?? "OK") + "\r\n" + f.VM.ViewStatus, new UTF8Encoding(true));
         f.Close();
         return f.VM.LastExportError == null ? 0 : 1;

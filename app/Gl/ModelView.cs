@@ -52,6 +52,7 @@ public class ModelView : Border {
         Child = surface;
         Cursor = new Cursor(StandardCursorType.SizeAll);
         Look.Changed += Redraw;
+        ModelScene.TexturesChanged += Redraw;      // 뒤에서 텍스처가 풀릴 때마다
         UpdateCam();
     }
 

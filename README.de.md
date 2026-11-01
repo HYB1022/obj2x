@@ -35,7 +35,7 @@
 </p>
 
 > [!NOTE]
-> **Seit v2.7.3 heißt obj2x jetzt Bus Depot.** Das Programm ist `BusDepot.exe`, die Einstellungen liegen in `BusDepot.ini`. Alte Einstellungen (`obj2x.ini`) werden beim ersten Start übernommen, und ältere Versionen aktualisieren sich weiterhin automatisch. Übrig gebliebene alte Dateien werden aufgeräumt; der Starter `obj2x.exe` bleibt, damit alte Verknüpfungen funktionieren.
+> **Seit v2.7.3 heißt obj2x jetzt Bus Depot.** Das Programm ist `BusDepot.exe`, die Einstellungen liegen in `BusDepot.ini`. Alte Einstellungen (`obj2x.ini`) werden beim ersten Start übernommen, und ältere Versionen aktualisieren sich weiterhin automatisch. Seit v2.8.1 werden alle Dateien mit dem alten Namen entfernt, auch der Starter `obj2x.exe`.
 
 Statt Dateien einzeln zu öffnen, Optionen einzustellen und Convert zu drücken, **wählst du nur einen Ordner**, den Rest erledigt das Programm.
 
@@ -205,6 +205,7 @@ Blender und OmsiXConv sind nicht in diesem Repository enthalten. Jedes Programm 
 
 ## Änderungen
 
+- **v2.8.1** — **Busmodelle öffnen deutlich schneller**: Teile werden auf mehreren Kernen gelesen, Texturen werden nach dem Anzeigen des Modells im Hintergrund nachgeladen (Testbus: 6–7 s → etwa 1 s, mit Texturen etwa 1,5 s). Große Texturen nutzen eine kleinere dds-Mipmap oder werden beim Dekodieren verkleinert. **Karten laden ebenfalls schneller** (Anrak&Munsan: 3–5 s → etwa 1 s, kein Einfrieren mehr beim Laden). Das Programm startet auch schneller (vorkompiliert – der Hauptgrund, warum v2.8.0 langsam war). **Alle obj2x-Dateien werden entfernt**: der `obj2x.exe`-Starter, `obj2x.bat`, `obj2x.ini` und andere Dateien mit dem alten Namen werden gelöscht, nur Bus Depot bleibt (zeigt eine Verknüpfung auf `obj2x.exe`, bitte für `BusDepot.exe` neu anlegen). Fehler behoben, durch den das Auto-Update den Starter ausließ
 - **v2.8.0** — Oberfläche neu gebaut (WPF → [Avalonia](https://avaloniaui.net/) + .NET 8). Aussehen und Funktionen bleiben gleich, die Bus-3D-Ansicht wird mit OpenGL gezeichnet. .NET ist enthalten, es muss nichts installiert werden, das Zip ist aber jetzt etwa 22 MB groß. Die Schriften stecken in der exe. macOS (openOMSI) lässt sich jetzt aus demselben Code bauen (noch nicht veröffentlicht). **Bekanntes Problem: Busmodelle und Kartenkacheln laden deutlich langsamer als vorher.** Wird in der nächsten Version behoben
 - **v2.7.8** — Tab Karte: Fahrzeuggruppen von Betriebshöfen (`[aigroup_depot_typgroup]`) erscheinen in der KI-Liste nicht mehr als leere Gruppen (sie zählen als Fahrzeuge des Betriebshofs). Tab Objekt: Eine .sco aus verschlüsselten o3d meldet das jetzt statt „Dateien nicht gefunden“
 - **v2.7.7** — Tab Bus: **Wegpunkte und Sitze in 3D ziehen** (freie Bewegung, rote/grüne/blaue Pfeile für x/y/z, `Shift` in 1-m-Schritten), **Modell ausblenden** (nur Wege und Sitze), **Rückgängig/Wiederholen** (`Strg+Z` / `Strg+Y`), normaler Mauszeiger über Griffen. Innenraum hinter Glas war unsichtbar – behoben (transparente Materialien werden zuletzt gezeichnet). README-Bilder je Sprache

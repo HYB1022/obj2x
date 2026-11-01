@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -118,6 +119,7 @@ public sealed class Tex {
 public sealed class Material {
     public Color Color = Colors.White;
     public Tex Texture;
+    public string TexPath;           // 아직 풀지 않은 텍스처 파일 (ModelScene.LoadTextures가 뒤에서 채운다)
     public bool Alpha;               // 텍스처의 알파를 쓴다 (아니면 불투명하게)
     public Color Emissive;           // 덧그림: 조명과 상관없이 더하는 색 (알파 = 세기)
     public bool Tile = true;
@@ -176,41 +178,68 @@ public static class CompositionTarget {
     }
 }
 
+// 개발용: 어디에 시간이 드는지 (스레드마다 더한 밀리초)
+public static class Prof {
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, long> ticks = new();
+    public static long Now => System.Diagnostics.Stopwatch.GetTimestamp();
+    public static void Add(string k, long t0) { long d = System.Diagnostics.Stopwatch.GetTimestamp() - t0; ticks.AddOrUpdate(k, d, (_, v) => v + d); }
+    public static string Text() { var sb = new System.Text.StringBuilder(); foreach (var kv in ticks) sb.Append(kv.Key).Append(' ').Append((kv.Value * 1000.0 / System.Diagnostics.Stopwatch.Frequency).ToString("0")).Append("ms  "); return sb.ToString(); }
+    public static void Reset() { ticks.Clear(); }
+}
+
 // ---------------------------------------------------------------- 텍스처 읽기: bmp/png/jpg는 Skia로, tga/dds는 직접 (OMSI에서 많이 쓰는 형식)
 public static class TexLoad {
     public static Tex Load(string path, int max) {
         string ext = Path.GetExtension(path).ToLowerInvariant();
         Tex t;
         if (ext == ".tga") t = Tga(File.ReadAllBytes(path));
-        else if (ext == ".dds") t = Dds(File.ReadAllBytes(path));
-        else t = Decode(path);
+        else if (ext == ".dds") t = Dds(File.ReadAllBytes(path), max);
+        else t = Decode(path, max);
         if (t == null) return null;
         while (t.W > max || t.H > max) t = Half(t);
         return t;
     }
 
-    static unsafe Tex Decode(string path) {
+    // bmp/png/jpg: Skia로 풀고, 크면 Skia로 줄인 다음, 픽셀을 한 번에 복사해 RGBA로 바꾼다 (v2.8.0은 여기가 느렸다)
+    static unsafe Tex Decode(string path, int max) {
         using FileStream fs = File.OpenRead(path);
-        using Bitmap bmp = new Bitmap(fs);
-        int w = bmp.PixelSize.Width, h = bmp.PixelSize.Height;
-        byte[] px = new byte[w * h * 4];
-        using (WriteableBitmap wb = new WriteableBitmap(bmp.PixelSize, new Vector(96, 96), PixelFormat.Rgba8888, AlphaFormat.Unpremul)) {
-            using (ILockedFramebuffer fb = wb.Lock()) {
-                bmp.CopyPixels(fb, AlphaFormat.Unpremul);
-                for (int y = 0; y < h; y++) System.Runtime.InteropServices.Marshal.Copy(fb.Address + y * fb.RowBytes, px, y * w * 4, w * 4);
+        Bitmap bmp = new Bitmap(fs);
+        try {
+            int w0 = bmp.PixelSize.Width, h0 = bmp.PixelSize.Height;
+            if (w0 > max || h0 > max) {
+                double k = (double)max / Math.Max(w0, h0);
+                Bitmap sc = bmp.CreateScaledBitmap(new PixelSize(Math.Max(1, (int)(w0 * k)), Math.Max(1, (int)(h0 * k))), BitmapInterpolationMode.MediumQuality);
+                bmp.Dispose(); bmp = sc;
             }
-        }
-        return new Tex(w, h, px);
+            int w = bmp.PixelSize.Width, h = bmp.PixelSize.Height, stride = w * 4;
+            byte[] px = new byte[stride * h];
+            fixed (byte* p = px) bmp.CopyPixels(new PixelRect(0, 0, w, h), (IntPtr)p, px.Length, stride);
+            bool bgra = bmp.Format == null || bmp.Format.Value == PixelFormat.Bgra8888;
+            bool premul = bmp.AlphaFormat != AlphaFormat.Unpremul;
+            fixed (byte* p = px) {
+                for (byte* q = p, end = p + px.Length; q < end; q += 4) {
+                    if (bgra) { byte b = q[0]; q[0] = q[2]; q[2] = b; }
+                    byte a = q[3];
+                    if (premul && a != 255 && a != 0) { q[0] = (byte)Math.Min(255, q[0] * 255 / a); q[1] = (byte)Math.Min(255, q[1] * 255 / a); q[2] = (byte)Math.Min(255, q[2] * 255 / a); }
+                }
+            }
+            return new Tex(w, h, px);
+        } finally { bmp.Dispose(); }
     }
 
     // 가로세로 절반으로 (2x2 평균)
-    static Tex Half(Tex t) {
-        int w = Math.Max(1, t.W / 2), h = Math.Max(1, t.H / 2);
+    static unsafe Tex Half(Tex t) {
+        int w = Math.Max(1, t.W / 2), h = Math.Max(1, t.H / 2), sw = t.W;
         byte[] o = new byte[w * h * 4];
-        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) for (int c = 0; c < 4; c++) {
-            int x0 = Math.Min(t.W - 1, x * 2), x1 = Math.Min(t.W - 1, x * 2 + 1), y0 = Math.Min(t.H - 1, y * 2), y1 = Math.Min(t.H - 1, y * 2 + 1);
-            int s = t.Rgba[(y0 * t.W + x0) * 4 + c] + t.Rgba[(y0 * t.W + x1) * 4 + c] + t.Rgba[(y1 * t.W + x0) * 4 + c] + t.Rgba[(y1 * t.W + x1) * 4 + c];
-            o[(y * w + x) * 4 + c] = (byte)(s / 4);
+        fixed (byte* s = t.Rgba) fixed (byte* d = o) {
+            for (int y = 0; y < h; y++) {
+                int y0 = Math.Min(t.H - 1, y * 2), y1 = Math.Min(t.H - 1, y * 2 + 1);
+                byte* r0 = s + y0 * sw * 4, r1 = s + y1 * sw * 4, dst = d + y * w * 4;
+                for (int x = 0; x < w; x++) {
+                    int x0 = Math.Min(sw - 1, x * 2) * 4, x1 = Math.Min(sw - 1, x * 2 + 1) * 4;
+                    for (int c = 0; c < 4; c++) dst[x * 4 + c] = (byte)((r0[x0 + c] + r0[x1 + c] + r1[x0 + c] + r1[x1 + c]) >> 2);
+                }
+            }
         }
         return new Tex(w, h, o);
     }
@@ -243,14 +272,22 @@ public static class TexLoad {
     }
 
     // DDS: DXT1/DXT3/DXT5와 무압축 32/24비트 (가장 큰 밉맵 한 장, 결과는 RGBA)
-    public static Tex Dds(byte[] d) {
+    // max보다 크면 파일 속 작은 밉맵 중 max 안에 드는 가장 큰 것을 푼다
+    public static Tex Dds(byte[] d, int max = int.MaxValue) {
         if (d.Length < 128 || d[0] != 'D' || d[1] != 'D' || d[2] != 'S') return null;
         int h = BitConverter.ToInt32(d, 12), w = BitConverter.ToInt32(d, 16);
         uint pfFlags = BitConverter.ToUInt32(d, 80);
         string four = System.Text.Encoding.ASCII.GetString(d, 84, 4);
         int bits = BitConverter.ToInt32(d, 88);
-        byte[] o = new byte[w * h * 4];
+        int mips = Math.Max(1, BitConverter.ToInt32(d, 28));
         int p = 128;
+        bool dxt = (pfFlags & 4) != 0 && (four == "DXT1" || four == "DXT3" || four == "DXT5");
+        for (int lv = 1; lv < mips && (w > max || h > max) && w > 1 && h > 1; lv++) {
+            long size = dxt ? (long)Math.Max(1, (w + 3) / 4) * Math.Max(1, (h + 3) / 4) * (four == "DXT1" ? 8 : 16) : (long)w * h * (bits / 8);
+            if (p + size >= d.Length) break;
+            p += (int)size; w = Math.Max(1, w / 2); h = Math.Max(1, h / 2);
+        }
+        byte[] o = new byte[w * h * 4];
         if ((pfFlags & 4) != 0 && (four == "DXT1" || four == "DXT3" || four == "DXT5")) {
             int bw = (w + 3) / 4, bh = (h + 3) / 4, blk = four == "DXT1" ? 8 : 16;
             if (p + (long)bw * bh * blk > d.Length) return null;
@@ -324,8 +361,10 @@ public static class ModelScene {
     public static PartItem Build(ModelCfg cfg, CfgMesh cm, Dictionary<string, Material> cache, List<string> missing, bool twoSided) {
         PartItem it = new PartItem { Mesh = cm, Name = cm.File };
         O3dModel m;
+        long t0 = Prof.Now;
         try { m = O3dModel.Load(cm.Path); }
         catch (Exception ex) { it.Sub = cm.Exists ? ex.Message : L.T("view_part_nofile"); return it; }
+        finally { Prof.Add("o3d", t0); }
         // 투명 재질은 따로 모은다 (화면에서는 불투명한 것을 모두 그린 뒤에 그린다)
         Model3DGroup g = new Model3DGroup(), ga = new Model3DGroup();
         int nm = Math.Max(1, m.Mats.Count);
@@ -373,16 +412,54 @@ public static class ModelScene {
         Color dc = Color.FromRgb(Clamp(mt.Diffuse[0]), Clamp(mt.Diffuse[1]), Clamp(mt.Diffuse[2]));
         bool alpha = cm.UsesAlpha(mt.Tex);
         string key = f != null ? f.ToLowerInvariant() + (alpha ? "|a" : "") : "#" + dc.ToString();
-        lock (cache) if (cache.TryGetValue(key, out Material hit)) return hit;
-        Material mat = new Material { Alpha = alpha };
-        if (f != null) {
-            try { mat.Texture = TexLoad.Load(f, 1024); } catch (Exception) { }   // [matl_alpha]가 없으면 알파를 버린다 (셰이더에서)
-        } else if (mt.Tex.Length > 0) { lock (missing) if (!missing.Contains(mt.Tex)) missing.Add(mt.Tex); }
-        if (mat.Texture == null) mat.Color = f != null || mt.Tex.Length == 0 ? dc : Color.FromRgb(200, 200, 205);
-        lock (cache) cache[key] = mat;
+        // 여러 스레드가 부품을 함께 읽는다: 재질은 먼저 자리를 잡은 스레드 하나만 텍스처를 읽고, 나머지는 같은 재질을 받는다
+        // (화면에는 모든 부품을 다 읽은 뒤에 넣으므로 그때는 텍스처가 다 들어 있다)
+        Material mat;
+        lock (cache) {
+            if (cache.TryGetValue(key, out Material hit)) return hit;
+            mat = new Material { Alpha = alpha };
+            cache[key] = mat;
+        }
+        // 텍스처는 여기서 풀지 않는다: 모델을 먼저 보여 주고 LoadTextures가 뒤에서 채운다 (예전 WPF처럼 열기가 빠르게)
+        if (f != null) { mat.TexPath = f; Interlocked.Increment(ref pending); }
+        else if (mt.Tex.Length > 0) { lock (missing) if (!missing.Contains(mt.Tex)) missing.Add(mt.Tex); }
+        mat.Color = f != null || mt.Tex.Length == 0 ? dc : Color.FromRgb(200, 200, 205);
         return mat;
     }
     static byte Clamp(float v) { return (byte)Math.Max(0, Math.Min(255, v * 255 * 1.25)); }
+
+    // ---- 텍스처를 뒤에서 여러 코어로 풀기. 풀리는 대로(0.1초에 한 번) 3D 화면이 다시 그린다
+    static int pending;
+    public static int Pending => Volatile.Read(ref pending);      // 아직 안 풀린 텍스처 수 (스크린샷/점검이 기다린다)
+    public static event Action TexturesChanged;                   // 화면 스레드에서 부른다
+    static long lastRedraw;
+    public static void LoadTextures(IEnumerable<Material> mats, Func<bool> cancelled) {
+        List<Material> list = new();
+        foreach (Material m in mats) if (m.TexPath != null) list.Add(m);
+        if (list.Count == 0) return;
+        System.Threading.Tasks.Task.Run(() => {
+            long w0 = Prof.Now;
+            // 화면 스레드 몫으로 한 코어는 남긴다
+            System.Threading.Tasks.Parallel.ForEach(list, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 1) }, m => {
+                string path = Interlocked.Exchange(ref m.TexPath, null);
+                if (path == null) return;
+                try {
+                    if (!cancelled()) {
+                        long t1 = Prof.Now;
+                        Tex t = null;
+                        try { t = TexLoad.Load(path, 1024); } catch (Exception) { }
+                        Prof.Add("tex", t1);
+                        if (t != null) m.Texture = t;
+                    }
+                } finally { Interlocked.Decrement(ref pending); }
+                long now = Environment.TickCount64, prev = Interlocked.Read(ref lastRedraw);
+                if (now - prev >= 100 && Interlocked.CompareExchange(ref lastRedraw, now, prev) == prev) Redraw();
+            });
+            Prof.Add("texwall", w0);
+            Redraw();
+        });
+    }
+    static void Redraw() { Dispatcher.UIThread.Post(() => TexturesChanged?.Invoke()); }
 }
 
 // 덧그림의 손잡이(사람 길 점, 좌석)를 끌 때 VM에 넘기는 값. Delta는 처음 누른 곳에서 움직인 양(화면 좌표계), Snap은 Shift를 누른 채
