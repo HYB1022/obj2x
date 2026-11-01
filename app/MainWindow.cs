@@ -68,6 +68,7 @@ public class MainWindow : Window, IUi {
         overlay = shell.FindControl<Panel>("Overlay");
 
         VM = new MainViewModel(s, here, this);
+        MacMenu.Attach(this);
         DataContext = VM;
         // 버스 탭 되돌리기 / 다시 실행 (글자 칸에 있을 때는 칸 자체의 되돌리기가 먼저 먹는다). 맥은 ⌘
         KeyModifiers mod = Omsi.IsWindows ? KeyModifiers.Control : KeyModifiers.Meta;

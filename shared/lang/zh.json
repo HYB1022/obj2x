@@ -574,5 +574,6 @@
   "on_mac_lbl_blender_path": "Blender 2.79（Blender.app，可选）",
   "on_mac_msg_err_bl": "请检查 Blender 路径（Blender.app）。",
   "on_mac_omsi_err": "请先在设置中指定 OMSI 2 文件夹（包含 Vehicles 和 maps 的文件夹）",
-  "on_mac_view_blender_none": "未找到 Blender。请用\"浏览\"选择 Blender.app。"
+  "on_mac_view_blender_none": "未找到 Blender。请用\"浏览\"选择 Blender.app。",
+  "mac_menu_about": "关于 Bus Depot"
 }

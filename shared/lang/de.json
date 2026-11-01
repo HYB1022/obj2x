@@ -574,5 +574,6 @@
   "on_mac_lbl_blender_path": "Blender 2.79 (Blender.app, optional)",
   "on_mac_msg_err_bl": "Bitte den Blender-Pfad prüfen (Blender.app).",
   "on_mac_omsi_err": "Zuerst in den Einstellungen den OMSI-2-Ordner wählen (der Ordner mit Vehicles und maps)",
-  "on_mac_view_blender_none": "Blender wurde nicht gefunden. Mit Durchsuchen Blender.app auswählen."
+  "on_mac_view_blender_none": "Blender wurde nicht gefunden. Mit Durchsuchen Blender.app auswählen.",
+  "mac_menu_about": "Über Bus Depot"
 }

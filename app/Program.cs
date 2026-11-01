@@ -43,6 +43,7 @@ public static class Program {
 
 public class App : Application {
     public override void Initialize() {
+        Name = "Bus Depot";     // 맥 메뉴 막대의 앱 이름 (기본값은 Avalonia Application)
         Styles.Add(new FluentTheme());
         Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://BusDepot/")) { Source = new Uri("avares://BusDepot/Views/Styles.axaml") });
     }

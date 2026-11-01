@@ -574,5 +574,6 @@
   "on_mac_lbl_blender_path": "Blender 2.79（Blender.app、任意）",
   "on_mac_msg_err_bl": "Blender のパスを確認してください（Blender.app）。",
   "on_mac_omsi_err": "先に設定で OMSI 2 フォルダーを指定してください（Vehicles と maps があるフォルダー）",
-  "on_mac_view_blender_none": "Blender が見つかりません。参照から Blender.app を指定してください。"
+  "on_mac_view_blender_none": "Blender が見つかりません。参照から Blender.app を指定してください。",
+  "mac_menu_about": "Bus Depot について"
 }
