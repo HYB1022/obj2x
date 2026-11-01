@@ -97,6 +97,20 @@ obj를 만드는 Blender는 버전이 상관없습니다. 변환에만 2.79b가 
 > [!NOTE]
 > OmsiXConv로 변환하는 동안에는 보이지 않는 OmsiXConv 창이 입력을 받고 있으니 마우스와 키보드를 가급적 건드리지 마세요.
 
+### macOS (openOMSI)
+
+1. [Releases](https://github.com/HYB1022/obj2x/releases/latest)에서 Apple 실리콘 Mac은 `BusDepot-mac-arm64.zip`, Intel Mac은 `BusDepot-mac-x64.zip`을 받아 풀고 `BusDepot.app`을 `응용 프로그램` 폴더로 옮깁니다.
+2. 서명이 없는 앱이라 처음 한 번은 터미널에서 아래 두 줄을 실행해야 열립니다 (Apple 실리콘은 두 번째 줄이 꼭 필요합니다).
+
+```sh
+xattr -dr com.apple.quarantine /Applications/BusDepot.app
+codesign --force --deep --sign - /Applications/BusDepot.app
+```
+
+3. `설정`의 'OMSI 2 / openOMSI'에서 Windows에서 가져온 OMSI 2 폴더를 고릅니다 (맥에서는 자동으로 찾지 않습니다). openOMSI 모드 설치기가 쓰는 `~/.openomsi/content`는 자동으로 잡히고, 만든 오브젝트/스플라인도 여기에 들어갑니다.
+
+맥에서는 빠른 변환(FastO3D), 버스·맵 보기, 오브젝트/스플라인 만들기를 모두 쓸 수 있습니다. OmsiXConv는 Windows 프로그램이라 DirectX → O3D 방식은 꺼져 있고, 맥용 Blender 2.79가 있으면 `.x` 단독 변환을 쓸 수 있습니다. 자동 업데이트 대신 릴리스 페이지가 열립니다.
+
 ## 기능
 
 | 기능 | 설명 |
@@ -206,6 +220,7 @@ dist\win\BusDepot.exe --selftest
 
 ## 변경 내역
 
+- **v2.8.3** — **macOS 버전을 처음 릴리스합니다** (openOMSI용, Apple 실리콘 / Intel). 맵 탭에서 오브젝트·스플라인이 모두 '없음'으로 나오던 문제, 맵 사진이 안 나오던 문제, 맥에서 Blender 경로가 Windows 기준으로 나오던 문제를 고쳤고, 맥 메뉴 막대에 앱 이름과 페이지 바로 가기(⌘1~⌘7, ⌘,)를 넣었습니다
 - **v2.8.2** — 자동 업데이트가 설치는 끝내 놓고 새 버전을 다시 켜지 못하던 문제 수정(`System.Diagnostics.Process` 오류 창). v2.8.0/v2.8.1에서 이 버전으로 업데이트할 때는 아직 그 창이 한 번 뜰 수 있습니다. 닫고 Bus Depot을 다시 실행하면 v2.8.2입니다
 - **v2.8.1** — **버스 모델 열기가 빨라짐**: 부품을 여러 코어로 함께 읽고, 텍스처는 모델을 먼저 보여 준 뒤 뒤에서 채움(시험한 버스 기준 6~7초 → 약 1초, 텍스처까지 약 1.5초). 큰 텍스처는 dds의 작은 밉맵을 쓰거나 한 번에 줄여서 읽음. **맵 읽기도 빨라짐**(안락문산 기준 3~5초 → 약 1초, 읽는 동안 화면이 멈추던 문제 해결). 프로그램 시작도 빨라짐(미리 컴파일 — v2.8.0이 느렸던 주된 원인). **obj2x 파일을 모두 정리**: `obj2x.exe` 런처, `obj2x.bat`, `obj2x.ini` 등 예전 이름의 파일을 지우고 Bus Depot만 남김(바로 가기가 `obj2x.exe`를 가리키면 `BusDepot.exe`로 다시 만드세요). 자동 업데이트가 런처를 빠뜨리던 문제 수정
 - **v2.8.0** — 화면을 새로 만들었습니다 (WPF → [Avalonia](https://avaloniaui.net/) + .NET 8). 모양과 기능은 그대로이고, 버스 3D는 OpenGL로 그립니다. .NET이 함께 들어 있어 따로 설치할 것은 없지만 zip이 약 22 MB로 커졌습니다. 글꼴은 exe 안에 들어갑니다. macOS(openOMSI)도 같은 코드로 만들 수 있게 됐습니다(아직 릴리스하지 않음). **알려진 문제: 버스 모델과 맵 타일을 불러오는 속도가 이전보다 많이 느립니다.** 다음 버전에서 고칠 예정입니다

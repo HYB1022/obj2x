@@ -97,6 +97,20 @@
 > [!NOTE]
 > OmsiXConv で変換している間は、見えない OmsiXConv のウィンドウが入力を受けているので、マウスとキーボードはできるだけ触らないでください。
 
+### macOS（openOMSI）
+
+1. [Releases](https://github.com/HYB1022/obj2x/releases/latest) から Apple シリコンは `BusDepot-mac-arm64.zip`、Intel は `BusDepot-mac-x64.zip` をダウンロードして展開し、`BusDepot.app` を「アプリケーション」フォルダーへ移します。
+2. 署名のないアプリなので、最初の一度だけターミナルで次の 2 行を実行してください（Apple シリコンでは 2 行目が必須です）。
+
+```sh
+xattr -dr com.apple.quarantine /Applications/BusDepot.app
+codesign --force --deep --sign - /Applications/BusDepot.app
+```
+
+3. 「設定」の「OMSI 2 / openOMSI」で Windows から持ってきた OMSI 2 フォルダーを選びます（Mac では自動で探しません）。openOMSI の MOD インストーラーが使う `~/.openomsi/content` は自動で認識され、作ったオブジェクト/スプラインもここに入ります。
+
+Mac では FastO3D、バス・マップ表示、オブジェクト/スプライン作成が使えます。OmsiXConv は Windows のプログラムなので DirectX → O3D は使えず、Mac 用 Blender 2.79 があれば「Blender .x のみ」が使えます。自動アップデートの代わりにリリースページが開きます。
+
 ## 機能
 
 | 機能 | 説明 |
@@ -205,6 +219,7 @@ dist\win\BusDepot.exe --selftest
 
 ## 変更履歴
 
+- **v2.8.3** — **macOS 版を初めてリリース**（openOMSI 用、Apple シリコン / Intel）。マップタブでオブジェクト・スプラインがすべて「なし」になる問題、マップ画像が出ない問題、Mac で Blender のパスが Windows 用になる問題を修正。Mac のメニューバーにアプリ名とページへのショートカット（⌘1〜⌘7、⌘,）を追加しました
 - **v2.8.2** — 自動アップデートがインストールは済ませても新しいバージョンを再起動できなかった問題を修正（`System.Diagnostics.Process` のエラー）。v2.8.0/v2.8.1 からこのバージョンへ更新するときは、まだそのエラーが一度出ることがあります。閉じて Bus Depot を起動し直すと v2.8.2 になっています
 - **v2.8.1** — **バスモデルを開くのが速くなりました**：部品を複数のコアで同時に読み込み、テクスチャはモデルを先に表示してから裏で読み込みます（試したバス：6～7 秒 → 約 1 秒、テクスチャまで約 1.5 秒）。大きなテクスチャは dds の小さいミップマップを使うか、読み込み時に縮小します。**マップの読み込みも速くなりました**（Anrak&Munsan：3～5 秒 → 約 1 秒、読み込み中に画面が止まる問題を解消）。起動も速くなりました（事前コンパイル。v2.8.0 が遅かった主な原因）。**obj2x のファイルをすべて整理**：`obj2x.exe` ランチャー、`obj2x.bat`、`obj2x.ini` など旧名のファイルを削除し Bus Depot だけを残します（ショートカットが `obj2x.exe` を指している場合は `BusDepot.exe` で作り直してください）。自動アップデートでランチャーが抜ける問題を修正
 - **v2.8.0** — 画面を作り直しました（WPF → [Avalonia](https://avaloniaui.net/) + .NET 8）。見た目と機能はそのままで、バスの 3D は OpenGL で描画します。.NET が同梱されているので別途インストールは不要ですが、zip は約 22 MB になりました。フォントは exe に内蔵されます。macOS（openOMSI）も同じコードからビルドできるようになりました（まだリリースしていません）。**既知の問題：バスのモデルとマップのタイルの読み込みが以前よりかなり遅くなっています。** 次のバージョンで修正予定です

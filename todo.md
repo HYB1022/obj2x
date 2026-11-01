@@ -25,7 +25,8 @@ v2.8.0부터 Windows와 맥이 같은 앱(`app/`, Avalonia 11 + .NET 8)을 쓴�
 - [ ] 맥에서 빌드·실행: `python build.py mac` → `dist/BusDepot-mac-arm64.zip`(Apple 실리콘) / `-x64.zip`(Intel)
   - 처음 한 번: `xattr -dr com.apple.quarantine /Applications/BusDepot.app` → `codesign --force --deep --sign - /Applications/BusDepot.app`
   - 맥에서 직접 빌드하려면 .NET 8 SDK 설치 후 `dotnet run --project app/BusDepot.csproj`
-- [ ] `/Applications/BusDepot.app/Contents/MacOS/BusDepot --selftest ~/Desktop/st.txt` → 실패 줄 고치기 (백슬래시 경로 변환은 맥에서만 실제로 돈다)
+- [x] v2.8.3: 맥 첫 릴리스 (zip 2개, README 5개 언어에 설치 안내)
+- [x] `/Applications/BusDepot.app/Contents/MacOS/BusDepot --selftest ~/Desktop/st.txt` → 실패 6개 고침 (v2.8.3: HOF 폴더 순서, obj 줄바꿈, 맥 기준 기대값). v2.8.3으로 다시 돌려 볼 것
 - [ ] 버스 3D(OpenGL 3.2 core)가 보이는지, 텍스처·투명 유리·애니메이션·기즈모 끌기
 - [ ] 설정 'OMSI 2 / openOMSI': OMSI 2 폴더 직접 고르기, `~/.openomsi/content` 자동 인식, 인코딩(949/1252 …)으로 한글/독일어 파일 이름이 맞게 나오는지
 - [ ] 만든 오브젝트/스플라인이 `content/Sceneryobjects`, `content/Splines`에 들어가고 openOMSI에서 보이는지
@@ -33,4 +34,5 @@ v2.8.0부터 Windows와 맥이 같은 앱(`app/`, Avalonia 11 + .NET 8)을 쓴�
 - [ ] Blender(맥용 `/Applications/Blender.app`) 찾기와 .blend 저장, `.x` 단독 변환
 - [ ] 단축키가 맥답게 동작하는지 (되돌리기 `⌘Z`, 다시 실행 `⌘⇧Z`)
 - [ ] 정식 서명/공증(Apple Developer 계정)을 할지, 아니면 지금처럼 직접 서명 안내로 갈지
-- [ ] 맥 릴리스 여부 결정 → 하게 되면 README 5개 언어에 맥 사용법(설치, 처음 실행 명령, content 폴더)을 넣고 GitHub 릴리스에 맥 zip 추가 (Windows `BusDepot.zip`을 먼저 올린다)
+- [x] 맥 릴리스 (v2.8.3부터, GitHub 릴리스에 Windows `BusDepot.zip`을 먼저 올리고 맥 zip 2개)
+- [ ] 맥 메뉴 막대의 표준 항목(숨기기/종료 ⌘Q)이 앱 메뉴에 남아 있는지 확인

@@ -41,8 +41,8 @@ FIRST = """Bus Depot %s (macOS)
    xattr -dr com.apple.quarantine /Applications/BusDepot.app
    codesign --force --deep --sign - /Applications/BusDepot.app
 
-3. 설정에서 OMSI 2 폴더와 openOMSI의 Mods 폴더(openOMSI가 설치된 곳 옆)를 확인하세요.
-   만든 오브젝트/스플라인은 Mods 폴더 안의 'Bus Depot' 폴더에 들어갑니다.
+3. 설정의 'OMSI 2 / openOMSI'에서 Windows에서 가져온 OMSI 2 폴더를 고르세요.
+   openOMSI의 ~/.openomsi/content는 자동으로 잡히고, 만든 오브젝트/스플라인도 여기에 들어갑니다.
 
 [English]
 1. Move BusDepot.app to the Applications folder.
@@ -52,8 +52,8 @@ FIRST = """Bus Depot %s (macOS)
    xattr -dr com.apple.quarantine /Applications/BusDepot.app
    codesign --force --deep --sign - /Applications/BusDepot.app
 
-3. In Settings, check the OMSI 2 folder and openOMSI's Mods folder (next to where openOMSI is installed).
-   Objects and splines you make go into a 'Bus Depot' folder inside Mods.
+3. In Settings -> 'OMSI 2 / openOMSI', pick the OMSI 2 folder you copied from Windows.
+   openOMSI's ~/.openomsi/content is picked up automatically; objects and splines you make go there.
 
 https://github.com/HYB1022/obj2x
 """ % ver

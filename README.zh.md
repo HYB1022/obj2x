@@ -97,6 +97,20 @@
 > [!NOTE]
 > OmsiXConv 转换期间，看不见的 OmsiXConv 窗口正在接收输入，请尽量不要操作鼠标和键盘。
 
+### macOS（openOMSI）
+
+1. 在 [Releases](https://github.com/HYB1022/obj2x/releases/latest) 下载 `BusDepot-mac-arm64.zip`（Apple 芯片）或 `BusDepot-mac-x64.zip`（Intel），解压后把 `BusDepot.app` 移到“应用程序”文件夹。
+2. 应用没有签名，第一次打开前请在终端运行下面两行（Apple 芯片必须运行第二行）。
+
+```sh
+xattr -dr com.apple.quarantine /Applications/BusDepot.app
+codesign --force --deep --sign - /Applications/BusDepot.app
+```
+
+3. 在“设置”的“OMSI 2 / openOMSI”中选择从 Windows 复制来的 OMSI 2 文件夹（Mac 上不会自动查找）。openOMSI 模组安装器使用的 `~/.openomsi/content` 会自动识别，制作的物件/样条也会放到这里。
+
+Mac 上可以使用 FastO3D、巴士和地图查看、物件/样条制作。OmsiXConv 是 Windows 程序，所以 DirectX → O3D 不可用；有 Mac 版 Blender 2.79 时可以使用“仅 Blender .x”。自动更新改为打开发布页面。
+
 ## 功能
 
 | 功能 | 说明 |
@@ -205,6 +219,7 @@ dist\win\BusDepot.exe --selftest
 
 ## 更新日志
 
+- **v2.8.3** — **首次发布 macOS 版**（用于 openOMSI，Apple 芯片 / Intel）。修复地图页中物件和样条全部显示为缺失、地图图片不显示、Mac 上 Blender 路径显示为 Windows 路径的问题。Mac 菜单栏显示应用名称和页面快捷方式（⌘1–⌘7、⌘,）
 - **v2.8.2** — 修复自动更新安装完成后无法重新启动新版本的问题（`System.Diagnostics.Process` 错误）。从 v2.8.0/v2.8.1 更新到本版本时仍可能出现一次该错误：关闭后重新运行 Bus Depot 即为 v2.8.2
 - **v2.8.1** — **打开巴士模型快了很多**：用多个核心同时读取部件，先显示模型再在后台加载贴图（测试的巴士：6~7 秒 → 约 1 秒，含贴图约 1.5 秒）。大贴图使用 dds 中较小的 mipmap，或在解码时缩小。**地图加载也更快了**（Anrak&Munsan：3~5 秒 → 约 1 秒，加载时界面不再卡住）。程序启动也更快（预编译，这是 v2.8.0 变慢的主要原因）。**清理所有 obj2x 文件**：删除 `obj2x.exe` 启动器、`obj2x.bat`、`obj2x.ini` 等旧名称文件，只保留 Bus Depot（如果快捷方式指向 `obj2x.exe`，请改为 `BusDepot.exe` 重新创建）。修复自动更新漏掉启动器的问题
 - **v2.8.0** — 重新制作了界面（WPF → [Avalonia](https://avaloniaui.net/) + .NET 8）。外观和功能不变，巴士 3D 改用 OpenGL 绘制。已内置 .NET，无需另外安装，但 zip 增大到约 22 MB。字体内置在 exe 中。现在也能用同一套代码构建 macOS（openOMSI）版（尚未发布）。**已知问题：加载巴士模型和地图地块比以前慢很多。** 将在下个版本修复

@@ -97,6 +97,20 @@ Mit welchem Blender du modellierst, ist egal; 2.79b wird nur für die Konvertier
 > [!NOTE]
 > Während OmsiXConv konvertiert, empfangen seine versteckten Fenster Eingaben. Bitte Maus und Tastatur möglichst nicht benutzen.
 
+### macOS (openOMSI)
+
+1. Unter [Releases](https://github.com/HYB1022/obj2x/releases/latest) `BusDepot-mac-arm64.zip` (Apple Silicon) oder `BusDepot-mac-x64.zip` (Intel) herunterladen, entpacken und `BusDepot.app` in `Programme` verschieben.
+2. Die App ist nicht signiert, deshalb vor dem ersten Start einmal diese zwei Zeilen im Terminal ausführen (die zweite ist bei Apple Silicon nötig).
+
+```sh
+xattr -dr com.apple.quarantine /Applications/BusDepot.app
+codesign --force --deep --sign - /Applications/BusDepot.app
+```
+
+3. In `Einstellungen` → 'OMSI 2 / openOMSI' den von Windows kopierten OMSI-2-Ordner wählen (auf dem Mac wird er nicht automatisch gesucht). `~/.openomsi/content` des openOMSI-Mod-Installers wird automatisch erkannt; erstellte Objekte/Splines landen dort.
+
+Auf dem Mac gehen FastO3D, Bus- und Kartenansicht sowie Objekt-/Spline-Erstellung. OmsiXConv ist ein Windows-Programm, daher ist DirectX → O3D aus; mit Blender 2.79 für Mac geht „nur Blender .x“. Statt Auto-Update öffnet sich die Release-Seite.
+
 ## Funktionen
 
 | Funktion | Beschreibung |
@@ -205,6 +219,7 @@ Blender und OmsiXConv sind nicht in diesem Repository enthalten. Jedes Programm 
 
 ## Änderungen
 
+- **v2.8.3** — **Erste macOS-Version** (für openOMSI, Apple Silicon / Intel). Behoben: im Karten-Tab wurden alle Objekte und Splines als fehlend angezeigt, das Kartenbild fehlte und der Blender-Pfad zeigte auf dem Mac einen Windows-Pfad. In der Mac-Menüleiste stehen jetzt der App-Name und Seiten-Kurzbefehle (⌘1–⌘7, ⌘,)
 - **v2.8.2** — Behoben: Das Auto-Update installierte die neue Version, konnte sie aber nicht neu starten (Fehler `System.Diagnostics.Process`). Beim Update von v2.8.0/v2.8.1 auf diese Version kann der Fehler noch einmal erscheinen: schließen und Bus Depot neu starten, dann läuft v2.8.2
 - **v2.8.1** — **Busmodelle öffnen deutlich schneller**: Teile werden auf mehreren Kernen gelesen, Texturen werden nach dem Anzeigen des Modells im Hintergrund nachgeladen (Testbus: 6–7 s → etwa 1 s, mit Texturen etwa 1,5 s). Große Texturen nutzen eine kleinere dds-Mipmap oder werden beim Dekodieren verkleinert. **Karten laden ebenfalls schneller** (Anrak&Munsan: 3–5 s → etwa 1 s, kein Einfrieren mehr beim Laden). Das Programm startet auch schneller (vorkompiliert – der Hauptgrund, warum v2.8.0 langsam war). **Alle obj2x-Dateien werden entfernt**: der `obj2x.exe`-Starter, `obj2x.bat`, `obj2x.ini` und andere Dateien mit dem alten Namen werden gelöscht, nur Bus Depot bleibt (zeigt eine Verknüpfung auf `obj2x.exe`, bitte für `BusDepot.exe` neu anlegen). Fehler behoben, durch den das Auto-Update den Starter ausließ
 - **v2.8.0** — Oberfläche neu gebaut (WPF → [Avalonia](https://avaloniaui.net/) + .NET 8). Aussehen und Funktionen bleiben gleich, die Bus-3D-Ansicht wird mit OpenGL gezeichnet. .NET ist enthalten, es muss nichts installiert werden, das Zip ist aber jetzt etwa 22 MB groß. Die Schriften stecken in der exe. macOS (openOMSI) lässt sich jetzt aus demselben Code bauen (noch nicht veröffentlicht). **Bekanntes Problem: Busmodelle und Kartenkacheln laden deutlich langsamer als vorher.** Wird in der nächsten Version behoben

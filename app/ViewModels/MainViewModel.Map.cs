@@ -165,6 +165,8 @@ public partial class MainViewModel {
         th.IsBackground = true; th.Start();
     }
     // [경로, 표시 이름]
+    // 폴더 목록 순서는 운영체제마다 다르다 (맥은 정렬하지 않고 준다) → 이름순으로
+    static string[] Sorted(string[] a) { Array.Sort(a, StringComparer.OrdinalIgnoreCase); return a; }
     public static List<string[]> HofList(params string[] vehiclesDirs) {
         List<string> keys = new List<string>();                     // 이름 + 내용 해시, 처음 나온 순서
         Dictionary<string, string> first = new Dictionary<string, string>();
@@ -172,8 +174,8 @@ public partial class MainViewModel {
         Dictionary<string, List<string>> dirs = new Dictionary<string, List<string>>();
         try {
             using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
-                foreach (string vehiclesDir in vehiclesDirs) { if (!Directory.Exists(vehiclesDir)) continue; foreach (string d in Directory.GetDirectories(vehiclesDir))
-                    foreach (string f in Directory.GetFiles(d, "*.hof")) {
+                foreach (string vehiclesDir in vehiclesDirs) { if (!Directory.Exists(vehiclesDir)) continue; foreach (string d in Sorted(Directory.GetDirectories(vehiclesDir)))
+                    foreach (string f in Sorted(Directory.GetFiles(d, "*.hof"))) {
                         string name, hash;
                         try { name = HofFile.ReadName(f); hash = Convert.ToBase64String(md5.ComputeHash(File.ReadAllBytes(f))); } catch (Exception) { continue; }
                         if (name.Length == 0) name = Path.GetFileNameWithoutExtension(f);

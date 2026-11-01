@@ -345,6 +345,7 @@ public static class ObjExport {
         HashSet<string> usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         using (StreamWriter ow = new StreamWriter(objPath, false, new UTF8Encoding(false)))
         using (StreamWriter mw = new StreamWriter(mtlPath, false, new UTF8Encoding(false))) {
+            ow.NewLine = "\r\n"; mw.NewLine = "\r\n";     // 운영체제와 상관없이 같은 파일 (맥 기본은 \n)
             ow.WriteLine("# " + AppInfo.Name + " " + AppInfo.Version + " - " + Path.GetFileName(cfg.CfgPath));
             ow.WriteLine("mtllib " + Path.GetFileName(mtlPath));
             int baseV = 1;

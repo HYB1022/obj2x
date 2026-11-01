@@ -276,6 +276,7 @@ public static class SelfTest {
         T("조건부: 값이 하나뿐인 옵션 부품은 변수 0으로 보고 끔 (앞문 겹침)", mo.DefaultOn(mo.Meshes[0]) && !mo.DefaultOn(mo.Meshes[1]), "");
         // 한 cti에 도색 여러 개 + UTF-8 BOM + ANSI 파일 이름
         string kn = "\uC0AC\uBCF8";   // '사본'
+        Encoding ansiWas = Omsi.Ansi; Omsi.Ansi = Encoding.GetEncoding(949);   // 맥은 설정의 코드 페이지(영어면 1252)라 한글을 못 담는다 → 이 점검만 949로
         File.WriteAllBytes(Path.Combine(bw2, "body " + kn + ".bmp"), new byte[] { 0x42, 0x4D });
         List<byte> cti = new List<byte>(new byte[] { 0xEF, 0xBB, 0xBF });
         cti.AddRange(Encoding.ASCII.GetBytes("***\r\n01\r\n***\r\n[item]\r\n01\r\nBody\r\nblue\\body_blue.bmp\r\n[setvar]\r\nwheel_type\r\n1\r\n***\r\n02\r\n***\r\n[item]\r\n02\r\nBody\r\nbody "));
@@ -285,6 +286,7 @@ public static class SelfTest {
         T("도색: 한 cti 안의 여러 도색 + BOM 붙은 ANSI 파일 이름", mr.Count == 2 && mr[0].Label == "multi · 01" && mr[1].Vars["wheel_type"] == "2" && File.Exists(mr[1].Items["Body"]) && mr[0].Vars["wheel_type"] == "1",
             mr.Count + " " + (mr.Count > 1 ? mr[1].Items["Body"] : ""));
         File.Delete(Path.Combine(bw2, "multi.cti"));
+        Omsi.Ansi = ansiWas;
         // 차량 스크립트: 도색의 연식(sely)으로 스크립트가 앞문 모양 변수를 정한다
         string sbus = Path.Combine(root, "ScriptBus"), sbm = Path.Combine(sbus, "model"), sbs = Path.Combine(sbus, "script"), sbt = Path.Combine(sbus, "Texture", "pl");
         Directory.CreateDirectory(sbm); Directory.CreateDirectory(sbs); Directory.CreateDirectory(sbt);
@@ -562,9 +564,10 @@ public static class SelfTest {
             }
             f.VM.ThemeName = "light"; f.VM.AccentName = "indigo";
             f.VM.Lang = "en"; Pump.Run(50);
-            T("언어 전환: 상태/배너 문구도 바뀜", f.VM.StatusText == L.T("status_blender_missing") && f.VM.StatusText.StartsWith("Required") && f.VM.BannerText.StartsWith("Missing"), f.VM.StatusText + " | " + f.VM.BannerText);
+            // 맥은 Blender가 선택 사항이라 도구 경고가 없다 (준비됨)
+            T("언어 전환: 상태/배너 문구도 바뀜", Platform.Mac ? f.VM.StatusText == "Ready" && !f.VM.BannerVisible : f.VM.StatusText == L.T("status_blender_missing") && f.VM.StatusText.StartsWith("Required") && f.VM.BannerText.StartsWith("Missing"), f.VM.StatusText + " | " + f.VM.BannerText);
             f.VM.Lang = "de"; Pump.Run(50);
-            T("언어 전환: 독일어 상태 문구", f.VM.StatusText == "Programmpfad fehlt", f.VM.StatusText);
+            T("언어 전환: 독일어 상태 문구", f.VM.StatusText == (Platform.Mac ? "Bereit" : "Programmpfad fehlt"), f.VM.StatusText);
             f.VM.Lang = "en"; Pump.Run(20);
             bool en = f.VM.NextText == "Next" || L.Lang == "en";
             f.VM.Lang = "ko"; Pump.Run(50);
@@ -612,7 +615,8 @@ public static class SelfTest {
             f.VM.Page = "advanced"; Pump.Run(50);
             NumBox nb = UiTree.Find<NumBox>(f.Host);
             f.VM.Par = 7; Pump.Run(20);
-            T("고급: 동시 실행 숫자 상자가 설정과 연결", nb != null && nb.Value == 7, nb == null ? "없음" : nb.Value.ToString());
+            // OmsiXConv 동시 실행 칸은 Windows에서만 보인다
+            T("고급: 동시 실행 숫자 상자가 설정과 연결", Platform.Mac ? nb == null || !Vis(nb) : nb != null && nb.Value == 7, nb == null ? "없음" : nb.Value.ToString());
             f.VM.Page = "settings"; Pump.Run(50);
             ComboBox lc = UiTree.Find<ComboBox>(f.Host);
             T("설정: 언어 드롭다운 (" + L.Languages.Length + "개 언어)", lc != null && lc.Items.Count == L.Languages.Length && Behave.GetValue(lc) == "ko" && lc.SelectedItem is LangItem li0 && li0.Code == "ko", lc == null ? "없음" : lc.Items.Count.ToString());
