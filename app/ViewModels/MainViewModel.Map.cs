@@ -54,7 +54,18 @@ public partial class MainViewModel {
     public string MapPath { get { return mapInfo != null ? mapInfo.Dir : L.T("map_none"); } }
     public string MapTitle { get { return mapInfo == null ? "" : (mapInfo.Friendly.Length > 0 ? mapInfo.Friendly : mapInfo.Name); } }
     public string MapDesc { get { return mapInfo == null ? "" : mapInfo.Description; } }
-    public string MapPicture { get { return mapInfo != null ? mapInfo.Picture : null; } }
+    // 문자열 경로를 Image.Source에 넘기면 URI로 해석돼서 맥 경로(/Users/...)는 열리지 않는다 → 직접 읽어 Bitmap으로
+    string mapPicPath; Avalonia.Media.Imaging.Bitmap mapPic;
+    public Avalonia.Media.Imaging.Bitmap MapPicture {
+        get {
+            string p = mapInfo != null ? mapInfo.Picture : null;
+            if (p != mapPicPath) {
+                mapPicPath = p; mapPic = null;
+                if (p != null) try { using (FileStream f = File.OpenRead(p)) mapPic = Avalonia.Media.Imaging.Bitmap.DecodeToWidth(f, 640); } catch (Exception) { }
+            }
+            return mapPic;
+        }
+    }
     public string MapStats {
         get {
             if (mapInfo == null) return "";

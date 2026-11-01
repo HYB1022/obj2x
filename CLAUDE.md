@@ -20,7 +20,7 @@ Windows와 macOS가 **같은 앱 하나**(`app/`, Avalonia 11 + .NET 8)를 쓴�
 
 - 필요한 것: .NET 8 SDK(이 PC는 `C:\Program Files\dotnet`), Python 3. NuGet 패키지는 Avalonia 11.2.3(MIT)뿐.
 - 개발 중: `dotnet build app/BusDepot.csproj` → `app/bin/Debug/net8.0/BusDepot.exe`. 설정 파일은 exe 옆 `BusDepot.ini`(Windows) / `~/Library/Application Support/BusDepot/BusDepot.ini`(맥).
-- 배포 빌드: `python build.py release` → `dist/BusDepot.zip`(Windows), `dist/BusDepot-mac-arm64.zip`, `dist/BusDepot-mac-x64.zip`. `python build.py win|mac`으로 한쪽만.
+- 배포 빌드: `python build.py release` → `dist/BusDepot.zip`(Windows), `dist/BusDepot-mac-arm64.zip`, `dist/BusDepot-mac-x64.zip`. `python build.py win|mac`으로 한쪽만. 맨 위의 `build_test.bat`은 release 빌드 후 `python build.py test`(배포 exe `--selftest` + 맥 zip 구성·실행 권한·CPU 종류·버전 점검)까지 한다.
   - Release 설정(csproj): .NET을 함께 넣은 한 파일 exe, 미리 컴파일(ReadyToRun: exe가 약 11 MB 커지지만 끄지 말 것 — 없으면 처음 도는 맵·모델 읽기 코드가 최적화 안 된 채로 돌아 v2.8.0처럼 몇 배 느려진다), 트리밍(partial: 우리 코드는 그대로), 압축. 네이티브 dll(Skia, HarfBuzz, ANGLE / 맥은 dylib)은 exe 옆에 둔다. 실행할 때 임시 폴더에 풀어 쓰는 방식은 백신 오진 위험 때문에 쓰지 않는다.
   - obj2x.exe 런처는 Windows에 들어 있는 .NET Framework `csc.exe`로 `windows/Launcher/Launcher.cs`를 컴파일한다 (build.py가 한다). 릴리스 zip에만 넣고(예전 업데이터용), 앱은 시작할 때 지운다.
   - 맥 zip은 Windows에서도 만든다 (`mac/make_app.py`: Info.plist, 아이콘, 실행 권한 755, 처음 실행 안내). 서명이 없어서 맥에서 처음 한 번 `xattr -dr com.apple.quarantine`와 `codesign --force --deep --sign -`가 필요하다(Apple 실리콘은 서명 없이는 실행되지 않음).

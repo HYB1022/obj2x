@@ -33,6 +33,11 @@ public static class Platform {
         if (string.IsNullOrEmpty(s.Lang)) s.Lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch {
             "ko" => "ko", "de" => "de", "ja" => "ja", "zh" => "zh", _ => "en" };
         if (string.IsNullOrEmpty(s.ModsDir) || !Directory.Exists(s.ModsDir)) s.ModsDir = FindContent();
+        // 기본값(C:\Program Files\...\blender.exe)이나 없는 경로면 응용 프로그램 폴더의 Blender 2.7x.app을 찾고, 없으면 비워 둔다
+        if (s.Blender.Contains('\\') || !File.Exists(s.Blender)) {
+            var b = Omsi.FindBlenders(null).Find(x => x.Ver != null && x.Ver.Major == 2 && x.Ver.Minor < 80);
+            s.Blender = b != null ? b.Path : "";
+        }
         ApplyMods(s);
         return s;
     }

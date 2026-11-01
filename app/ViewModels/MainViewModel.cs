@@ -139,7 +139,8 @@ public partial class MainViewModel : Observable {
     public string VersionText { get { return "v" + AppInfo.Version; } }
 
     public void RefreshStatus() {
-        List<string> missing = Conversion.MissingTools(S);
+        // 맥은 빠른 변환(FastO3D)이 기본이고 Blender 2.79는 선택 사항이라 경고하지 않는다 (마법사가 Blender 방식만 잠그고 이유를 보여 준다)
+        List<string> missing = Platform.Mac ? new List<string>() : Conversion.MissingTools(S);
         bool ok = missing.Count == 0;
         StatusText = running ? L.T("status_converting") : (ok ? L.T("status_ready") : L.T("status_blender_missing"));
         StatusState = running ? "busy" : (ok ? "ok" : "warn");

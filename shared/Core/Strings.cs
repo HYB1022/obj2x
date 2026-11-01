@@ -74,7 +74,12 @@ public static class L {
     }
 
     // 현재 언어 → 영어 → 한국어 순으로 찾는다
+    // 맥에서는 'on_mac_<키>' 문구가 있으면 그것을 쓴다 (blender.exe 대신 Blender.app 같은 운영체제에 맞는 안내)
     public static string T(string key) {
+        if (!Omsi.IsWindows && !key.StartsWith("on_mac_")) {
+            string m = T("on_mac_" + key);
+            if (m != "on_mac_" + key) return m;
+        }
         string v;
         Dictionary<string, string> d;
         if (tables.TryGetValue(Lang, out d) && d.TryGetValue(key, out v)) return v;

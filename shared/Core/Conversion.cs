@@ -25,7 +25,7 @@ public static class Conversion {
     // 없는 도구 목록 ("Blender (blender.exe)" 등). 비어 있으면 모두 있음
     public static List<string> MissingTools(Settings s) {
         List<string> m = new List<string>();
-        if (!BlenderOk(s)) m.Add("Blender (blender.exe)");
+        if (!BlenderOk(s)) m.Add(Omsi.IsWindows ? "Blender (blender.exe)" : "Blender (Blender.app)");
         if (Omsi.IsWindows && !ConvOk(s)) m.Add("OmsiXConv (OmsiXConv.exe)");
         return m;
     }

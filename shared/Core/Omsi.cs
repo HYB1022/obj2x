@@ -111,6 +111,14 @@ public static class Omsi {
             Match m = Regex.Match(pv ?? "", @"^(\d+)\.(\d+)(?:\.(\d+))?");
             if (m.Success) return new Version(int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value), m.Groups[3].Success ? int.Parse(m.Groups[3].Value) : 0);
         } catch (Exception) { }
+        // 맥: Blender.app/Contents/Info.plist의 CFBundleShortVersionString (실행하지 않아도 된다)
+        try {
+            string plist = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(exe)), "Info.plist");
+            if (!IsWindows && File.Exists(plist)) {
+                Match m = Regex.Match(File.ReadAllText(plist), @"<key>CFBundleShortVersionString</key>\s*<string>\s*(\d+)\.(\d+)(?:\.(\d+))?");
+                if (m.Success) return new Version(int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value), m.Groups[3].Success ? int.Parse(m.Groups[3].Value) : 0);
+            }
+        } catch (Exception) { }
         try {
             System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo(exe, "-b --factory-startup --version");
             psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.RedirectStandardOutput = true;

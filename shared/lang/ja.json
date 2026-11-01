@@ -570,5 +570,9 @@
   "mac_theme_system": "システム",
   "mac_theme_light": "ライト",
   "mac_theme_dark": "ダーク",
-  "mac_about_desc": "OMSI 2 / openOMSI 用制作ツールの Mac 版です。高速変換、バスの cfg・乗客の経路・座席の編集、マップの点検、オブジェクト・スプライン作成に対応します。3D 表示と Blender・OmsiXConv による変換は Windows 版のみです。"
+  "mac_about_desc": "OMSI 2 / openOMSI 用制作ツールの Mac 版です。高速変換、バスの cfg・乗客の経路・座席の編集、マップの点検、オブジェクト・スプライン作成に対応します。3D 表示と Blender・OmsiXConv による変換は Windows 版のみです。",
+  "on_mac_lbl_blender_path": "Blender 2.79（Blender.app、任意）",
+  "on_mac_msg_err_bl": "Blender のパスを確認してください（Blender.app）。",
+  "on_mac_omsi_err": "先に設定で OMSI 2 フォルダーを指定してください（Vehicles と maps があるフォルダー）",
+  "on_mac_view_blender_none": "Blender が見つかりません。参照から Blender.app を指定してください。"
 }

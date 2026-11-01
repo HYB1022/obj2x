@@ -570,5 +570,9 @@
   "mac_theme_system": "System",
   "mac_theme_light": "Hell",
   "mac_theme_dark": "Dunkel",
-  "mac_about_desc": "Die Mac-Version des Werkzeugs für OMSI 2 / openOMSI: Schnellkonvertierung, Bus-cfg-, Fahrgastweg- und Sitzbearbeitung, Kartenprüfung, Objekte und Splines erstellen. 3D-Ansichten und die Konvertierung mit Blender / OmsiXConv gibt es nur unter Windows."
+  "mac_about_desc": "Die Mac-Version des Werkzeugs für OMSI 2 / openOMSI: Schnellkonvertierung, Bus-cfg-, Fahrgastweg- und Sitzbearbeitung, Kartenprüfung, Objekte und Splines erstellen. 3D-Ansichten und die Konvertierung mit Blender / OmsiXConv gibt es nur unter Windows.",
+  "on_mac_lbl_blender_path": "Blender 2.79 (Blender.app, optional)",
+  "on_mac_msg_err_bl": "Bitte den Blender-Pfad prüfen (Blender.app).",
+  "on_mac_omsi_err": "Zuerst in den Einstellungen den OMSI-2-Ordner wählen (der Ordner mit Vehicles und maps)",
+  "on_mac_view_blender_none": "Blender wurde nicht gefunden. Mit Durchsuchen Blender.app auswählen."
 }
