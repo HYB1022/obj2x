@@ -132,7 +132,7 @@ public partial class MainViewModel {
         if (mrows.Count > MissingMax) MissingRows.Add(new InfoRow { Title = L.T("map_more", mrows.Count - MissingMax), Sub = L.T("map_more_sub") });
         foreach (AiGroup g in mapInfo.Ai) {
             int n = 0, miss = 0; foreach (UseItem v in g.Vehicles) { n += v.Count; if (mapInfo.MissingAi.Exists(delegate(UseItem x) { return string.Equals(x.Path, v.Path, StringComparison.OrdinalIgnoreCase); })) miss++; }
-            List<string> names = new List<string>(); foreach (UseItem v in g.Vehicles) names.Add(Path.GetFileNameWithoutExtension(v.Path) + " ×" + v.Count);
+            List<string> names = new List<string>(); foreach (UseItem v in g.Vehicles) names.Add(Omsi.Stem(v.Path) + " ×" + v.Count);
             AiRows.Add(new InfoRow { Title = (g.Name.Length > 0 ? g.Name : g.Kind) + " · " + L.T("map_ai_count", g.Vehicles.Count, n) + (miss > 0 ? " · " + L.T("map_ai_miss", miss) : ""),
                 Sub = string.Join(", ", names.ToArray()) });
         }
@@ -140,7 +140,7 @@ public partial class MainViewModel {
         PeopleRows.Add(new InfoRow { Title = L.T("map_drivers", mapInfo.Drivers.Count), Sub = Summ(mapInfo.Drivers) });
     }
     static string Summ(List<string> l) {
-        List<string> n = new List<string>(); foreach (string s in l) { n.Add(Path.GetFileNameWithoutExtension(s)); if (n.Count >= 12) { n.Add("…"); break; } }
+        List<string> n = new List<string>(); foreach (string s in l) { n.Add(Omsi.Stem(s)); if (n.Count >= 12) { n.Add("…"); break; } }
         return string.Join(", ", n.ToArray());
     }
 

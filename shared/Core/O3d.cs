@@ -234,7 +234,7 @@ public class ModelCfg {
         if (ctcFiles == null) {
             try { ctcFiles = Directory.GetFiles(CtcDir); Array.Sort(ctcFiles, StringComparer.OrdinalIgnoreCase); } catch (Exception) { ctcFiles = new string[0]; }
         }
-        string bn = System.IO.Path.GetFileNameWithoutExtension(tex.Replace('/', '\\')) + "_";
+        string bn = Omsi.Stem(tex) + "_";
         foreach (string f in ctcFiles) {
             string n = System.IO.Path.GetFileName(f), e = System.IO.Path.GetExtension(f).ToLowerInvariant();
             if (n.StartsWith(bn, StringComparison.OrdinalIgnoreCase) && (e == ".dds" || e == ".tga" || e == ".bmp" || e == ".png" || e == ".jpg")) return f;
@@ -324,9 +324,9 @@ public class Repaint {
 
     // 텍스처 이름이 [CTCTexture]의 원래 텍스처이고 이 도색에 그 자리가 있으면 도색 파일
     public string TexFor(string tex, Dictionary<string, string> slots) {
-        string bn = System.IO.Path.GetFileName(tex.Replace('/', '\\'));
+        string bn = Omsi.FileName(tex);
         foreach (KeyValuePair<string, string> kv in slots) {
-            if (!string.Equals(System.IO.Path.GetFileName(kv.Value.Replace('/', '\\')), bn, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!string.Equals(Omsi.FileName(kv.Value), bn, StringComparison.OrdinalIgnoreCase)) continue;
             string f;
             if (Items.TryGetValue(kv.Key, out f) && System.IO.File.Exists(f)) return f;
         }
@@ -352,7 +352,7 @@ public static class ObjExport {
             foreach (CfgMesh cm in meshes) {
                 O3dModel m;
                 try { m = O3dModel.Load(cm.Path); } catch (Exception ex) { errors.Add(cm.File + ": " + ex.Message); continue; }
-                string name = Uniq(Path.GetFileNameWithoutExtension(cm.File), usedNames);
+                string name = Uniq(Omsi.Stem(cm.File), usedNames);
                 ow.WriteLine("o " + name);
                 for (int i = 0; i < m.VCount; i++) {
                     int o = i * 8;

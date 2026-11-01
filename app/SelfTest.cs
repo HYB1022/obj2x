@@ -383,6 +383,8 @@ public static class SelfTest {
             && Math.Abs(mpi.Objects[1].X - 30) < 1e-9 && Math.Abs(mpi.Splines[0].X - 100) < 1e-9 && Math.Abs(mpi.Splines[0].Y - 50) < 1e-9 && mpi.Splines[0].Dir == 90, mpi.Friendly + "|" + mpi.YearFrom + "|" + mpi.MissingTiles + "|" + mpi.Objects[1].X + "|" + mpi.Splines[0].X + "," + mpi.Splines[0].Y + "," + mpi.Splines[0].Dir);
         T("맵: 없는 오브젝트(쓰인 횟수)·스플라인·AI(차고지 차종 포함)·사람", mpi.MissingObjects.Count == 1 && mpi.MissingObjects[0].Count == 2 && mpi.MissingSplines.Count == 1 && mpi.MissingSplines[0].Path.EndsWith("nope.sli")
             && mpi.Ai.Count == 2 && mpi.Ai[0].Vehicles.Count == 2 && mpi.Ai[1].Name == "Busses" && mpi.Ai[1].Vehicles.Count == 1 && mpi.Ai[1].Vehicles[0].Count == 2 && mpi.MissingAi.Count == 3 && mpi.MissingAi[0].Count == 3 && mpi.Humans.Count == 1 && mpi.MissingHumans.Count == 1, mpi.MissingObjects.Count + " " + mpi.MissingAi.Count);
+        // OMSI 파일 속 경로의 파일 이름: 맥에서도 \를 구분자로 (Path.GetFileName은 맥에서 \를 모른다)
+        T("경로: OMSI 경로(\\, /)의 파일 이름", Omsi.FileName(@"parts\body.o3d") == "body.o3d" && Omsi.Stem(@"model\parts\body.o3d") == "body" && Omsi.FileName("tex/a.bmp") == "a.bmp" && Omsi.FileName("a.bmp") == "a.bmp", Omsi.FileName(@"parts\body.o3d"));
         // 맥: Omsi.exe 없음 + 폴더 선택기가 준 경로 끝의 '/' + 설정의 OMSI 폴더는 다른 곳 → 그래도 맵 두 단계 위에서 찾아야 한다
         File.Delete(Path.Combine(om, "Omsi.exe"));
         MapInfo mpm = MapInfo.Load(mdir + "/", Path.Combine(root, "elsewhere"), null);

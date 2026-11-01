@@ -18,6 +18,13 @@ public static class Omsi {
         if (string.IsNullOrEmpty(p) || IsWindows) return p;
         return p.Replace('\\', Path.DirectorySeparatorChar);
     }
+    // OMSI 파일에 적힌 경로(\ 또는 /)의 파일 이름. 맥에서는 \가 구분자가 아니라서 Path.GetFileName("parts\\body.o3d")가 통째로 돌려준다
+    public static string FileName(string p) {
+        if (string.IsNullOrEmpty(p)) return p ?? "";
+        int i = p.LastIndexOfAny(new char[] { '\\', '/' });
+        return i >= 0 ? p.Substring(i + 1) : p;
+    }
+    public static string Stem(string p) { return Path.GetFileNameWithoutExtension(FileName(p)); }
     // 파일/폴더/주소를 운영체제의 기본 프로그램으로 연다 (Windows: 탐색기·연결 프로그램, 맥: open)
     public static void Open(string path) {
         System.Diagnostics.ProcessStartInfo psi;
@@ -210,7 +217,7 @@ public static class Omsi {
             if (mtl == null) continue;
             string dir = Path.GetDirectoryName(mtl);
             foreach (string t in MtlTextures(mtl)) {
-                if (FindTexture(t, dir) == null) r.Add(o.Rel + ": " + Path.GetFileName(t.Replace('/', '\\')));
+                if (FindTexture(t, dir) == null) r.Add(o.Rel + ": " + FileName(t));
             }
         }
         return r;
