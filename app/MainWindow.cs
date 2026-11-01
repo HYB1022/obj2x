@@ -206,6 +206,8 @@ public class MainWindow : Window, IUi {
         try {
             var res = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { SuggestedStartLocation = await StartFolder(StorageProvider, start), AllowMultiple = false });
             if (res.Count > 0) r = res[0].TryGetLocalPath();
+            // 맥은 폴더 경로 끝에 '/'를 붙여 준다 (/Users/a/maps/X/). 이름·상위 폴더 계산이 틀어지지 않게 뗀다
+            if (r != null && r.Length > 1 && (r.EndsWith('/') || r.EndsWith('\\')) && Path.GetPathRoot(r) != r) r = r.TrimEnd('/', '\\');
         } catch (Exception ex) { Msg(ex.Message); }
         done(r);
     }

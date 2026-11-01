@@ -125,10 +125,10 @@ public class ModelCfg {
         else {
             for (string d = dir; d != null; d = System.IO.Path.GetDirectoryName(d)) {
                 c.Bases.Add(d);
-                if (string.Equals(d.TrimEnd('\\'), c.VehicleDir.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) break;
+                if (string.Equals(d.TrimEnd('\\', '/'), c.VehicleDir.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase)) break;
             }
             string vm = System.IO.Path.Combine(c.VehicleDir, "Model");
-            if (Directory.Exists(vm) && !c.Bases.Exists(delegate(string b) { return string.Equals(b.TrimEnd('\\'), vm, StringComparison.OrdinalIgnoreCase); })) c.Bases.Insert(1, vm);
+            if (Directory.Exists(vm) && !c.Bases.Exists(delegate(string b) { return string.Equals(b.TrimEnd('\\', '/'), vm, StringComparison.OrdinalIgnoreCase); })) c.Bases.Insert(1, vm);
         }
         c.TexDir = sco ? System.IO.Path.Combine(dir, "texture") : System.IO.Path.Combine(c.VehicleDir, "Texture");
         string[] lines = c.Doc.Lines.ToArray();

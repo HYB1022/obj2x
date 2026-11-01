@@ -295,7 +295,7 @@ public static class ScoMaker {
         }
         if (o.Combine) {
             string name = Omsi.SafeName(o.Name);
-            if (name.Length == 0) name = Path.GetFileName(outDir.TrimEnd('\\'));
+            if (name.Length == 0) name = Path.GetFileName(outDir.TrimEnd('\\', '/'));
             // 충돌 모델은 하나만 넣을 수 있다: 이름에 coll이 들어간 모델, 없으면 가장 큰 모델
             string coll = models.Find(delegate(string m) { return Path.GetFileName(m).IndexOf("coll", StringComparison.OrdinalIgnoreCase) >= 0; });
             if (coll == null) { coll = models[0]; foreach (string m in models) if (new FileInfo(m).Length > new FileInfo(coll).Length) coll = m; }

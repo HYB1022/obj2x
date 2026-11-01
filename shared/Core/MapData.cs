@@ -34,8 +34,12 @@ public class MapInfo {
 
     public static MapInfo Load(string dir, string root, Action<int, int> progress) {
         MapInfo m = new MapInfo(); m.Dir = dir;
-        string guess = Path.GetDirectoryName(Path.GetDirectoryName(dir.TrimEnd('\\')) ?? "") ?? "";
-        m.Root = File.Exists(Path.Combine(guess, "Omsi.exe")) || string.IsNullOrEmpty(root) ? guess : root;
+        string guess = Path.GetDirectoryName(Path.GetDirectoryName(dir.TrimEnd('\\', '/')) ?? "") ?? "";
+        // 맥에는 Omsi.exe가 없을 수 있다: Sceneryobjects/Splines 폴더가 있으면 OMSI 폴더로 본다
+        bool guessOk = File.Exists(Path.Combine(guess, "Omsi.exe")) || Directory.Exists(Path.Combine(guess, "Sceneryobjects")) || Directory.Exists(Path.Combine(guess, "Splines"));
+        m.Root = guessOk || string.IsNullOrEmpty(root) ? guess : root;
+        // 설정의 OMSI 폴더가 맵 위치와 다르면 거기서도 찾는다
+        string other = guessOk && !string.IsNullOrEmpty(root) && !string.Equals(root.TrimEnd('\\', '/'), guess, StringComparison.OrdinalIgnoreCase) ? root : null;
         string[] L = Omsi.AnsiLines(Path.Combine(dir, "global.cfg"));
         for (int i = 0; i < L.Length; i++) {
             string k = L[i].Trim().ToLowerInvariant();
@@ -63,7 +67,7 @@ public class MapInfo {
         Dictionary<string, int> objUse = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase), splUse = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         Func<string, bool> has = delegate(string rel) {
             bool e; if (exists.TryGetValue(rel, out e)) return e;
-            try { e = File.Exists(Path.Combine(m.Root, Omsi.Rel(rel))); } catch (Exception) { e = false; }
+            try { e = File.Exists(Path.Combine(m.Root, Omsi.Rel(rel))) || (other != null && File.Exists(Path.Combine(other, Omsi.Rel(rel)))); } catch (Exception) { e = false; }
             if (!e) foreach (string r in ExtraRoots) { try { if (File.Exists(Path.Combine(r, Omsi.Rel(rel)))) { e = true; break; } } catch (Exception) { } }
             exists[rel] = e; return e;
         };

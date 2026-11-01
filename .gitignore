@@ -69,3 +69,9 @@ useless/
 dist/
 app/bin/
 app/obj/
+
+# macOS system files
+.DS_Store
+**/.DS_Store
+._.DS_Store
+**/._.DS_Store

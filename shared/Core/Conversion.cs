@@ -33,8 +33,8 @@ public static class Conversion {
     public static RunOptions BuildOptions(Settings s, string mode, string py) {
         RunOptions o = new RunOptions();
         o.Mode = mode;
-        o.In = s.Inp.Trim().TrimEnd('\\');
-        o.Out = s.Out.Trim().TrimEnd('\\');
+        o.In = s.Inp.Trim().TrimEnd('\\', '/');
+        o.Out = s.Out.Trim().TrimEnd('\\', '/');
         if (s.SameDir || mode == "fast") o.Out = o.In;
         o.Blender = Clean(s.Blender); o.Conv = Clean(s.Conv); o.Py = py;
         o.Par = s.Par; o.Sub = s.Sub; o.Inc = s.Inc; o.DelX = s.DelX;

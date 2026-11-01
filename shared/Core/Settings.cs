@@ -133,8 +133,8 @@ public class Settings {
             o.Add("[settings]");
             o.Add("blender=" + Blender);
             o.Add("conv=" + Conv);
-            o.Add("inp=" + Inp.TrimEnd('\\'));
-            o.Add("out=" + Out.TrimEnd('\\'));
+            o.Add("inp=" + Inp.TrimEnd('\\', '/'));
+            o.Add("out=" + Out.TrimEnd('\\', '/'));
             o.Add("doconv=" + (DoConv ? "1" : "0"));
             o.Add("par=" + Par);
             o.Add("samedir=" + (SameDir ? "1" : "0"));
