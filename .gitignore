@@ -75,3 +75,6 @@ app/obj/
 **/.DS_Store
 ._.DS_Store
 **/._.DS_Store
+# MiSans anywhere (user copies, e.g. fonts/ next to the exe)
+/fonts/
+MiSans*

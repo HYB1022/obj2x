@@ -87,7 +87,9 @@ public static class Look {
             if (L.Lang == "ja") return new FontFamily(Omsi.IsWindows ? "Yu Gothic UI, Meiryo UI, Meiryo" : "Hiragino Sans, Hiragino Kaku Gothic ProN");
             if (font == "system") return new FontFamily((Omsi.IsWindows ? "Segoe UI, " : "Helvetica Neue, ") + sys);
             if (font == "misans") {
-                if (MiSans() != null) return new FontFamily(MiSans() + ", " + sys);
+                string mi = MiSans();
+                // fonts 폴더의 것은 시스템 글꼴과 한 목록에 섞을 수 없어 하나만 준다 (없는 글자는 Avalonia가 시스템 글꼴에서 찾는다)
+                if (mi != null) return new FontFamily(mi.StartsWith(FileFonts.DirKey) ? mi : mi + ", " + sys);
                 font = "nanum";                   // 없으면 기본 글꼴로
             }
             foreach (string[] b in Bundled) {
@@ -98,8 +100,11 @@ public static class Look {
         } catch (Exception) { }
         return new FontFamily(sys);
     }
-    // MiSans: 라이선스상 글꼴 파일을 함께 배포할 수 없어서 넣지 않는다. 사용자가 시스템에 설치했으면 그것을 쓴다. 없으면 null.
+    // MiSans: 라이선스상 글꼴 파일을 함께 배포할 수 없어서 넣지 않는다. 사용자가 fonts 폴더(exe 옆, 맥은 Application Support/BusDepot/fonts)에
+    // 넣었으면 그것("fonts:BusDepotDir#MiSans"), 아니면 시스템에 설치한 것의 이름. 없으면 null.
     public static string MiSans() {
+        string d = FileFonts.DirFamily("MiSans", "MiSans Normal", "MiSans Regular");
+        if (d != null) return FileFonts.DirKey + "#" + d;
         try {
             HashSet<string> sysFonts = new(FontManager.Current.SystemFonts.Select(x => x.Name), StringComparer.OrdinalIgnoreCase);
             foreach (string n in new[] { "MiSans", "MiSans Normal", "MiSans Regular" }) if (sysFonts.Contains(n)) return n;

@@ -135,7 +135,7 @@ codesign --force --deep --sign - /Applications/BusDepot.app
 - **OmsiXConv 세부 옵션** (`고급`): `z up`, `Separate Files`, `Show Details of X`, `Remove Specular`, `Opt. Materials`, `Opt. Vertices`, `All Normals Up`, `Use Submesh Local Pos. as Global Pos.` 변환할 때마다 여기서 정한 상태로 자동 설정됩니다. 기본값은 `z up` 해제, `Remove Specular` / `Opt. Materials` / `Opt. Vertices` 체크입니다.
 - **Blender .x 내보내기 추가 옵션** (`고급`): 내보내기 애드온의 옵션을 `이름=값` 한 줄씩 적습니다 (예: `ApplyModifiers=True`). 실행 로그의 `x exporter options:` 목록에 있는 이름만 적용되고, 없는 이름은 `ignored options`로 표시됩니다.
 - **성공 시 .x 파일 삭제** (`설정`): O3D 변환에 성공하면 중간 파일인 `.x`를 지웁니다.
-- **글꼴** (`설정`): 나눔스퀘어 네오(기본), Noto Sans KR, MiSans, Windows 시스템 글꼴 중에서 고릅니다. 나눔스퀘어 네오와 Noto Sans KR은 `fonts` 폴더에 들어 있습니다. MiSans는 라이선스상 함께 배포할 수 없으니 [샤오미 HyperOS 글꼴 페이지](https://hyperos.mi.com/font)에서 받아 Windows에 설치하거나 `fonts` 폴더에 넣으세요. 없으면 나눔스퀘어 네오로 표시됩니다.
+- **글꼴** (`설정`): 나눔스퀘어 네오(기본), Noto Sans KR, MiSans, Windows 시스템 글꼴 중에서 고릅니다. 나눔스퀘어 네오와 Noto Sans KR은 프로그램 안에 들어 있습니다. MiSans는 라이선스상 함께 배포할 수 없으니 [샤오미 HyperOS 글꼴 페이지](https://hyperos.mi.com/font)에서 받아 Windows에 설치하거나 `BusDepot.exe` 옆 `fonts` 폴더에 넣으세요 (맥은 `~/Library/Application Support/BusDepot/fonts`). 없으면 나눔스퀘어 네오로 표시됩니다.
 - **언어 파일** (`설정`): 한국어, English, Deutsch, 日本語, 中文을 지원합니다. `언어 파일` 버튼을 누르면 exe 옆에 `lang` 폴더와 번역 틀(`_template.json`)이 생깁니다. 틀을 복사해 `<언어 코드>.json`(예: `fr.json`)으로 저장하고 번역하면 언어 목록에 나타납니다. 기본 언어와 같은 이름으로 저장하면 그 언어의 일부 문구만 바꿀 수도 있습니다.
 
 ## OMSI 제작: 오브젝트 / 스플라인 / 버스 / 맵
@@ -227,6 +227,7 @@ dist\win\BusDepot.exe --selftest
 
 ## 변경 내역
 
+- **v2.8.5** — `fonts` 폴더에 넣은 MiSans를 인식하지 못하던 문제 수정 (v2.8.0부터). MiSans의 보통/굵은 글씨가 Regular/Bold로 잡히게 함
 - **v2.8.4** — 맥: 메뉴 막대의 페이지 바로 가기(⌘1~⌘7, ⌘,)가 동작하지 않던 문제 수정. 자체 점검 결과 맨 위에 버전·운영체제를 적고, 실패하면 어느 조건이 틀렸는지 보여 줌. README에 macOS 안내 보강. 맥: OBJ로 저장할 때 부품 이름이 `parts\body`처럼 폴더까지 붙던 문제와, 도색 텍스처·AI 차량 이름에서 같은 문제 수정
 - **v2.8.3** — **macOS 버전을 처음 릴리스합니다** (openOMSI용, Apple 실리콘 / Intel). 맵 탭에서 오브젝트·스플라인이 모두 '없음'으로 나오던 문제, 맵 사진이 안 나오던 문제, 맥에서 Blender 경로가 Windows 기준으로 나오던 문제를 고쳤고, 맥 메뉴 막대에 앱 이름과 페이지 바로 가기(⌘1~⌘7, ⌘,)를 넣었습니다
 - **v2.8.2** — 자동 업데이트가 설치는 끝내 놓고 새 버전을 다시 켜지 못하던 문제 수정(`System.Diagnostics.Process` 오류 창). v2.8.0/v2.8.1에서 이 버전으로 업데이트할 때는 아직 그 창이 한 번 뜰 수 있습니다. 닫고 Bus Depot을 다시 실행하면 v2.8.2입니다

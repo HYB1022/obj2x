@@ -135,7 +135,7 @@ Mac 上可以使用 FastO3D、巴士和地图查看、物件/样条制作。Omsi
 - **OmsiXConv 详细选项**（`高级`）：`z up`、`Separate Files`、`Show Details of X`、`Remove Specular`、`Opt. Materials`、`Opt. Vertices`、`All Normals Up`、`Use Submesh Local Pos. as Global Pos.` 每次转换都会自动设为这里的状态。默认为 `z up` 关闭，`Remove Specular` / `Opt. Materials` / `Opt. Vertices` 开启。
 - **Blender .x 导出附加选项**（`高级`）：每行写一个导出插件的 `名称=值`（例如 `ApplyModifiers=True`）。只有日志中 `x exporter options:` 列出的名称会生效，未知名称显示为 `ignored options`。
 - **成功后删除 .x**（`设置`）：O3D 转换成功后删除中间文件 `.x`。
-- **字体**（`设置`）：可选 NanumSquare Neo（默认）、Noto Sans KR、MiSans 或 Windows 系统字体。NanumSquare Neo 和 Noto Sans KR 在 `fonts` 文件夹中。MiSans 的许可不允许随程序分发，请从[小米 HyperOS 字体页面](https://hyperos.mi.com/font)下载后安装到 Windows 或放进 `fonts` 文件夹。没有时以 NanumSquare Neo 显示。
+- **字体**（`设置`）：可选 NanumSquare Neo（默认）、Noto Sans KR、MiSans 或 Windows 系统字体。NanumSquare Neo 和 Noto Sans KR 已内置在程序中。MiSans 的许可不允许随程序分发，请从[小米 HyperOS 字体页面](https://hyperos.mi.com/font)下载后安装到 Windows 或放进 `BusDepot.exe` 旁边的 `fonts` 文件夹（Mac 为 `~/Library/Application Support/BusDepot/fonts`）。没有时以 NanumSquare Neo 显示。
 - **语言文件**（`设置`）：内置 한국어、English、Deutsch、日本語 和 中文。点击 `语言文件` 按钮会在 exe 旁创建 `lang` 文件夹和翻译模板（`_template.json`）。把模板复制为 `<语言代码>.json`（如 `fr.json`）并翻译，它就会出现在语言列表中。用内置语言的文件名保存，则只修改该语言的部分文字。
 
 ## OMSI 制作：物件 / 样条线 / 巴士 / 地图
@@ -226,6 +226,7 @@ dist\win\BusDepot.exe --selftest
 
 ## 更新日志
 
+- **v2.8.5** — 修复放进 `fonts` 文件夹的 MiSans 无法识别的问题（自 v2.8.0 起）。MiSans 的常规/粗体文字改用 Regular/Bold
 - **v2.8.4** — Mac：修复菜单栏的页面快捷方式（⌘1–⌘7、⌘,）无效的问题。自检结果开头写上版本和系统，失败时显示是哪个条件不对。README 补充 macOS 说明。Mac：修复保存为 OBJ 时部件名带上文件夹（`parts\body`）的问题，以及涂装贴图、AI 车辆名称的同类问题
 - **v2.8.3** — **首次发布 macOS 版**（用于 openOMSI，Apple 芯片 / Intel）。修复地图页中物件和样条全部显示为缺失、地图图片不显示、Mac 上 Blender 路径显示为 Windows 路径的问题。Mac 菜单栏显示应用名称和页面快捷方式（⌘1–⌘7、⌘,）
 - **v2.8.2** — 修复自动更新安装完成后无法重新启动新版本的问题（`System.Diagnostics.Process` 错误）。从 v2.8.0/v2.8.1 更新到本版本时仍可能出现一次该错误：关闭后重新运行 Bus Depot 即为 v2.8.2

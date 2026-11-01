@@ -113,5 +113,104 @@ public static class FileFonts {
     public const string Prefix = "avares://BusDepot/Assets/Fonts#";
     static readonly string[] names = { "NanumSquare Neo", "Noto Sans KR" };
     public static bool Has(string family) { return Array.IndexOf(names, family) >= 0; }
-    public static void Register() { }
+
+    // 사용자가 넣은 글꼴 폴더 (MiSans처럼 함께 배포할 수 없는 글꼴): Windows는 exe 옆 fonts, 맥은 앱 번들 안과 ~/Library/Application Support/BusDepot/fonts
+    public const string DirKey = "fonts:BusDepotDir";
+    static DirFontCollection dirFonts;
+    public static IEnumerable<string> Dirs() {
+        yield return Path.Combine(Program.Here, "fonts");
+        if (Platform.Mac) yield return Path.Combine(Platform.DataDir, "fonts");
+    }
+    public static void Register() {
+        try {
+            dirFonts = new DirFontCollection(new Uri(DirKey), Dirs());
+            FontManager.Current.AddFontCollection(dirFonts);
+        } catch (Exception) { dirFonts = null; }
+    }
+    public static IEnumerable<string> Describe() { return dirFonts != null ? dirFonts.Describe() : new string[0]; }
+    // fonts 폴더에서 읽은 글꼴 이름(대소문자 무시)이면 그 이름, 없으면 null
+    public static string DirFamily(params string[] want) {
+        if (dirFonts == null) return null;
+        foreach (string w in want) foreach (string f in dirFonts.Families) if (string.Equals(f, w, StringComparison.OrdinalIgnoreCase)) return f;
+        return null;
+    }
+}
+
+// 폴더의 ttf/otf를 읽는 글꼴 모음. Avalonia의 EmbeddedFontCollection은 avares:// 안의 것만 읽어서 따로 만든다.
+// 굵기마다 파일이 따로인 글꼴(MiSans-Regular/Bold/...)은 같은 이름으로 묶고, 고를 때 가장 가까운 굵기를 준다.
+public class DirFontCollection : Avalonia.Media.Fonts.FontCollectionBase {
+    readonly Uri key; readonly List<string> dirs;
+    readonly List<FontFamily> families = new();
+    readonly Dictionary<string, List<IGlyphTypeface>> faces = new(StringComparer.OrdinalIgnoreCase);
+    readonly Dictionary<IGlyphTypeface, string> styleOf = new();     // 파일 이름의 굵기: MiSans-Regular.ttf → Regular (Regular와 Bold는 글꼴 이름이 둘 다 "MiSans")
+    public DirFontCollection(Uri key, IEnumerable<string> dirs) { this.key = key; this.dirs = new List<string>(dirs); }
+    public override Uri Key => key;
+    public override int Count => families.Count;
+    public override FontFamily this[int index] => families[index];
+    public override IEnumerator<FontFamily> GetEnumerator() => families.GetEnumerator();
+    public IEnumerable<string> Families { get { foreach (string n in faces.Keys) yield return n; } }
+    // --fonttest용: 읽은 글꼴 (모음 이름 · 글꼴 이름 · 굵기)
+    public IEnumerable<string> Describe() { foreach (var kv in faces) foreach (IGlyphTypeface g in kv.Value) yield return kv.Key + " · " + g.FamilyName + " (" + styleOf.GetValueOrDefault(g) + ") · " + (int)g.Weight + " " + g.Style; }
+
+    public override void Initialize(IFontManagerImpl fontManager) {
+        foreach (string d in dirs) {
+            string[] files;
+            try { if (!Directory.Exists(d)) continue; files = Directory.GetFiles(d); } catch (Exception) { continue; }
+            Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+            foreach (string f in files) {
+                string ext = Path.GetExtension(f).ToLowerInvariant();
+                if (ext != ".ttf" && ext != ".otf") continue;
+                try {
+                    using FileStream s = File.OpenRead(f);
+                    MemoryStream m = new MemoryStream(); s.CopyTo(m); m.Position = 0;
+                    IGlyphTypeface gt = Create(fontManager, m);
+                    if (gt == null) continue;
+                    // 굵기마다 이름이 다른 글꼴(MiSans Normal, MiSans Bold ...)도 대표 이름(TypographicFamilyName)으로 묶는다
+                    string fam = Typographic(gt) ?? gt.FamilyName;
+                    string stem = Path.GetFileNameWithoutExtension(f); int dash = stem.LastIndexOfAny(new[] { '-', '_', ' ' });
+                    styleOf[gt] = dash >= 0 ? stem.Substring(dash + 1) : "";
+                    Add(fam, gt);
+                    if (!string.Equals(fam, gt.FamilyName, StringComparison.OrdinalIgnoreCase)) Add(gt.FamilyName, gt);
+                } catch (Exception) { }
+            }
+        }
+    }
+    // Avalonia 11.2는 스트림에서 글꼴을 만드는 함수(IFontManagerImpl.TryCreateGlyphTypeface(Stream, ...))와 대표 이름(IGlyphTypeface2)을
+    // 내부용으로 막아 두었다. EmbeddedFontCollection이 쓰는 바로 그 함수를 리플렉션으로 부른다
+    const System.Reflection.BindingFlags Any = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+    static IGlyphTypeface Create(IFontManagerImpl fm, Stream s) {
+        var mi = typeof(IFontManagerImpl).GetMethod("TryCreateGlyphTypeface", Any, null, new[] { typeof(Stream), typeof(FontSimulations), typeof(IGlyphTypeface).MakeByRefType() }, null);
+        if (mi == null) return null;
+        object[] a = { s, FontSimulations.None, null };
+        return mi.Invoke(fm, a) is true ? a[2] as IGlyphTypeface : null;
+    }
+    static string Typographic(IGlyphTypeface gt) {
+        try {
+            Type t = typeof(IGlyphTypeface).Assembly.GetType("Avalonia.Media.IGlyphTypeface2");
+            string n = t != null && t.IsInstanceOfType(gt) ? t.GetProperty("TypographicFamilyName", Any)?.GetValue(gt) as string : null;
+            return string.IsNullOrEmpty(n) ? null : n;
+        } catch (Exception) { return null; }
+    }
+    void Add(string fam, IGlyphTypeface gt) {
+        if (!faces.TryGetValue(fam, out List<IGlyphTypeface> l)) { faces[fam] = l = new List<IGlyphTypeface>(); families.Add(new FontFamily(key, fam)); }
+        l.Add(gt);
+    }
+
+    public override bool TryGetGlyphTypeface(string familyName, FontStyle style, FontWeight weight, FontStretch stretch, out IGlyphTypeface glyphTypeface) {
+        glyphTypeface = null;
+        if (!faces.TryGetValue(familyName, out List<IGlyphTypeface> l) || l.Count == 0) return false;
+        // MiSans처럼 굵기 숫자가 표준과 다른 글꼴(Regular 330, Bold 630, Heavy 700 ...)이 있어서 굵기 이름을 먼저 본다
+        string[] names = (int)weight switch {
+            >= 350 and < 450 => new[] { "Regular", "Normal" }, >= 450 and < 550 => new[] { "Medium" },
+            >= 550 and < 650 => new[] { "Semibold", "SemiBold", "Demibold" }, >= 650 and < 750 => new[] { "Bold" },
+            >= 750 => new[] { "Heavy", "Black", "ExtraBold" }, _ => new string[0] };
+        foreach (string n in names) foreach (IGlyphTypeface g in l)
+            if (g.Style == style && (string.Equals(styleOf.GetValueOrDefault(g), n, StringComparison.OrdinalIgnoreCase) || g.FamilyName.EndsWith(" " + n, StringComparison.OrdinalIgnoreCase))) { glyphTypeface = g; return true; }
+        int best = int.MaxValue;
+        foreach (IGlyphTypeface g in l) {
+            int score = Math.Abs((int)g.Weight - (int)weight) + (g.Style == style ? 0 : 1000);
+            if (score < best) { best = score; glyphTypeface = g; }
+        }
+        return glyphTypeface != null;
+    }
 }

@@ -135,7 +135,7 @@ Mac では FastO3D、バス・マップ表示、オブジェクト/スプライ�
 - **OmsiXConv の詳細オプション**（`詳細`）：`z up`、`Separate Files`、`Show Details of X`、`Remove Specular`、`Opt. Materials`、`Opt. Vertices`、`All Normals Up`、`Use Submesh Local Pos. as Global Pos.` を変換のたびにここで決めた状態に自動設定します。既定値は `z up` オフ、`Remove Specular` / `Opt. Materials` / `Opt. Vertices` オンです。
 - **Blender .x 書き出しの追加オプション**（`詳細`）：書き出しアドオンのオプションを `名前=値` で 1 行ずつ書きます（例：`ApplyModifiers=True`）。ログの `x exporter options:` 一覧にある名前だけが適用され、ない名前は `ignored options` と表示されます。
 - **成功したら .x を削除**（`設定`）：O3D 変換に成功したら中間ファイルの `.x` を削除します。
-- **フォント**（`設定`）：NanumSquare Neo（既定）、Noto Sans KR、MiSans、Windows のシステムフォントから選びます。NanumSquare Neo と Noto Sans KR は `fonts` フォルダーに入っています。MiSans はライセンス上同梱できないので、[Xiaomi の HyperOS フォントページ](https://hyperos.mi.com/font)から入手して Windows にインストールするか `fonts` フォルダーに入れてください。ない場合は NanumSquare Neo で表示されます。
+- **フォント**（`設定`）：NanumSquare Neo（既定）、Noto Sans KR、MiSans、Windows のシステムフォントから選びます。NanumSquare Neo と Noto Sans KR はプログラムに内蔵されています。MiSans はライセンス上同梱できないので、[Xiaomi の HyperOS フォントページ](https://hyperos.mi.com/font)から入手して Windows にインストールするか `BusDepot.exe` の隣の `fonts` フォルダーに入れてください（Mac は `~/Library/Application Support/BusDepot/fonts`）。ない場合は NanumSquare Neo で表示されます。
 - **言語ファイル**（`設定`）：한국어、English、Deutsch、日本語、中文 に対応しています。`言語ファイル` ボタンを押すと exe の横に `lang` フォルダーと翻訳テンプレート（`_template.json`）が作られます。テンプレートを `<言語コード>.json`（例：`fr.json`）としてコピーして翻訳すると言語一覧に表示されます。内蔵言語と同じ名前で保存すると、その言語の一部の文言だけを変えられます。
 
 ## OMSI 作成：オブジェクト / スプライン / バス / マップ
@@ -226,6 +226,7 @@ dist\win\BusDepot.exe --selftest
 
 ## 変更履歴
 
+- **v2.8.5** — `fonts` フォルダーに入れた MiSans が認識されない問題を修正（v2.8.0 から）。MiSans の標準/太字が Regular/Bold になるように
 - **v2.8.4** — Mac：メニューバーのページへのショートカット（⌘1〜⌘7、⌘,）が効かない問題を修正。自己診断の結果の先頭にバージョンと OS を書き、失敗したときはどの条件が違ったかを表示。README の macOS 案内を追加。Mac：OBJ で保存すると部品名にフォルダーまで付く（`parts\body`）問題と、塗装テクスチャ・AI 車両名の同じ問題を修正
 - **v2.8.3** — **macOS 版を初めてリリース**（openOMSI 用、Apple シリコン / Intel）。マップタブでオブジェクト・スプラインがすべて「なし」になる問題、マップ画像が出ない問題、Mac で Blender のパスが Windows 用になる問題を修正。Mac のメニューバーにアプリ名とページへのショートカット（⌘1〜⌘7、⌘,）を追加しました
 - **v2.8.2** — 自動アップデートがインストールは済ませても新しいバージョンを再起動できなかった問題を修正（`System.Diagnostics.Process` のエラー）。v2.8.0/v2.8.1 からこのバージョンへ更新するときは、まだそのエラーが一度出ることがあります。閉じて Bus Depot を起動し直すと v2.8.2 になっています

@@ -56,6 +56,8 @@ public static class DevTools {
                 bool ok = FontManager.Current.TryGetGlyphTypeface(new Typeface(fam, FontStyle.Normal, w), out IGlyphTypeface gt);
                 sb.AppendLine(font + " " + w + " (" + fam + ") -> " + ok + " " + (gt != null ? gt.FamilyName + " w=" + gt.Weight : ""));
             }
+        sb.AppendLine("fonts 폴더: " + string.Join(" | ", FileFonts.Dirs()));
+        foreach (string d in FileFonts.Describe()) sb.AppendLine("  " + d);
         File.WriteAllText(path, sb.ToString());
         return 0;
     }

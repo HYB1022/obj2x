@@ -215,7 +215,7 @@
   "btn_lang_folder": "语言文件",
   "lbl_language_sub": "把语言文件 (.json) 放进 lang 文件夹，重新启动后即可选择",
   "lbl_font": "字体",
-  "lbl_font_sub": "整个应用使用的字体。自行安装 MiSans 后即可使用",
+  "lbl_font_sub": "整个应用使用的字体。安装 MiSans 或放进 fonts 文件夹后即可使用",
   "font_nanum": "NanumSquare Neo",
   "font_noto": "Noto Sans",
   "font_system": "系统默认",

@@ -135,7 +135,7 @@ On the Mac you can use FastO3D, the bus and map viewers and the object/spline ma
 - **OmsiXConv options** (`Advanced`): `z up`, `Separate Files`, `Show Details of X`, `Remove Specular`, `Opt. Materials`, `Opt. Vertices`, `All Normals Up`, `Use Submesh Local Pos. as Global Pos.` are set this way for every conversion. The defaults are `z up` off and `Remove Specular` / `Opt. Materials` / `Opt. Vertices` on.
 - **Extra Blender .x export options** (`Advanced`): one `name=value` per line for the export add-on (e.g. `ApplyModifiers=True`). Only names listed under `x exporter options:` in the log are applied; unknown names appear as `ignored options`.
 - **Delete .x on success** (`Settings`): deletes the intermediate `.x` after a successful O3D conversion.
-- **Font** (`Settings`): NanumSquare Neo (default), Noto Sans KR, MiSans or the Windows system font. NanumSquare Neo and Noto Sans KR are in the `fonts` folder. MiSans cannot be redistributed under its license, so download it from [Xiaomi's HyperOS font page](https://hyperos.mi.com/font) and install it in Windows or put it in the `fonts` folder. Without it, NanumSquare Neo is used.
+- **Font** (`Settings`): NanumSquare Neo (default), Noto Sans KR, MiSans or the Windows system font. NanumSquare Neo and Noto Sans KR are built into the program. MiSans cannot be redistributed under its license, so download it from [Xiaomi's HyperOS font page](https://hyperos.mi.com/font) and install it in Windows or put it in the `fonts` folder next to `BusDepot.exe` (on the Mac: `~/Library/Application Support/BusDepot/fonts`). Without it, NanumSquare Neo is used.
 - **Language files** (`Settings`): 한국어, English, Deutsch, 日本語 and 中文 are built in. The `Language files` button creates a `lang` folder with a translation template (`_template.json`) next to the exe. Copy the template to `<language code>.json` (e.g. `fr.json`), translate it and it appears in the language list. Saving under a built-in language's name changes only some of its texts.
 
 ## OMSI creation: objects / splines / bus / map
@@ -226,6 +226,7 @@ Blender and OmsiXConv are not included in this repository. Each program is under
 
 ## Changelog
 
+- **v2.8.5** — Fixed MiSans in the `fonts` folder not being recognized (since v2.8.0). MiSans normal/bold text now uses Regular/Bold
 - **v2.8.4** — Mac: fixed the page shortcuts in the menu bar (⌘1–⌘7, ⌘,) not working. The self-test result starts with the version and OS and shows which condition failed. More macOS information in the README. Mac: fixed part names getting the folder (`parts\body`) when saving as OBJ, and the same in repaint textures and AI vehicle names
 - **v2.8.3** — **First macOS release** (for openOMSI, Apple silicon / Intel). Fixed all objects and splines showing as missing in the Map tab, the map picture not showing, and the Blender path showing a Windows path on the Mac. The Mac menu bar now shows the app name and page shortcuts (⌘1–⌘7, ⌘,)
 - **v2.8.2** — Fixed the auto-update installing the new version but failing to restart it (`System.Diagnostics.Process` error). When updating from v2.8.0/v2.8.1 to this version the error may still appear once: close it and start Bus Depot again, it will be v2.8.2
