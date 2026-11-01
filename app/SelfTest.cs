@@ -36,6 +36,9 @@ public static class SelfTest {
 
     public static int Run(string here, string outFile) {
         Motion.Off = true;
+        // 맨 위에 버전과 운영체제: 결과 파일이 어느 빌드에서 나온 것인지 알 수 있게
+        sb.AppendLine("# Bus Depot v" + AppInfo.Version + " · " + (Platform.Mac ? "macOS" : "Windows") + " " + System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant()
+            + " · " + System.Runtime.InteropServices.RuntimeInformation.OSDescription + " · ANSI " + Omsi.Ansi.CodePage);
         string root = Path.Combine(Path.GetTempPath(), "BusDepot_selftest_cs");
         try { if (Directory.Exists(root)) Directory.Delete(root, true); } catch (Exception) { }
         Directory.CreateDirectory(root);
@@ -410,7 +413,12 @@ public static class SelfTest {
         // wheel.o3d의 세 번째 정점 (0, 1, 2) → obj에서는 z를 뒤집어 (0, 1, -2), UV v도 뒤집음, 면 방향 반대 (1 3 2)
         T("obj 내보내기: 부품마다 o, z 뒤집기, 면 방향, 텍스처 경로, 투명은 [matl_alpha]만", objTxt.Contains("o body") && objTxt.Contains("o wheel") && objTxt.Contains("v 0 1 -2")
             && objTxt.Contains("vt 0 0\n") == false && objTxt.Contains("f 5/5/5 7/7/7 6/6/6") && mtlTxt.Contains("map_Kd " + Path.Combine(bw2, "wall_Red.bmp")) && mtlTxt.Contains("map_d " + Path.Combine(bt, "glass.tga"))
-            && Count(mtlTxt, "map_d") == 1 && exErr.Count == 1 && exErr[0].StartsWith(@"parts\inside.o3d"), objTxt.Length + " err=" + string.Join(",", exErr.ToArray()) + "\n" + mtlTxt);
+            && Count(mtlTxt, "map_d") == 1 && exErr.Count == 1 && exErr[0].StartsWith(@"parts\inside.o3d"),
+            // 어느 조건이 틀렸는지 (맥에서 원인을 찾기 쉽게)
+            string.Join(" ", new[] { ("o body", objTxt.Contains("o body")), ("o wheel", objTxt.Contains("o wheel")), ("v 0 1 -2", objTxt.Contains("v 0 1 -2")), ("vt0 0", !objTxt.Contains("vt 0 0\n")),
+                ("f 5 7 6", objTxt.Contains("f 5/5/5 7/7/7 6/6/6")), ("map_Kd", mtlTxt.Contains("map_Kd " + Path.Combine(bw2, "wall_Red.bmp"))), ("map_d", mtlTxt.Contains("map_d " + Path.Combine(bt, "glass.tga"))),
+                ("map_d x1", Count(mtlTxt, "map_d") == 1), ("err", exErr.Count == 1 && exErr[0].StartsWith(@"parts\inside.o3d")) }.Where(c => !c.Item2).Select(c => "[" + c.Item1 + "]"))
+            + " len=" + objTxt.Length + " err=" + string.Join(",", exErr.ToArray()) + "\n" + mtlTxt.Replace("\r\n", " / "));
 
         // 4-5. 텍스처 읽기: tga(무압축/RLE), dds(DXT1/DXT5)
         byte[] t2 = new byte[18 + 4 * 4]; t2[2] = 2; t2[12] = 2; t2[14] = 2; t2[16] = 32; t2[17] = 8 | 0x20;

@@ -12,11 +12,16 @@
   <a href="https://github.com/HYB1022/obj2x/releases/latest"><img src="https://img.shields.io/github/v/release/HYB1022/obj2x?style=flat-square&label=%E6%9C%80%E6%96%B0%E7%89%88&color=5046e5" alt="最新版"></a>
   <a href="https://github.com/HYB1022/obj2x/releases"><img src="https://img.shields.io/github/downloads/HYB1022/obj2x/total?style=flat-square&label=%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89&color=0a84ff" alt="ダウンロード数"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=flat-square" alt="Windows 10 | 11">
+  <img src="https://img.shields.io/badge/macOS-11%2B%20(openOMSI)-555555?style=flat-square&logo=apple" alt="macOS 11+ (openOMSI)">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-34c759?style=flat-square" alt="GPL-3.0"></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/HYB1022/obj2x/releases/latest/download/BusDepot.zip"><b>⬇ BusDepot.zip をダウンロード</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/HYB1022/obj2x/releases/latest/download/BusDepot-mac-arm64.zip">Mac (Apple シリコン)</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/HYB1022/obj2x/releases/latest/download/BusDepot-mac-x64.zip">Mac (Intel)</a>
   &nbsp;·&nbsp;
   <a href="#使い方">使い方</a>
   &nbsp;·&nbsp;
@@ -46,6 +51,7 @@
 - **OMSI 作成**：o3d モデルからオブジェクト（`.sco`）を、車線・歩道の値から道路スプライン（`.sli`）を作り、OMSI フォルダーに直接入れます。
 - **バス**：`.bus` を開いてモデルを塗装まで 3D で表示し、アニメーション（`[newanim]`）を動かしながらピボット・回転・factor を直し、乗客の経路（`paths.cfg`）と座席（`passengercabin.cfg`）を編集して保存します。Blender ファイル（`.blend`）や OBJ にも保存できます。
 - **マップ**：マップ情報とタイル・スプライン・オブジェクトの配置を地図で表示し、足りないオブジェクト・スプライン・AI 車両・人を見つけます。HOF ファイルも閲覧できます。
+- **macOS（openOMSI）**：同じアプリが Mac（Apple シリコン / Intel）でも動きます。FastO3D、バス・マップ表示、オブジェクト/スプライン作成が使え、openOMSI の `~/.openomsi/content` フォルダーも自動で参照します。[インストール方法](#macosopenomsi)
 
 `.o3d` は `.x` と同じフォルダーに作られ、ファイル名は obj と同じです（`face.obj` → `face.x` → `face.o3d`）。
 
@@ -75,6 +81,7 @@
 | 必要なもの | 説明 |
 | --- | --- |
 | Windows 10 / 11 | .NET がプログラムに同梱されているので別途インストールは不要です（64 ビット） |
+| macOS 11 以降（任意） | Apple シリコン / Intel。openOMSI と一緒に使う Mac 版です。OmsiXConv 方式は使えません（[macOS](#macosopenomsi)） |
 | [Blender 2.79b](https://download.blender.org/release/Blender2.79/) | 標準の `Import-Export: DirectX X Format` アドオンが有効になっている必要があります。他のバージョン（2.8 以降）は変換に対応していません |
 | OmsiXConv (Omsi X to O3D Converter 1.0) | **このリポジトリには含まれていません。** 別途入手して `OmsiXConv.exe` の場所を指定してください |
 
@@ -219,6 +226,7 @@ dist\win\BusDepot.exe --selftest
 
 ## 変更履歴
 
+- **v2.8.4** — Mac：メニューバーのページへのショートカット（⌘1〜⌘7、⌘,）が効かない問題を修正。自己診断の結果の先頭にバージョンと OS を書き、失敗したときはどの条件が違ったかを表示。README の macOS 案内を追加
 - **v2.8.3** — **macOS 版を初めてリリース**（openOMSI 用、Apple シリコン / Intel）。マップタブでオブジェクト・スプラインがすべて「なし」になる問題、マップ画像が出ない問題、Mac で Blender のパスが Windows 用になる問題を修正。Mac のメニューバーにアプリ名とページへのショートカット（⌘1〜⌘7、⌘,）を追加しました
 - **v2.8.2** — 自動アップデートがインストールは済ませても新しいバージョンを再起動できなかった問題を修正（`System.Diagnostics.Process` のエラー）。v2.8.0/v2.8.1 からこのバージョンへ更新するときは、まだそのエラーが一度出ることがあります。閉じて Bus Depot を起動し直すと v2.8.2 になっています
 - **v2.8.1** — **バスモデルを開くのが速くなりました**：部品を複数のコアで同時に読み込み、テクスチャはモデルを先に表示してから裏で読み込みます（試したバス：6～7 秒 → 約 1 秒、テクスチャまで約 1.5 秒）。大きなテクスチャは dds の小さいミップマップを使うか、読み込み時に縮小します。**マップの読み込みも速くなりました**（Anrak&Munsan：3～5 秒 → 約 1 秒、読み込み中に画面が止まる問題を解消）。起動も速くなりました（事前コンパイル。v2.8.0 が遅かった主な原因）。**obj2x のファイルをすべて整理**：`obj2x.exe` ランチャー、`obj2x.bat`、`obj2x.ini` など旧名のファイルを削除し Bus Depot だけを残します（ショートカットが `obj2x.exe` を指している場合は `BusDepot.exe` で作り直してください）。自動アップデートでランチャーが抜ける問題を修正

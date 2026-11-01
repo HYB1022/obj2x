@@ -12,11 +12,16 @@
   <a href="https://github.com/HYB1022/obj2x/releases/latest"><img src="https://img.shields.io/github/v/release/HYB1022/obj2x?style=flat-square&label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&color=5046e5" alt="最新版本"></a>
   <a href="https://github.com/HYB1022/obj2x/releases"><img src="https://img.shields.io/github/downloads/HYB1022/obj2x/total?style=flat-square&label=%E4%B8%8B%E8%BD%BD%E9%87%8F&color=0a84ff" alt="下载量"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=flat-square" alt="Windows 10 | 11">
+  <img src="https://img.shields.io/badge/macOS-11%2B%20(openOMSI)-555555?style=flat-square&logo=apple" alt="macOS 11+ (openOMSI)">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-34c759?style=flat-square" alt="GPL-3.0"></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/HYB1022/obj2x/releases/latest/download/BusDepot.zip"><b>⬇ 下载 BusDepot.zip</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/HYB1022/obj2x/releases/latest/download/BusDepot-mac-arm64.zip">Mac (Apple 芯片)</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/HYB1022/obj2x/releases/latest/download/BusDepot-mac-x64.zip">Mac (Intel)</a>
   &nbsp;·&nbsp;
   <a href="#使用方法">使用方法</a>
   &nbsp;·&nbsp;
@@ -46,6 +51,7 @@
 - **OMSI 制作**：用 o3d 模型制作场景物件（`.sco`），用车道和人行道参数制作道路样条线（`.sli`），直接放进 OMSI 文件夹。
 - **巴士**：打开 `.bus`，连同涂装以 3D 显示模型，播放动画（`[newanim]`）并修改枢轴、旋转和 factor，编辑乘客路径（`paths.cfg`）和座位（`passengercabin.cfg`）并保存。也可以保存为 Blender 文件（`.blend`）或 OBJ。
 - **地图**：显示地图信息以及地块、样条线、物件的分布图，并找出缺失的物件、样条线、AI 车辆和人物。也可以查看 HOF 文件。
+- **macOS（openOMSI）**：同一个应用也能在 Mac（Apple 芯片 / Intel）上运行。可以使用 FastO3D、巴士和地图查看、物件/样条制作，并自动包含 openOMSI 的 `~/.openomsi/content` 文件夹。[安装方法](#macosopenomsi)
 
 `.o3d` 会生成在与 `.x` 相同的文件夹中，文件名与 obj 相同（`face.obj` → `face.x` → `face.o3d`）。
 
@@ -75,6 +81,7 @@
 | 所需 | 说明 |
 | --- | --- |
 | Windows 10 / 11 | 程序已内置 .NET，无需另外安装（64 位） |
+| macOS 11 及以上（可选） | Apple 芯片 / Intel。与 openOMSI 一起使用的 Mac 版。不能使用 OmsiXConv 方式（[macOS](#macosopenomsi)） |
 | [Blender 2.79b](https://download.blender.org/release/Blender2.79/) | 需要启用自带的 `Import-Export: DirectX X Format` 插件。其他版本（2.8 及以上）不支持用于转换 |
 | OmsiXConv (Omsi X to O3D Converter 1.0) | **本仓库不包含。** 请另行获取并指定 `OmsiXConv.exe` 的位置 |
 
@@ -219,6 +226,7 @@ dist\win\BusDepot.exe --selftest
 
 ## 更新日志
 
+- **v2.8.4** — Mac：修复菜单栏的页面快捷方式（⌘1–⌘7、⌘,）无效的问题。自检结果开头写上版本和系统，失败时显示是哪个条件不对。README 补充 macOS 说明
 - **v2.8.3** — **首次发布 macOS 版**（用于 openOMSI，Apple 芯片 / Intel）。修复地图页中物件和样条全部显示为缺失、地图图片不显示、Mac 上 Blender 路径显示为 Windows 路径的问题。Mac 菜单栏显示应用名称和页面快捷方式（⌘1–⌘7、⌘,）
 - **v2.8.2** — 修复自动更新安装完成后无法重新启动新版本的问题（`System.Diagnostics.Process` 错误）。从 v2.8.0/v2.8.1 更新到本版本时仍可能出现一次该错误：关闭后重新运行 Bus Depot 即为 v2.8.2
 - **v2.8.1** — **打开巴士模型快了很多**：用多个核心同时读取部件，先显示模型再在后台加载贴图（测试的巴士：6~7 秒 → 约 1 秒，含贴图约 1.5 秒）。大贴图使用 dds 中较小的 mipmap，或在解码时缩小。**地图加载也更快了**（Anrak&Munsan：3~5 秒 → 约 1 秒，加载时界面不再卡住）。程序启动也更快（预编译，这是 v2.8.0 变慢的主要原因）。**清理所有 obj2x 文件**：删除 `obj2x.exe` 启动器、`obj2x.bat`、`obj2x.ini` 等旧名称文件，只保留 Bus Depot（如果快捷方式指向 `obj2x.exe`，请改为 `BusDepot.exe` 重新创建）。修复自动更新漏掉启动器的问题

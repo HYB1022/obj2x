@@ -12,11 +12,16 @@
   <a href="https://github.com/HYB1022/obj2x/releases/latest"><img src="https://img.shields.io/github/v/release/HYB1022/obj2x?style=flat-square&label=neueste&color=5046e5" alt="Neueste Version"></a>
   <a href="https://github.com/HYB1022/obj2x/releases"><img src="https://img.shields.io/github/downloads/HYB1022/obj2x/total?style=flat-square&label=Downloads&color=0a84ff" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=flat-square" alt="Windows 10 | 11">
+  <img src="https://img.shields.io/badge/macOS-11%2B%20(openOMSI)-555555?style=flat-square&logo=apple" alt="macOS 11+ (openOMSI)">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-34c759?style=flat-square" alt="GPL-3.0"></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/HYB1022/obj2x/releases/latest/download/BusDepot.zip"><b>⬇ BusDepot.zip herunterladen</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/HYB1022/obj2x/releases/latest/download/BusDepot-mac-arm64.zip">Mac (Apple Silicon)</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/HYB1022/obj2x/releases/latest/download/BusDepot-mac-x64.zip">Mac (Intel)</a>
   &nbsp;·&nbsp;
   <a href="#verwendung">Verwendung</a>
   &nbsp;·&nbsp;
@@ -46,6 +51,7 @@ Statt Dateien einzeln zu öffnen, Optionen einzustellen und Convert zu drücken,
 - **OMSI-Erstellung**: erstellt Szenerieobjekte (`.sco`) aus o3d-Modellen und Straßensplines (`.sli`) aus Spur- und Gehwegwerten direkt im OMSI-Ordner.
 - **Bus**: öffnet eine `.bus` und zeigt das Modell mit Lackierung in 3D, spielt die Animationen (`[newanim]`) ab, korrigiert Drehpunkte, Drehungen und Faktoren und bearbeitet Fahrgastwege (`paths.cfg`) und Sitze (`passengercabin.cfg`). Auch als Blender-Datei (`.blend`) oder OBJ speicherbar.
 - **Karte**: zeigt Karteninfos und die Lage von Kacheln, Splines und Objekten und findet fehlende Objekte, Splines, KI-Fahrzeuge und Personen. HOF-Dateien lassen sich ebenfalls ansehen.
+- **macOS (openOMSI)**: Dieselbe App läuft auf dem Mac (Apple Silicon / Intel). FastO3D, Bus- und Kartenansicht sowie Objekt-/Spline-Erstellung funktionieren, der Ordner `~/.openomsi/content` von openOMSI wird automatisch einbezogen. [Installation](#macos-openomsi)
 
 Die `.o3d` entsteht im selben Ordner wie die `.x` und heißt wie die obj (`face.obj` → `face.x` → `face.o3d`).
 
@@ -75,6 +81,7 @@ Die `.o3d` entsteht im selben Ordner wie die `.x` und heißt wie die obj (`face.
 | Voraussetzung | Hinweis |
 | --- | --- |
 | Windows 10 / 11 | .NET ist im Programm enthalten, es muss nichts installiert werden (64 Bit) |
+| macOS 11 oder neuer (optional) | Apple Silicon / Intel. Die Mac-Version für openOMSI. Die OmsiXConv-Methode ist nicht verfügbar ([macOS](#macos-openomsi)) |
 | [Blender 2.79b](https://download.blender.org/release/Blender2.79/) | Das mitgelieferte Add-on `Import-Export: DirectX X Format` muss aktiviert sein. Andere Versionen (2.8 und neuer) werden für die Konvertierung nicht unterstützt |
 | OmsiXConv (Omsi X to O3D Converter 1.0) | **Nicht in diesem Repository enthalten.** Separat besorgen und den Ort von `OmsiXConv.exe` angeben |
 
@@ -219,6 +226,7 @@ Blender und OmsiXConv sind nicht in diesem Repository enthalten. Jedes Programm 
 
 ## Änderungen
 
+- **v2.8.4** — Mac: Seiten-Kurzbefehle in der Menüleiste (⌘1–⌘7, ⌘,) funktionierten nicht – behoben. Das Ergebnis des Selbsttests beginnt mit Version und Betriebssystem und zeigt, welche Bedingung fehlschlug. Mehr macOS-Infos im README
 - **v2.8.3** — **Erste macOS-Version** (für openOMSI, Apple Silicon / Intel). Behoben: im Karten-Tab wurden alle Objekte und Splines als fehlend angezeigt, das Kartenbild fehlte und der Blender-Pfad zeigte auf dem Mac einen Windows-Pfad. In der Mac-Menüleiste stehen jetzt der App-Name und Seiten-Kurzbefehle (⌘1–⌘7, ⌘,)
 - **v2.8.2** — Behoben: Das Auto-Update installierte die neue Version, konnte sie aber nicht neu starten (Fehler `System.Diagnostics.Process`). Beim Update von v2.8.0/v2.8.1 auf diese Version kann der Fehler noch einmal erscheinen: schließen und Bus Depot neu starten, dann läuft v2.8.2
 - **v2.8.1** — **Busmodelle öffnen deutlich schneller**: Teile werden auf mehreren Kernen gelesen, Texturen werden nach dem Anzeigen des Modells im Hintergrund nachgeladen (Testbus: 6–7 s → etwa 1 s, mit Texturen etwa 1,5 s). Große Texturen nutzen eine kleinere dds-Mipmap oder werden beim Dekodieren verkleinert. **Karten laden ebenfalls schneller** (Anrak&Munsan: 3–5 s → etwa 1 s, kein Einfrieren mehr beim Laden). Das Programm startet auch schneller (vorkompiliert – der Hauptgrund, warum v2.8.0 langsam war). **Alle obj2x-Dateien werden entfernt**: der `obj2x.exe`-Starter, `obj2x.bat`, `obj2x.ini` und andere Dateien mit dem alten Namen werden gelöscht, nur Bus Depot bleibt (zeigt eine Verknüpfung auf `obj2x.exe`, bitte für `BusDepot.exe` neu anlegen). Fehler behoben, durch den das Auto-Update den Starter ausließ
